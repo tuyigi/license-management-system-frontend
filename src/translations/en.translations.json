@@ -1,0 +1,23 @@
+{
+    "login": {
+        "hello": "Welcome!",
+        "welcome": "We are happy to see you again.",
+        "help": "Help",
+        "forms": {
+            "remember_me": "Remember me next time.",
+            "login": "Login",
+            "hints": {
+                "username": "Your email or username",
+                "password": "Your password"
+            },
+            "labels": {
+                "username": "Email",
+                "password": "Password"
+            },
+            "errors": {
+                "no_username": "Enter your username",
+                "no_password": "Enter your password"
+            }
+        }
+    }
+}

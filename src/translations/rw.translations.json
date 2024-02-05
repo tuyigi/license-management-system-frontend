@@ -1,0 +1,23 @@
+{
+    "login":{
+        "hello":"Murakaza!",
+        "welcome":"Twishimiye kongera kubabona.",
+        "help":"Ubufasha",
+        "forms":{
+            "remember_me":"Ibuka amakuru wasizemo.",
+            "login":"Injira",
+            "hints":{
+                "username":"Imeyili yanyu",
+                "password":"Ijoambo banga ryanyu"
+            },
+            "labels":{
+                "username":"Imeyili",
+                "password":"Ijambobanga"
+            },
+            "errors":{
+                "no_username":"Mushyiremo imeyili yanyu",
+                "no_password":"Mushyiremo ijambo banga ryanyu"
+            }
+        }
+    }
+}
