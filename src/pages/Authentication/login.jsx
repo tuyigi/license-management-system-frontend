@@ -13,23 +13,14 @@ import {
   CircularProgress,
   Container,
   CssBaseline,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Badge,
   InputAdornment,
   Grid
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import {
-  AccountCircle,
   Close,
-  Vidiblity,
   Visibility,
   VisibilityOff,
-  RadioButtonCheckedRounded
 } from "@material-ui/icons";
 import LanguageToggleMenu from "../../utils/languagetoggle_menu.jsx";
 import { withLocalize, Translate } from "react-localize-redux";
@@ -81,12 +72,6 @@ function Login(props) {
     var ex = history?.location?.state?.expired;
     if (ex != null) {
       history.replace(history.location.pathname);
-      localStorage.removeItem("nx_cent");
-      localStorage.removeItem("nx_op");
-      localStorage.removeItem("nx_ag");
-
-      localStorage.removeItem("profile");
-      localStorage.removeItem("agent_profile");
       setExpired(true);
     }
 
@@ -176,8 +161,8 @@ function Login(props) {
 
       <Container >
 
-      <Box style={{marginTop: 180}} />
-        <Grid container spacing={3} justify="center">
+      <Box style={{marginTop: 150}} />
+        <Grid container spacing={4} justify="center">
           <Grid item xs={12} sm={12} md={6}>
           <Box
               display="flex"
@@ -187,9 +172,6 @@ function Login(props) {
               ref={requestRef}
             >
                 <img src={HomeLicenseImage} width={300} />
-              {/* <Typography variant="h4" gutterBottom>
-                <b>Interested in our services?</b>
-              </Typography> */}
             </Box>
             <Box
               display="flex"
@@ -204,7 +186,7 @@ function Login(props) {
             </Box>
             <Box display="flex" alignItems="flex-start" p={1}>
               <Typography>
-                License MIS is a system system system system system system system system system system system system system system system system system system system system system system system system system system system system system
+                The License Management System is designed to streamline the process of managing software licenses within the organization. It aims to ensure compliance with licensing agreements, optimize license usage, and provide transparency in license distribution and allocation.
               </Typography>
             </Box>
 

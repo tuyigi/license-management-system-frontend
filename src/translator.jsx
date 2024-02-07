@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 
 import Login from "./pages/Authentication/login.jsx";
 import BnrHome from "./pages/Admin/home.jsx";
+import LicenseManagerHome from "./pages/LicenseManager/home";
+import OrgAdminHome from "./pages/AdminOrganization/home";
 
 import {
   BrowserRouter as Router,
@@ -51,8 +53,9 @@ function Translator(props) {
       <Router>
         <Switch>
           <Route exact path="/" component={() => <Login {...props} />} />
-          <Route exact path="/bnr" component={() => <BnrHome {...props} />} />
-          {/* <Route component={() => <NotFound full={true} />} /> */}
+          <Route path="/bnr" component={() => <BnrHome {...props} />} />
+          <Route path="/licenseManager" component={() => <LicenseManagerHome {...props} />} />
+          <Route path="/orgAdmin" component={() => <OrgAdminHome {...props} />} />
         </Switch>
       </Router>
     </SnackbarProvider>

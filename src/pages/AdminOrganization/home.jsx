@@ -46,8 +46,6 @@ import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
 import { Link, Switch, Route, useHistory } from "react-router-dom";
 
-import Dashboard from "./dashboard"
-
 
 
 
@@ -56,40 +54,30 @@ const routes = [
       path: "/bnr",
       exact: true,
       permission: "CAN_VIEW_HOME",
-      main: () =>  <Dashboard/>,
+      main: () =>  <></>,
     },
-    {
-        path: "/bnr/home",
-        exact: true,
-        permission: "CAN_VIEW_HOME",
-        main: () =>  <Dashboard/>,
-    },
-
     {
       main: () => <></>,
     },
   ];
 
 const menus = [
-    { name: "Home", icon: <Home color="primary" />, path: "/bnr/home",permission: "CAN_VIEW_HOME", },
-    { name: "Licenses", icon: <Receipt color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
-    { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
-    { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ROLE_PERMISSION"},
-    { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ROLE_PERMISSION"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/bnr/report", permission: "CAN_VIEW_REPORT",
+    { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
+    { name: "Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
+    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/report", permission: "CAN_VIEW_REPORT",
         submenu:[
-            { name: "License Tracking", path: "/bnr/licenseTracking"},
-            { name: "Organization Licenses", path: "/bnr/licenseOrganization"}
+            { name: "Approved Licenses ", path: "/orgAdmin/licenseRequests"}
         ]
-    },
-    ];
+    }
+];
 
 const menus2 = [
-    { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/bnr/settings" ,permission:"CAN_VIEW_SETTINGS",},
-    { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/bnr/logout" },
+    { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/orgAdmin/settings" ,permission:"CAN_VIEW_SETTINGS",},
+    { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/orgAdmin/logout" },
   ];
 
 const drawerWidth = 250;
+
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
@@ -144,7 +132,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function BnrHome(props) {
+function OrgAdminHome(props) {
     const { window } = props;
     const classes = useStyles();
     const Theme = useTheme();
@@ -454,4 +442,4 @@ function BnrHome(props) {
     );
   }
   
-  export default withLocalize(BnrHome);
+  export default withLocalize(OrgAdminHome);
