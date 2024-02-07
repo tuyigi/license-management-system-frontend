@@ -45,16 +45,23 @@ import {
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
 import { Link, Switch, Route, useHistory } from "react-router-dom";
+import Dashboard from "./dashboard";
 
 
 
 
 const routes = [
     {
-      path: "/bnr",
+      path: "/orgAdmin",
       exact: true,
       permission: "CAN_VIEW_HOME",
-      main: () =>  <></>,
+      main: () => <Dashboard/>,
+    },
+    {
+        path: "/orgAdmin/home",
+        exact: true,
+        permission: "CAN_VIEW_HOME",
+        main: () => <Dashboard/>,
     },
     {
       main: () => <></>,
