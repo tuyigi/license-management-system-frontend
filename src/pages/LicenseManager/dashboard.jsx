@@ -195,7 +195,7 @@ function Dashboard(){
 
 
                     <Grid item xs={12} md={4} lg={4} sm={4}>
-                        <Paper style={{minHeight: 380,}}>
+                        <Paper style={{minHeight: 380,}} elevation={0}>
                             <Typography style={{marginLeft: 20}}> Licenses Status </Typography>
                             <Chart options={licenseRequestStatusChart.options} series={licenseRequestStatusChart.options.series} type="pie" height={350} />
                         </Paper>
@@ -203,7 +203,7 @@ function Dashboard(){
 
 
                     <Grid item xs={12} md={8} lg={8} sm={8}>
-                        <Paper style={{minHeight: 380,}}>
+                        <Paper style={{minHeight: 380,}} elevation={0}>
                             <Typography style={{marginLeft: 20}}> Licenses Allocated </Typography>
                             <Chart options={allocatedLicenseChart.options} series={allocatedLicenseChart.series} type="bar" height={350} />
                         </Paper>

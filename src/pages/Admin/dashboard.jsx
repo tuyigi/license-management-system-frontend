@@ -163,14 +163,14 @@ function Dashboard(){
                         </Grid>
 
                     <Grid item xs={12} md={6} lg={6} sm={6}>
-                        <Paper style={{minHeight: 380,}}>
+                        <Paper style={{minHeight: 380,}} elevation={0}>
                             <Typography style={{marginLeft: 20}}> Organizations by Type </Typography>
                             <Chart options={organizationTypeChart.options} series={organizationTypeChart.series} type="bar" height={350} />
                         </Paper>
                     </Grid>
 
                     <Grid item xs={12} md={6} lg={6} sm={6}>
-                        <Paper style={{minHeight: 380,display:'flex'}}>
+                        <Paper style={{minHeight: 380,display:'flex'}} elevation={0}>
                             <Typography style={{marginLeft: 20}}> License Requests </Typography>
                             <Chart style={{marginTop: 50}} options={licenseRequestStatusChart.options} series={licenseRequestStatusChart.options.series} type="donut" width={380} />
                         </Paper>

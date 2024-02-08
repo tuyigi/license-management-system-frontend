@@ -179,12 +179,12 @@ function Dashboard(){
 
 
                     <Grid item xs={12} md={4} lg={4} sm={4}>
-                        <Paper style={{minHeight: 380,}}></Paper>
+                        <Paper style={{minHeight: 380,}} elevation={0}></Paper>
                     </Grid>
 
 
                     <Grid item xs={12} md={8} lg={8} sm={8}>
-                        <Paper style={{minHeight: 380,}}></Paper>
+                        <Paper style={{minHeight: 380,}} elevation={0}></Paper>
                     </Grid>
 
                 </Grid>
