@@ -232,7 +232,6 @@ function LicenseManagerHome(props) {
                     </List>
                   </Collapse>
                 )}
-            
             </>
           ))}
         </List>

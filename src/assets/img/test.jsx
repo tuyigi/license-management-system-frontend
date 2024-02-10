@@ -1,327 +1,876 @@
-import Skeleton from '@material-ui/lab/Skeleton';
-import { Map, Marker, Popup, TileLayer } from "react-leaflet";import { Icon } from "leaflet";import L from 'leaflet';
-import {TransportService,ReportingService,AdminService,FinanceService,groupBy} from "./../../utils/web_config_2";import axios from 'axios';import MUIDataTable from "mui-datatables";import UserInfo from "./login_info.js";import { format } from "date-fns/esm";import { Link } from "react-router-dom";
-import Iticket from "../../assets/svg/ticket.svg"; import Imoney from "../../assets/svg/money.svg";import Iposuser from "../../assets/svg/posuser.svg";import Iroad from "../../assets/svg/road1.svg";
-import { useSnackbar } from 'notistack';import Format from "date-fns/format";
-import passenger from "../../assets/svg/passenger.svg";
-const useStyles = makeStyles((theme) => ({ root: { flexShrink: 0, flexFlow:1, [theme.breakpoints.up('sm')]:{ marginLeft:250, } }, paper: { padding: theme.spacing(2), height:200, elevation:0 }, paper3: { padding: theme.spacing(2), height:"100px", elevation:0 }, paper1: { padding: theme.spacing(2), height:380, elevation:0 }, paper2: { padding: theme.spacing(2), elevation:0 }, title:{ [theme.breakpoints.down('sm')]: { fontSize:"12px", } }, formTitle:{ flexGrow:1, }, }));
-
-function Dashboard(){ const classes = useStyles(); const [activePark, setActivePark] =useState(null); const [pos1,setPos1]=useState(null); const [pos2,setPos2]=useState(null); const [message,setMessage]=useState("");
- const { enqueueSnackbar, closeSnackbar } = useSnackbar();
- const [operatorData, setOperatorData] = useState({});
- // bus report revenue const [busLebals,setBusLebals]=useState([]); const [busTotal,setBusTotal]=useState([]);
- // route report revenue const [routeLebals,setRouteLebals]=useState([]); const [routeTotal,setRouteTotal]=useState([]); const [token,setToken] = useState(""); useEffect(()=>{ var data = {}; const data1 = localStorage.getItem("nx_op"); if (data1 != null) { data = JSON.parse(data1); }
- setOperatorData(data); setToken(data.token); axios.defaults.baseURL = new ReportingService().BASE_URL;
- // get_bus_report(data.token); // get_route_report(data.token); // get_route_report2(data.token); // get_branch_report(data.token); // get_user_report(data.token); // get_year_report(data.token); // get_channel_report(data.token);
-
-
- // get_week_report(data.token); // get_fines_report(data.token); // get_coordinates(data.token); },[]);
- const view_report=()=>{ axios.defaults.baseURL = new ReportingService().BASE_URL;
-  get_bus_report(token); get_route_report(token); get_route_report2(token); get_branch_report(token); get_user_report(token); get_year_report(token); get_channel_report(token); }
-// overview summary
- const [nTicket,setNticket]=useState(0);const [nAmount,setNamount]=useState(0);const [nPosuser,setNposuser]=useState(0);const [currency,setCurrency]=useState("");
- // format money
- function formatMoney(amount, decimalCount = 2, decimal = ".", thousands = ",") { try { decimalCount = Math.abs(decimalCount); decimalCount = isNaN(decimalCount) ? 2 : decimalCount; const negativeSign = amount < 0 ? "-" : ""; let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString(); let j = (i.length > 3) ? i.length % 3 : 0; return negativeSign + (j ? i.substr(0, j) + thousands : '') + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : ""); } catch (e) { console.log(e) } };
-
- // daily report per bus
- const [revenue_bus,setRevenue_bus]=useState( { options:{ series: [{ name: 'Revenue', data: [] }], chart: { height: 350, type: 'bar', tools:{ download: false, selection:false, pan:false, reset:false, } },
-   noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, plotOptions: { bar: { columnWidth: '40%', } }, dataLabels: { enabled: false, formatter: function (val) { return formatMoney(val,0) + " FRW"; }, offsetY: -20, style: { fontSize: '12px', colors: ["#304758"] } }, xaxis: { categories:[], position: 'bottom', axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { fill: { type: 'gradient', gradient: { colorFrom: '#D8E3F0', colorTo: '#BED1E6', stops: [0, 100], opacityFrom: 0.4, opacityTo: 0.5, } } }, tooltip: { custom: function({series, seriesIndex, dataPointIndex, w}) { return '<div class="arrow_box" style="padding:10">' + '<span>' + formatMoney(parseInt(series[seriesIndex][dataPointIndex]),0) + ' FRW </span>' + '</div>' } }, }, yaxis: { axisBorder: { show: false }, axisTicks: { show: false, }, labels: { show: false, formatter: function (val) { return formatMoney(parseInt(val),0)+ " "; } } }, } });
- const [busLoad,setBusLoad]=useState(false); const get_bus_report=(token)=>{ setBusLoad(false); axios.defaults.baseURL = new ReportingService().BASE_URL; const busInstance = axios.create(new ReportingService().setHeaders(token)); busInstance.post('/pos-report/bus-detail-report?page=0&size=10000000', // { // "bus":"", // "day": Format(new Date(), ["yyyy-MM-dd"]) // // "organization_id":new UserInfo().ORG_ID // }, { "day": Format(new Date(), ["yyyy-MM-dd"]), "organization_id": new UserInfo().ORG_ID, "route": "" } ) .then(res=>{ setBusLoad(false); // console.log("== report ==",res.data.data); var objs=res.data.data.content; var performance=[]; var lebals=[]; // total amount var total=objs.reduce((a, b)=>{ return a + parseInt(b.total_amount); }, 0);
-     objs.sort((a,b)=>parseInt(b.total_amount)-parseInt(a.total_amount)); objs.map((o,i)=>{ if(i<9){ o['amount']=o.total_amount+" "+o.currency; var percentage=(parseInt(o.total_amount)/total)*100; performance.push(percentage); lebals.push(o['plate_nbr']); } }); let unique_bus =lebals.reduce(function(a,b){if(a.indexOf(b)<0)a.push(b);return a;},[]); let unique_percentage=[]; let unique_revenue=[]; // calculate revenue for(var i=0;i<unique_bus.length;i++){ var to=0; var r=0; for(var a=0;a<objs.length;a++){ if(objs[a]['plate_nbr']==unique_bus[i]){ r=r+parseInt(objs[a]['total_amount']); to=to+parseInt(objs[a]['total_tickets']); } } unique_revenue.push(r) unique_percentage.push(to); } setRevenue_bus( { options:{ series: [{ name: 'Revenue', data:unique_revenue }], chart: { height: 350, type: 'bar', tools:{ download: false, selection:false, pan:false, reset:false, } }, plotOptions: { bar: { columnWidth: '40%', } }, dataLabels: { enabled: false, formatter: function (val) { return formatMoney(val,0) + " FRW"; }, offsetY: -20, style: { fontSize: '12px', colors: ["#304758"] } }, xaxis: { categories:unique_bus, position: 'bottom', axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { fill: { type: 'gradient', gradient: { colorFrom: '#D8E3F0', colorTo: '#BED1E6', stops: [0, 100], opacityFrom: 0.4, opacityTo: 0.5, } } }, tooltip: { custom: function({series, seriesIndex, dataPointIndex, w}) { return '<div class="arrow_box" style="padding:10">' + '<span>' + formatMoney(parseInt(series[seriesIndex][dataPointIndex]),0) + ' FRW </span>' + '</div>' } }, }, yaxis: { axisBorder: { show: false }, axisTicks: { show: false, }, labels: { show: false, formatter: function (val) { return formatMoney(parseInt(val),0)+ " "; } } }, } });
-  // setBusLebals(unique_bus); // setBusTotal(unique_revenue);
- }) .catch(err=>{ setBusLoad(false); if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-  if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); }
-  });
- }
-
-  // daily report per route
-  // chart route performance (tickets,revenue)
-
-
-  const [routePercentage,setRoutePercentage]=useState([]); const [routeRPercentage,setRouteRPercentage]=useState([]); const [routeLabels,setRouteLabels]=useState([]); const [topRoute,setTopRoute]=useState([]);
-
-  const route_performance_revenue= { series: [{ name: 'Percentage', data: routeRPercentage }], options: { chart: { height: 350, type: 'area' }, noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, dataLabels: { enabled: false }, stroke: { curve: 'smooth' }, xaxis: { categories: topRoute }, tooltip: { y: { formatter: function (val) { return val + "%" } } }, }, };
-
-
-  const [route_performance_passenger,setRoute_performance_passenger]=useState({ series: [{ name: 'Percentage', data: [] }], options: { chart: { type: 'bar', height: 350 }, noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, plotOptions: { bar: { horizontal: true, distributed: false, startingShape: "flat", barHeight: "40%", endingShape: "rounded", dataLabels: { position: "top", }, }, }, colors:['#B578EF','#26E59F','#92D7BB','#FFEC42','#FDD8B5'], dataLabels: { enabled: false }, xaxis: { categories: [], }, tooltip: { y: { formatter: function (val) { return val + "%" } } }, }, });
-
-
-  const get_route_report2=(token)=>{ axios.defaults.baseURL = new ReportingService().BASE_URL; const routeInstance = axios.create(new ReportingService().setHeaders(token)); routeInstance.post('/pos-report/route-daily-ticket',{ "organization_id": new UserInfo().ORG_ID, "day": Format(new Date(), ["yyyy-MM-dd",]) }) .then(res=>{ var objs=res.data.data; var r=[]; // uniques route var t=[]; // unique total amount var p=[]; // unique percentage per tickets var pR=[] // unique percentage per revenue var tot_tickets=objs.reduce((a,b)=>a+b.total_tickets,0); var tot_revs=objs.reduce((a,b)=>a+parseInt(b.total_amount),0);
-   objs.map((o)=>{ r.push(o['route']); t.push(o['total_amount']); // calculate route ticket var cal=Math.round((o['total_tickets']/tot_tickets)*100); // var obj={route:o['route'],percentage:cal}; // calculate route revenue var Rcal=Math.round((parseInt(o['total_amount'])/tot_revs)*100); pR.push(Rcal); p.push(cal); });
-    setTopRoute(r); setRouteTotal(t); // setRoutePercentage(p); setRouteRPercentage(pR); // console.log("pR",pR); // console.log("p",p);
-    setRoute_performance_passenger({ series: [{ name: 'Percentage', data: p }], options: { chart: { type: 'bar', height: 350 }, plotOptions: { bar: { horizontal: true, columnWidth: '10%', endingShape: 'rounded' }, }, colors:['#B578EF','#26E59F','#92D7BB','#FFEC42','#FDD8B5'], dataLabels: { enabled: false }, xaxis: { categories: r, }, tooltip: { y: { formatter: function (val) { return val + "%" } } }, }, });
-
-
-   }) .catch(err=>{ if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-    if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); }
-    }); }
-    // branch performance /////////////////////////////////////////////
-    const [branchLabels,setBranchLabels]=useState([]); const [branchSeries,setBranchSeries]=useState([]);
-    const branchChart={options:{ series: branchSeries, chart: { type: 'donut', width:300, height:300 }, labels: branchLabels, noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, legend: { position: 'right', itemMargin:{ horizontal:0 } }, responsive: [{ breakpoint: 1000, options: { chart: { width: 250, height:250 }, legend: { position: 'right' } } }] } };
-    const columns = [ { name: "branche_name", label: "Branch Name", options: { filter: true, sort: true, } } , { name: "total_tickets", label: "Tickets", options: { filter: true, sort: true, } }, { name: "amount", label: "Total Amount", options: { filter: true, sort: true, } } ];
-    const [branchMessage,setBranchMessage]=useState("Loading...");
-    const options = {textLabels: { body: { noMatch: branchMessage }, }, filterType: 'checkbox', download:true, responsive:"standard", selectableRows:false, rowsPerPage:10, elevation:0, customToolbarSelect: (selectedRows, displayData, setSelectedRows) => ( <Box> {/* <Chip className={classes.chip} icon={ <Visibility/>} color="primary" variant="outlined" label="View details" onClick={()=>{ var name=displayData[selectedRows.data[0]['index']]['data'][0]; console.log("ticket id",id); }} /> */} </Box> ), };
-    const [branchReports,setBranchReports]=useState([]); const [branchLoad,setBranchLoad]=useState(false); const get_branch_report=(token)=>{ setBranchLoad(true); setBranchMessage("Loading..."); axios.defaults.baseURL = new ReportingService().BASE_URL; const routeInstance = axios.create(new ReportingService().setHeaders(token)); routeInstance.post('/pos-report/branch-detail-report', { "company_id": new UserInfo().ORG_ID, "end_date": Format(new Date(), ["yyyy-MM-dd",]), "start_date": Format(new Date(), ["yyyy-MM-dd",]) } // { // "branch": "", // "organization_id":new UserInfo().ORG_ID // } ) .then(res=>{ var objs=res.data.data; // console.log("===== branch report =====",objs); if(objs.length==0){ setBranchMessage("No branch report available"); // setReportsMessage("No Branch report available today"); }else{ var performance=[]; var lebals=[]; var total=objs.reduce((a, b)=>{ return a + parseInt(b.total_income); }, 0);
-
-     objs.map((o)=>{ o['amount']=formatMoney(o.total_income,0)+" RWF"; var a=parseInt(o.total_income); // var am=formatMoney(a,0)+" RWF"; // o['total_income']=am; var percentage=(parseInt(o.total_income)/total)*100; performance.push(percentage); if(o['branch_name']==null){ lebals.push("null"); o['branch_name']="null"; }else{ lebals.push(o['branch_name']); } });
-      console.log("objs") console.log(objs);
-
-      let unique_branch =lebals.reduce(function(a,b){if(a.indexOf(b)<0)a.push(b);return a;},[]); let unique_percentage=[]; let unique_revenue=[]; var grouped=[]; for(var i=0;i<unique_branch.length;i++){ var to=0; var r=0; var curr=""; for(var a=0;a<objs.length;a++){ if(objs[a]['branch_name']==unique_branch[i]){ r=r+parseInt(objs[a]['total_income']); to=to+parseInt(objs[a]['total_tickets']); curr="RWF"; } } var obj={branche_name:unique_branch[i],total_tickets:to,amount:formatMoney(r,0)+" "+curr}; grouped.push(obj); unique_revenue.push(r); unique_percentage.push(to); }
-      setBranchSeries(unique_percentage); setBranchLabels(unique_branch);
-      console.log("grouped"); console.log(grouped);
-      setBranchReports(grouped); } setBranchLoad(false); }) .catch(err=>{ setBranchLoad(false);
-     if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-      if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); }
-      }); }
-
-     // channel performance //////////////////////////////////
-
-     const [channelLabels,setChannelLabels]=useState([]); const [channelSeries,setChannelSeries]=useState([]);
-     const columnsChannel = [ { name: "channel_type", label: "Channel", options: { filter: true, sort: true, customBodyRender: (value, tableMeta, updateValue) => { return ( <Typography color="primary"><Link color="primary" href="#" onClick={()=>{ get_channel_details_report(value); }}>{value}</Link></Typography> ); } } }, { name: "total_tickets", label: "Total Tickets", options: { filter: true, sort: true, } }, { name: "total_amount", label: "Total Amount", options: { filter: true, sort: true, } }, { name: "currency", label: "Currency", options: { filter: true, sort: true, } } ];
-     const [channelMessage,setChannelMessage]=useState("No report available");
-     const optionsChannel = {textLabels: { body: { noMatch: channelMessage }, }, filterType: 'checkbox', download:true, responsive:"standard", selectableRows:false, rowsPerPage: 10, elevation:0, };
-     const channelChart={options:{ series: channelSeries, chart: { type: 'donut', width:300, height:300 }, labels:channelLabels, noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, legend: { position: 'right', itemMargin:{ horizontal:0 } }, responsive: [{ breakpoint: 1000, options: { chart: { width: 250, height:250 }, legend: { position: 'right' } } }] } };
-     const [channelLoad,setChannelLoad]=useState(false); const [channelReports,setChannelReports]=useState();const get_channel_report=(token)=>{ setChannelMessage("Loading..."); setChannelLoad(true); axios.defaults.baseURL = new ReportingService().BASE_URL; const channelInstance = axios.create(new ReportingService().setHeaders(token)); channelInstance.post('/traffic-report/daily-sales-report', { "organization_id":new UserInfo().ORG_ID, "chanel_type":""} ) .then(res=>{ var objs=res.data.data; if(objs.length==0){ setChannelMessage("No channel report available"); } var l=[]; var s=[];
-      objs.map((o)=>{ l.push(o['channel_type']); s.push(parseInt(o['total_amount'])); o['total_amount']=formatMoney(parseInt(o['total_amount']),0)+" "+o['currency']; });
-      setChannelLabels(l); setChannelSeries(s); setChannelReports(objs); setChannelLoad(false); }) .catch(err=>{
-      setChannelLoad(false);
-      if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-       if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); } });
-       }
-
-
-/// top 5 routes performance
-
-       const [routeSeries,setRouteSeries]=useState([]); const routeChart={options:{ series: routeSeries, chart: { type: 'donut', width:300, height:300 }, labels: routeLabels, noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, legend: { position: 'right', itemMargin:{ horizontal:0 } }, responsive: [{ breakpoint: 1000, options: { chart: { width: 250, height:250 }, legend: { position: 'right' } } }] } };
-
-       const columnsRoute = [ { name: "route", label: "Route", options: { filter: true, sort: true, customBodyRender: (value, tableMeta, updateValue) => { return ( <Typography color="primary"><Link color="primary" href="#" onClick={()=>{ get_route_details_report(value); }}>{value}</Link></Typography> ); } } } , { name: "total_tickets", label: "Tickets", options: { filter: true, sort: true, } }, { name: "amount", label: "Total Amount", options: { filter: true, sort: true, } } ];
-       const [routeMessage,setRouteMessage]=useState("Loading...");
-       const optionsRoute = {textLabels: { body: { noMatch: routeMessage }, }, filterType: 'checkbox', download:true, responsive:"standard", selectableRows:false, rowsPerPage: 10, elevation:0, };
-       const [routeReports,setRouteReports]=useState([]); const [routeLoad,setRouteLoad]=useState(false);
-       const get_route_report=(token)=>{ setRouteLoad(true); setRouteMessage("Loading..."); axios.defaults.baseURL = new ReportingService().BASE_URL; const routeInstance = axios.create(new ReportingService().setHeaders(token)); routeInstance.post('/pos-report/route-daily-ticket', // { // "organization_id":new UserInfo().ORG_ID // }, { "day": Format(new Date(), ["yyyy-MM-dd",]), "organization_id": new UserInfo().ORG_ID, "route": "" }) .then(res=>{ var objs=res.data.data; let ta=0; let tt=0; if(objs.length==0){ setRouteMessage("No route report available"); }else{ var l=[]; var s=[]; var top_objs=[]; var curr=""; objs.sort((a,b)=>parseInt(b.total_amount)-parseInt(a.total_amount)); objs.map((o,i)=>{ tt=tt+parseInt(o['total_tickets']); ta=ta+parseInt(o['total_amount']); if(i<5){ l.push(o['route']); s.push(parseInt(o['total_amount'])); o['amount']=formatMoney(parseInt(o['total_amount']),0)+" "+o['currency']; curr=o['currency']; top_objs.push(o); } }); setRouteLabels(l); setRouteSeries(s); setRouteReports(top_objs); setCurrency(curr); } setNticket(tt); setNamount(formatMoney(ta,0)); setRouteLoad(false); }) .catch(err=>{ setRouteLoad(false); if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-        if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); } }); }
-
-         // top 5 pos user
-         const [userLabels,setUserLabels]=useState([]); const [userSeries,setUserSeries]=useState([]); const userChart={options:{ series: userSeries, chart: { type: 'donut', width:300, height:300 }, labels: userLabels, noData: { text: "No data yet", align: "center", verticalAlign: "middle", offsetX: 0, offsetY: 0, }, legend: { position: 'right', itemMargin:{ horizontal:0 } }, responsive: [{ breakpoint: 1000, options: { chart: { width: 250, height:250 }, legend: { position: 'right' } } }] } };
-
-         const columnsUser = [ { name: "user_name", label: "Username", options: { filter: true, sort: true, customBodyRender: (value, tableMeta, updateValue) => { return ( <Typography color="primary"><Link color="primary" href="#" onClick={()=>{ get_user_details_report(value); }}>{value}</Link></Typography> ); } } } , { name: "passengr_cash", label: "CASH", options: { filter: true, sort: true, } }, { name: "passenger_card", label: "CARD", options: { filter: true, sort: true, } }, { name: "luggage_cash", label: "Luggage", options: { filter: true, sort: true, } }, { name: "total_tickets", label: "Tickets", options: { filter: true, sort: true, } }, { name: "amount", label: "Total Amount", options: { filter: true, sort: true, } } ];
-         const [userMessage,setUserMessage]=useState("Loading...");
-         const optionsUser = {textLabels: { body: { noMatch: userMessage }, }, filterType: 'checkbox', download:true, responsive:"standard", selectableRows:false, rowsPerPage: 10, elevation:0, };
-
-         const [userReports,setUserReports]=useState([]); const [userLoad,setUserLoad]=useState(false); const get_user_report=(token)=>{ setUserLoad(true); setUserMessage("Loading..."); axios.defaults.baseURL = new ReportingService().BASE_URL; const userInstance = axios.create(new ReportingService().setHeaders(token)); userInstance.post('/pos-report/user-daily-ticket?page=0&size=10000000', { "company_id":new UserInfo().ORG_ID, "end_date": Format(new Date(), ["yyyy-MM-dd",]), "start_date": Format(new Date(), ["yyyy-MM-dd",]) } ) .then(res=>{ var objs=res.data.data.content; console.log("user report",objs); if(objs.length==0){ setUserMessage("No report available!") } let sortedreport = objs.slice().sort((a, b) => parseInt(b.total_amount) - parseInt(a.total_amount)); // console.log("sorted report",sortedreport);
-          var l=[]; var s=[]; var n_objs=[];
-          let count_pos_user=0; sortedreport.map((o,i)=>{ o['user_name']=o['cashier'];
-           // count users
-           if(o['cashier']!=null){ count_pos_user++; }
-           if(i<5){ if(o['cashier']!=null){ o['amount']=formatMoney(parseInt(o['total_amount']),0)+" RWF"; o['passengr_cash']=formatMoney(parseInt(o['passengr_cash']),0)+" RWF"; o['passenger_card']=formatMoney(parseInt(o['passenger_card']),0)+" RWF"; o['luggage_cash']=formatMoney(parseInt(o['luggage_cash']),0)+" RWF"; l.push(o['cashier']); s.push(parseInt(o['total_amount'])); n_objs.push(o); } }
-          });
-          setNposuser(count_pos_user);
-          if(n_objs.length==0){ setUserMessage("No report available!") }
-          setUserLabels(l); setUserSeries(s);
-          setUserReports(n_objs);
-          setUserLoad(false); }) .catch(err=>{ setUserLoad(false); if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-          if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); } }); }
-// weekly report
-           const [weekLabels,setWeekLabels]=useState([]);const [weekSeries,setWeekSeries]=useState([]);
-           const colors=["#3BA2F9","#45E6A8","#FDBB51","#FD637B","#8B79D5","#6E848D","#4EB3A9","#D647E9"];
-           const weekChart= { series: [{ name:"Sales", data: weekSeries
-            }], options: { chart: { height: 350, type: 'bar', events: { click: function(chart, w, e) { // console.log(chart, w, e) } } }, colors: colors, plotOptions: { bar: { columnWidth: '45%', distributed: true } }, tooltip: { custom: function({series, seriesIndex, dataPointIndex, w}) { return '<div class="arrow_box" style="padding:10">' + '<span>' + formatMoney(parseInt(series[seriesIndex][dataPointIndex]),0) + ' </span>' + '</div>' } }, dataLabels: { enabled: false, formatter: function(val, opt) { return formatMoney(parseInt(val),0)+" "; } }, legend: { show: false }, xaxis: { categories: weekLabels, labels: { style: { colors: colors, fontSize: '12px' } } } },};
-
-
-                const [weekLoad,setWeekLoad]=useState(false); const get_week_report=(token)=>{ setWeekLoad(true); axios.defaults.baseURL = new ReportingService().BASE_URL; const weekInstance = axios.create(new ReportingService().setHeaders(token)); weekInstance.post('/traffic-report/weekly-sales',{ "organization_id": new UserInfo().ORG_ID}) .then(res=>{ var objs=res.data.data; var weekday = new Array(7); weekday[0] = "Monday"; weekday[1] = "Tuesday"; weekday[2] = "Wednesday"; weekday[3] = "Thursday"; weekday[4] = "Friday"; weekday[5] = "Saturday"; weekday[6] = "Sunday"; var l=[]; var s=[];
-                 weekday.map((o)=>{ var obj=objs.find((f)=>f.day==o); if(obj!=null){ l.push(o); s.push(obj['total_amount']); }else{ l.push(o); s.push(0); } });
-                 setWeekLabels(l); setWeekSeries(s); setWeekLoad(false); }) .catch(err=>{ setWeekLoad(false); if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-                 if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); } }); }
-
-// yearly report
-
-                  const [yearReport,setYearReport]=useState({});const [yearLoad,setYearLoad]=useState(false);const [foundYear,setFoundYear]=useState(false);const get_year_report=(token)=>{ var d = new Date(); var n = d.getFullYear(); setYearLoad(true); axios.defaults.baseURL = new ReportingService().BASE_URL; const yearInstance = axios.create(new ReportingService().setHeaders(token)); yearInstance.post('/traffic-report/annual-sales',{ "organization_id": new UserInfo().ORG_ID, "year": n+""}) .then(res=>{ var objs=res.data.data;
-                   if(objs.length==0){ setFoundYear(false); console.log("empty yearly report"); }else{ // console.log("yearly report",objs); // console.log("year report ",objs); setFoundYear(true); setYearReport(objs[0]); }
-                    setYearLoad(false); }) .catch(err=>{ setYearLoad(false);
-                    if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); // console.log("err message:"+err.message); }
-                     if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); // console.log("err response:"+err.response.data.message); }
-                     });}
-
-
-
-// daily fines report
-                    const [fineMessage,setFineMessage]=useState("Loading...");const [fineLoad,setFineLoad]=useState();const [fineReports,setFineReports]=useState([]);const get_fines_report=(token)=>{ setFineMessage("Loading..."); axios.defaults.baseURL = new TransportService().BASE_URL; const finesInstance = axios.create(new TransportService().setHeaders(token)); finesInstance.put('/api/v1/fines/getAllFineTicketsByOperatorAndDate', { "from_date": format(new Date(), ["yyyy-MM-dd"]), "operator_id": new UserInfo().ID, "to_date": format(new Date(), ["yyyy-MM-dd"]), "organization_id":new UserInfo().ORG_ID } ) .then(res=>{ var objs=res.data; if(objs.length==0){ setFineMessage("No fines report available"); }else{ setFineReports(objs); }
-                     setFineLoad(false); }) .catch(err=>{ setFineLoad(false); });}
-
-///////////////////////////////////// details report ///////////////////////////////////
-
-
-
-
-                    const [detailsLoad,setDetailsLoad]=useState(false);const [openD,setOpenD]=useState("dashboard");const [reportType,setReportType]=useState("");const [messageDetails,setMessageDetails]=useState("Loading...");
-
-// channel details reort
-
-
-                    const columnsChannelDetails = [ { name: "route", label: "Route", options: { filter: true, sort: true } }, { name: "departure_time", label: "Departure Time", options: { filter: true, sort: true, } }, { name: "plate_number", label: "Plate Number", options: { filter: true, sort: true, } }, { name: "total_tickets", label: "Total Tickets", options: { filter: true, sort: true, } }, { name: "total_amount", label: "Total Amount", options: { filter: true, sort: true, } }, { name: "currency", label: "Currency", options: { filter: true, sort: true, } } ];
-
-                    const [channelDetailsReport,setChannelDetailsReport]=useState([]);
-                    const get_channel_details_report=(ch)=>{ setChannelDetailsReport([]); setOpenD("channelDetails"); setReportType(ch); setMessageDetails("Loading..."); setDetailsLoad(true); axios.defaults.baseURL = new ReportingService().BASE_URL; const channelDetailsInstance = axios.create(new ReportingService().setHeaders(operatorData.token)); channelDetailsInstance.post('/traffic-report/detailed-daily-sales-report',{ "organization_id":new UserInfo().ORG_ID, "chanel_type":ch}) .then(res=>{ var objs=res.data.data; // console.log("objs",objs); if(objs.length==0){ setMessageDetails("No channel details report availale"); }else{ objs.map((o)=>{ o['total_amount']=formatMoney(parseInt(o['total_amount']),0); }); } setChannelDetailsReport(objs); setDetailsLoad(false); }) .catch(err=>{ // console.log(err.message); setDetailsLoad(false); setMessageDetails(err.message);
-                     if(err.message){ enqueueSnackbar(err.message, { variant: 'error' }); console.log("err message:"+err.message); }
-                     if(err.response){ enqueueSnackbar(err.response.data.message, { variant: 'error' }); console.log("err response:"+err.response.data.message); } });
-                    }
-
-
-/// /// route details report
-
-                    const columnsRouteDetails = [ { name: "user_name", label: "Cashier", options: { filter: true, sort: true } }, { name: "source", label: "Source", options: { filter: true, sort: true, } }, { name: "destination", label: "Destination", options: { filter: true, sort: true, } }, { name: "total_tickets", label: "Total Tickets", options: { filter: true, sort: true, } }, { name: "total_amount", label: "Total Amount", options: { filter: true, sort: true, } }, { name: "currency", label: "Currency", options: { filter: true, sort: true, } } ];
-
-
-                    const [routeDetailsReport,setRouteDetailsReport]=useState([]);
-                    const get_route_details_report=(r)=>{ setReportType(r); setMessageDetails("Laoding..."); setRouteDetailsReport([]); setOpenD("routeDetails"); setDetailsLoad(true); axios.defaults.baseURL = new ReportingService().BASE_URL; const routeDetailsInstance = axios.create(new ReportingService().setHeaders(operatorData.token)); routeDetailsInstance.post('/pos-report/user-detail-report',{ "route":r, "organization_id":new UserInfo().ORG_ID }) .then((res)=>{ var objs=res.data.data; if(objs.length==0){ setMessageDetails("No reports available") }else{ objs.map((o)=>{ o['total_amount']=formatMoney(parseInt(o['total_amount']),0); }); } setRouteDetailsReport(objs);
-                     setDetailsLoad(false); }) .catch(err=>{
-                     setDetailsLoad(false); });}
-
-
-/// /// user details report
-                    const columnsUserDetails = [ { name: "source", label: "Source", options: { filter: true, sort: true, } }, { name: "destination", label: "Destination", options: { filter: true, sort: true, } }, { name: "total_tickets", label: "Total Tickets", options: { filter: true, sort: true, } }, { name: "total_amount", label: "Total Amount", options: { filter: true, sort: true, } }, { name: "currency", label: "Currency", options: { filter: true, sort: true, } } ];
-
-                    const [userDetailsReport,setUserDetailsReport]=useState([]);
-                    const get_user_details_report=(u)=>{ setReportType(u); setMessageDetails("Loading..."); setUserDetailsReport([]); setOpenD("userDetails"); setDetailsLoad(true); axios.defaults.baseURL = new ReportingService().BASE_URL; const userDetailsInstance = axios.create(new ReportingService().setHeaders(operatorData.token)); userDetailsInstance.post('/pos-report/user-detail-report',{ "user":u, "organization_id":new UserInfo().ORG_ID }) .then((res)=>{ var objs=res.data.data; if(objs.length==0){ setMessageDetails("No report available"); }else{ objs.map((o)=>{ o['total_amount']=formatMoney(parseInt(o['total_amount']),0); }); } setUserDetailsReport(objs); setDetailsLoad(false);
-                    }) .catch((err)=>{
-                     setDetailsLoad(false); }); }
-
-                    /// bus live track
-
-                    const [coordinates,setCoordinates]=useState([]);
-                    const [coordinateLoad,setCoordinateLoad]=useState(false);
-
-                    const get_coordinates=(token)=>{
-                     setCoordinateLoad(true);
-                     axios.defaults.baseURL = new ReportingService().BASE_URL; const coordinateInstance = axios.create(new ReportingService().setHeaders(token)); coordinateInstance.post('/traffic-report/bus-locations',{ "organization_id": new UserInfo().ORG_ID, "day": format(new Date(), ["yyyy-MM-dd"]), "vehicle": ""})
-
-                         .then(res=>{ var objs=res.data.data; console.log("coordinates",objs); var data=[]; var groupByPlate = groupBy(objs, function(item) { return [item.vehicle];});
-
-                          groupByPlate.map((o)=>{var len=o.length;data.push(o[len-1]);});
-                          setCoordinates(data);
-                          setCoordinateLoad(false); }) .catch(err=>{ setCoordinateLoad(false); });
-                    }
-
-
-                    const L = require('leaflet');const myIcon = L.icon({ iconUrl: require('../../assets/svg/icon-bus.svg'), iconSize: [30,30], iconAnchor: [15, 30], popupAnchor: null, shadowUrl: null, shadowSize: null, shadowAnchor: null});
-
-                    const getYear=()=>{ var d = new Date(); var n = d.getFullYear(); return n;}
-
-
-
-
-                    return(<div className={classes.root}> <Box display="flex"> <Box display="flex" className={classes.formTitle}><DDashboard color="primary" fontSize="medium"/><Typography variant="h6">Dashboard</Typography></Box>
-                     <Event fontSize="large" color="primary"/><Typography variant="h6">{format(new Date(), ["yyyy-MM-dd"])}</Typography> <Box ml={1} mb={1}><Button variant="outlined" color="primary" onClick={()=>{ view_report(); }}> View Report </Button> </Box>
-                    </Box><Box>
-                     {/* dashboard */}{openD=="dashboard"&&
-                        <Grid container spacing={1}>
-
-                         {/* overview */}
-
-                         {/* total tickets */}
-                         <Grid item xs={12} md={4} > <Paper className={classes.paper3} elevation={0}> <Grid container> <Grid item xs={8} md={8}> <Box display="flex" justifyContent="center"><Typography variant="h8">Total tickets</Typography></Box> <Box mt={2} display="flex" justifyContent="center"><Typography variant="h6">{nTicket}</Typography></Box> </Grid>
-                          <Grid item xs={4} md={4}> <Box p={1}> <img src={Iticket} width="80px" height="60px"/> </Box> </Grid>
-                         </Grid> </Paper> </Grid>
-
-
-                         {/* total amount */}
-                         <Grid item xs={12} md={4} > <Paper className={classes.paper3} elevation={0}> <Grid container> <Grid item xs={8} md={8}> <Box display="flex" justifyContent="center"><Typography variant="h8" >Total amount</Typography></Box> <Box mt={2} display="flex" justifyContent="center"><Typography variant="h6">{nAmount+" "+currency} </Typography></Box> </Grid> <Grid item xs={4} md={4}> <Box p={1}> <img src={Imoney} width="80px" height="60px"/> </Box> </Grid>
-                         </Grid> </Paper> </Grid>
-
-
-
-                         {/* pos users */}
-                         <Grid item xs={12} md={4} lg={4} sm={4} > <Paper className={classes.paper3} elevation={0}> <Grid container> <Grid item xs={8} md={8}> <Box display="flex" justifyContent="center"><Typography variant="h8" >POS Users</Typography></Box> <Box mt={2} display="flex" justifyContent="center"><Typography variant="h6">{nPosuser}</Typography></Box> </Grid> <Grid item xs={4} md={4}> <Box p={1}> <img src={Iposuser} width="80px" height="60px"/> </Box> </Grid>
-                         </Grid> </Paper> </Grid>
-                         <Grid item xs={12} md={12} sm={12} lg={12}> <Typography variant="h6">Route Performance</Typography> </Grid>
-                         <Grid item xs={12} md={7} sm={7} lg={7}> <Paper elevation={0}><Box m={1} display="flex"><Typography style={{flexGrow:1}} >Per revenue</Typography><AccountBalanceWallet color="secondary"/></Box>
-                          <Chart options={route_performance_revenue.options} series={route_performance_revenue.series} type="area" height={250} />
-
-
-                         </Paper></Grid>
-                         {/* Route performance per passenger */}
-                         <Grid item xs={12} md={5} sm={4} lg={5}><Paper elevation={0}>
-                          <Box m={1} display="flex"><Typography style={{flexGrow:1}}>Per passenger</Typography><img style={{margin:5}} src={passenger} width="30px" height="30px" /></Box>
-                          <Chart options={route_performance_passenger.options} series={route_performance_passenger.series} type="bar" height={250}/></Paper></Grid>
-                         <Grid item xs={12} md={12} sm={12} lg={12}> <Typography variant="h6">Route & POS Users</Typography> </Grid>
-                         {/* top five routes */}
-                         <Grid item xs={12} md={6} lg={6} sm={6}> <Paper elevation={0}> <Grid container>
-                          <Grid item xs={12} md={12}> <Box> <Box m={1} display="flex" ><Typography style={{flexGrow:1}} variant="h6" className={classes.title}>Top 5 routes</Typography><img src={Iroad} width="30px" height="30px" /></Box></Box> </Grid>
-                          <Grid item xs={12} md={12}>
-                           {/* {routeLoad&&<Box display="flex" justifyContent="center"><Skeleton variant="circle" width={200} height={200} /></Box>} */} {routeLoad==false&& <Chart options={routeChart.options} series={routeChart.options.series} type="donut" height="200" />}
-                          </Grid>
-                         </Grid>
-                          <MUIDataTable title={"Top 5 routes"} data={routeReports} columns={columnsRoute} options={optionsRoute} />
-                         </Paper> </Grid>
-                         {/* top five pos user */}
-                         <Grid item xs={12} md={6} lg={6} sm={6}> <Paper elevation={0}> <Grid container>
-                          <Grid item xs={12} md={12}> <Box> <Box m={1} display="flex" ><Typography style={{flexGrow:1}} variant="h6" className={classes.title}>Top 5 POS Users</Typography><PhoneAndroid fontSize="secondary" fontSize="large" /></Box></Box> </Grid>
-                          <Grid item xs={12} md={12}>
-                           {/* {userLoad&&<Box display="flex" justifyContent="center"><Skeleton variant="circle" width={300} height={300} /></Box>} */} {userLoad==false&& <Chart options={userChart.options} series={userChart.options.series} type="donut" height="200" />} </Grid>
-                         </Grid>
-                          <MUIDataTable title={"Top 5 POS users"} data={userReports} columns={columnsUser} options={optionsUser} />
-                         </Paper> </Grid> <Grid item xs={12} md={12} sm={12} lg={12}> <Typography variant="h6">Branches & Channel</Typography> </Grid>
-
-                         {/* branch performance */}
-                         <Grid item xs={12} md={6} lg={6} sm={6}> <Paper elevation={0}> <Grid container>
-                          <Grid item xs={12} md={12}> <Box> <Box m={1} display="flex"><Typography style={{flexGrow:1}} variant="h6" className={classes.title}>Top 5 Branches</Typography><CallSplit fontSize="large" color="secondary"/></Box></Box> </Grid>
-                          <Grid item xs={12} md={12}> {/* {branchLoad&&<Box display="flex" justifyContent="center"><Skeleton variant="circle" width={300} height={300} /></Box> } */} {branchLoad==false&&<Chart options={branchChart.options} series={branchChart.options.series} type="donut" height="200"/>}
-                          </Grid>
-                         </Grid>
-                          <MUIDataTable title={"Branch Performance"} data={branchReports} columns={columns} options={options} />
-                         </Paper> </Grid>
-
-                         <Grid item xs={12} md={6} lg={6} sm={6}> <Paper elevation={0}> <Grid container>
-                          <Grid item xs={12} md={12}> <Box> <Box m={1} display="flex"><Typography variant="h6" style={{flexGrow:1}} className={classes.title}>Channel Performance</Typography><DevicesOther fontSize="large" color="secondary" /></Box></Box> </Grid>
-                          <Grid item xs={12} md={12}>
-                           {/* {channelLoad&&<Box display="flex" justifyContent="center"><Skeleton variant="circle" width={300} height={300} /></Box>} */} {channelLoad==false&&<Chart options={channelChart.options} series={channelChart.options.series} type="donut" height="200" />}
-                          </Grid>
-                         </Grid>
-                          <MUIDataTable title={"Channel Performance"} data={channelReports} columns={columnsChannel} options={optionsChannel} />
-                         </Paper> </Grid>
-
-
-                         {/* <Grid item xs={12} md={12} sm={12} lg={12}> <Typography variant="h6">Weekly & Driver report</Typography> </Grid> */}
-
-                         {/* dail fines per bus */}{/* <Grid item xs={12} md={7}> <Paper className={classes.paper1} elevation={0}> <Grid container> <Grid item xs={12} md={12}> <Typography variant={"h6"} className={classes.title}>Weekly Report</Typography> </Grid> <Grid item xs={12} md={12} > <Chart options={weekChart.options} series={weekChart.series} type="bar" height="300px" /> </Grid> </Grid> </Paper> </Grid> */}{/* daily fines per driver */} {/* <Grid item xs={12} md={5}> <Paper className={classes.paper1} elevation={0}> <Grid container> <Grid item xs={12} md={12}> <Typography variant={"h6"} className={classes.title}>Daily fines per driver</Typography> </Grid> <Grid item xs={12} md={12}> {fineReports.length==0&&<Typography>{fineMessage}</Typography>} {fineLoad?<Box display="flex" justifyContent="center"> <Typography>Loading...</Typography> </Box>: <List dense={true}> {fineReports.map((f)=>{ return( <Box> <ListItem> <ListItemAvatar> <DirectionsBus/> </ListItemAvatar> <ListItemText primary={f['driver']['first_name']+" "+f['driver']['last_name']} secondary={formatMoney(f['totalAmount'],0)+" FRW"} /> <ListItemSecondaryAction> <IconButton edge="end" aria-label="delete"> <Chip label={f['offences'].length} color="primary" icon={<ArrowDropUp />} /> </IconButton> </ListItemSecondaryAction> </ListItem>
- <Divider /> </Box>
- ); })} </List> }
- </Grid> </Grid> </Paper> </Grid> */}
-                         <Grid item xs={12} md={8}> <Paper className={classes.paper1} elevation={0}> <Grid container> <Grid item xs={12} md={12}> <Typography variant="h6">Top 10 buses revenue</Typography> </Grid> <Grid item xs={12} md={12}> <Chart options={revenue_bus.options} series={revenue_bus.options.series} type="bar" height="300px" /> </Grid> </Grid> </Paper> </Grid>
-
-                         {/* revenue split */}
-                         <Grid item xs={12} md={4}> <Paper className={classes.paper1} elevation={0}> <Grid container>
-                          <Grid item xs={12} md={12}> <Box> <Typography variant="h6" className={classes.title}>Revenue per year</Typography></Box> </Grid> <Grid item xs={12} md={12} lg={12}> <Grid container> <Grid item xs={12} md={12} lg={12}> <Box mt={3} display="flex" flexDirection="row" justifyContent="center" > <Box ><Today fontSize="large" style={{width:"100px",height:"100px"}} color="primary"/></Box> </Box> </Grid> <Grid item xs={12} sm={12} md={12} lg={12}> <Box mt={1} display="flex" flexDirection="row" justifyContent="center" > <Box><Typography variant="h5">{getYear()}</Typography></Box> </Box> </Grid>
-                          <Grid item xs={12} sm={12} md={12} lg={12}> <Box mt={1} display="flex" flexDirection="row" justifyContent="center" > <Box><Typography variant="h6">{yearLoad?"0 "+yearReport['currency']:foundYear==true?formatMoney(parseInt(yearReport['total_amount']),0)+" "+yearReport['currency']:"0 "+yearReport['currency']}</Typography></Box> </Box> </Grid> </Grid> </Grid>
-                          <Grid item xs={12} md={12}>
-                           {/* <Chart options={report.revenue_split.options} series={report.revenue_split.options.series} type="donut" height="350" /> */}
-                          </Grid>
-                         </Grid>
-                         </Paper> </Grid>
-                         {/* end revenue split */}
-                         {/* <Grid item xs={12} sm={12} md={12} lg={12}> <Paper className={classes.paper2} elevation={0}> <Box> <Typography color="textSecondary">Bus Location Tracking</Typography> </Box> <Box mt={2}> <Map center={[-1.992819,30.044063]} zoom={12}>
- <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors' />
-
- {coordinates.map((c)=>{ return (<Marker position={[c.latitude,c.longitude]} onClick={() => { setMessage("Bus : "+c.vehicle+" Validator : "+c.validator); setPos1(c.latitude); setPos2(c.longitude); setActivePark(true); }}
- icon={myIcon}
- />); })}
- {activePark && ( <Popup position={[pos1,pos2]} onClose={() => { setActivePark(null); }} > <div> <h2>Bus Details</h2> <p>{message}</p> </div> </Popup> )} </Map> </Box> </Paper> </Grid> */}
-                        </Grid>
-                    }
-                     {openD=="channelDetails"&&<Box ><Box width="100%" display="flex" justifyContent="flex-end"><IconButton><CancelPresentation style={{color:"#EC3C39"}} onClick={()=>{ setOpenD("dashboard");}} /></IconButton></Box><Grid container> <Grid item xs={12} md={12} sm={12} lg={12}>
-                      <MUIDataTable title={"Channel details report > "+reportType} data={channelDetailsReport} columns={columnsChannelDetails} options={options}/>
-                     </Grid> </Grid></Box>}
-
-
-                     {openD=="routeDetails"&&<Box ><Box width="100%" display="flex" justifyContent="flex-end"><IconButton><CancelPresentation style={{color:"#EC3C39"}} onClick={()=>{ setOpenD("dashboard");}} /></IconButton></Box><Grid container> <Grid item xs={12} md={12} sm={12} lg={12}>
-                      <MUIDataTable title={"Route details report > "+reportType} data={routeDetailsReport} columns={columnsRouteDetails} options={options}/>
-                     </Grid> </Grid></Box>}
-                     {openD=="userDetails"&&<Box ><Box width="100%" display="flex" justifyContent="flex-end"><IconButton><CancelPresentation style={{color:"#EC3C39"}} onClick={()=>{ setOpenD("dashboard");}} /></IconButton></Box><Grid container> <Grid item xs={12} md={12} sm={12} lg={12}>
-                      <MUIDataTable title={"User details report > "+reportType} data={userDetailsReport} columns={columnsUserDetails} options={options}/>
-                     </Grid> </Grid></Box>}
-
-                     {/* details */}
-                    </Box>
-
-                    </div> );}
-                   export default withLocalize(Dashboard);
+import React, {useState, useEffect, useCallback} from "react";
+import {Container, Box} from "@material-ui/core";
+import {
+    Typography,
+    AppBar,
+    Toolbar,
+    Link,
+    CardActionArea,
+    TextField,
+    Button,
+    Chip,
+    Paper,
+    FormControlLabel,
+    IconButton,
+    Avatar,
+    Tooltip,
+    Switch,
+    Input
+} from "@material-ui/core";
+import {
+    CircularProgress,
+    Grid,
+    Dialog,
+    DialogActions,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    LinearProgress,
+    InputLabel,
+    Select,
+    FormHelperText,
+    MenuItem,
+    FormControl,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemIcon,
+    ListItemSecondaryAction,
+    Popover,
+    Checkbox,
+    Divider
+} from "@material-ui/core";
+import {
+    DesktopMac,
+    Add,
+    FilterList,
+    CheckCircle,
+    Block,
+    AccountCircle,
+    Close,
+    Edit,
+    Delete,
+    BusinessCenter,
+    SubdirectoryArrowLeftOutlined,
+} from "@material-ui/icons";
+import {withLocalize, Translate} from "react-localize-redux";
+import {useHistory} from "react-router-dom";
+import {useRoles, useOrganizations, useOperators} from "../hooks/use_hooks";
+import MUIDataTable from "mui-datatables";
+import MaskedInput from "react-text-mask";
+import {makeStyles} from "@material-ui/styles";
+import {AdminService, Validator, ReportingService} from "./../../../utils/web_config";
+import {useSnackbar} from "notistack";
+import Empty from "../../../assets/svg/empty.svg";
+import {Skeleton, Autocomplete, Pagination} from "@material-ui/lab";
+
+const axios = require("axios");
+const useStyles = makeStyles((theme) => ({
+    root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
+    title: {flexGrow: 1,},
+    btn: {textTransform: "capitalize",},
+    btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
+    paper: {padding: 15,},
+    action: {borderRadius: 15,},
+}));
+
+function MaskedNID(props) {
+    const {inputRef, ...other} = props;
+    return (<MaskedInput {...other} ref={(ref) => {
+        inputRef(ref ? ref.inputElement : null);
+    }}
+                         mask={[/\d/, " ", /\d/, /\d/, /\d/, /\d/, " ", /\d/, " ", /\d/, /\d/, /\d/, /\d/, /\d/, /\d/, /\d/, " ", /\d/, " ", /\d/, /\d/,]}
+                         placeholderChar={"\u2000"} showMask={false} keepCharPositions={true}/>);
+}
+
+function SystemUsers(props) {
+    const classes = useStyles();
+    const history = useHistory();
+    const orgs = useOrganizations();
+    const ops = useOperators();
+    const allRoles = useRoles();
+    const [accountData, setAccountData] = useState({});
+    const [addNewOpen, setAddNewOpen] = useState(false);
+    const [users, setUsers] = useState({
+        page: 0,
+        count: 1,
+        rowsPerPage: 10,
+        sortOrder: {},
+        saving: false,
+        loading: false,
+        toggling: false,
+        data: [],
+    });
+    const [status, setStatus] = useState("Loading users....");
+    const {enqueueSnackbar, closeSnackbar} = useSnackbar();
+    const [roles, setRoles] = useState([]);
+    const [agentEditMode, setAgentEditMode] = useState({status: false, suspend: false,});
+    const [id, setId] = useState({value: "", error: ""});
+    const [idData, setIdData] = useState({loading: false, saving: false, open: false,});
+    const [operators, setOperators] = useState({
+        saving: false,
+        loadfing: false,
+        open: false,
+        page: 0,
+        pages: 1,
+        count: 20,
+        per_page: 20,
+        data: [],
+    });
+    const [firstName, setFirstName] = useState({value: "", error: ""});
+    const [lastName, setLastName] = useState({value: "", error: ""});
+    const [email, setEmail] = useState({value: "", error: ""});
+    const [username, setUsername] = useState({value: "", error: ""});
+    const [phone, setPhone] = useState({value: "", error: ""});
+    const [NID, setNid] = useState({value: "", error: ""});
+    const [gender, setGender] = useState({value: "", error: ""});
+    const [type, setType] = useState({value: "", error: ""}); //const [password, setPassword] = useState({ value: "", error: "" });
+    const [organization, setOrganization] = useState({value: {}, error: ""});
+    const [role, setRole] = useState({value: "", error: "",});
+    const [selectedAgent, setSelectedAgent] = useState({saving: false, loading: false, data: {},});
+    const [warning, setWarning] = useState({open: false});
+    const [anchorAssign, setAnchorAssign] = useState(null);
+    const [tempAssign, setTempAssign] = useState({data: []});
+
+    useEffect(() => {
+        var accountData = new AdminService().accountData;
+        setAccountData(accountData);
+        getUsers(accountData.token, accountData.organization?.organization_id);
+    }, []);
+    const onIdChange = (event) => {
+        if (event.target.value === "") {
+            setId({value: "", error: "Enter ID number to continue"});
+        } else {
+            setId({value: event.target.value, error: ""});
+        }
+    };
+
+    const onSearchClick = () => {
+        if (id.value === "") {
+            setId({value: "", error: "Enter ID number to continue."});
+        } else {
+            getIDInfo();
+        }
+    };
+    ///////////////////////////////////
+    const getIDInfo = () => {
+        const createInstance = axios.create(new AdminService().getHeaders(accountData.token));
+        setIdData({...idData, loading: true});
+        const data = {document_number: id.value,};
+        createInstance.post(new ReportingService().NIDA_DOCUMENT, data).then(function (response) {
+            setIdData({...idData, loading: false});
+            const d = response.data;
+            if (d.data?.applicationNumber == null) {
+                notify("error", "Your ID number is not found");
+            } else {
+                setFirstName({value: d.data.foreName, error: ""});
+                setLastName({value: d.data.surnames, error: ""});
+                setNid({value: d.data.documentNumber, error: ''})
+                setIdData({...idData, loading: false, data: d.data, open: false});
+                setAddNewOpen(true)
+            }
+        }).catch(function (error) {
+            setIdData({...idData, loading: false});
+            var e = error.message;
+            if (error.response) {
+                e = error.response.data.message;
+            }
+            notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+        });
+    };
+    ///////////////////////////////////
+
+    const onFirstNameChange = (event) => {
+        if (event.target.value === "") {
+            setFirstName({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_first_name")} </Translate>),
+            });
+        } else {
+            setFirstName({value: event.target.value, error: ""});
+        }
+    };
+    const onLastNameChange = (event) => {
+        if (event.target.value === "") {
+            setLastName({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_last_name")} </Translate>),
+            });
+        } else {
+            setLastName({value: event.target.value, error: ""});
+        }
+    };
+    const onEmailChange = (event) => {
+        if (event.target.value === "") {
+            setEmail({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_email")} </Translate>),
+            });
+        } else {
+            setEmail({value: event.target.value, error: ""});
+        }
+    };
+    const onUsernameChange = (event) => {
+        if (event.target.value === "") {
+            setUsername({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_username")} </Translate>),
+            });
+        } else {
+            var u = event.target.value;
+            setUsername({value: u, error: ""});
+        }
+    };
+    const onPhoneChange = (event) => {
+        if (event.target.value === "") {
+            setPhone({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_phone")} </Translate>),
+            });
+        } else {
+            setPhone({value: event.target.value, error: ""});
+        }
+    };
+    const onNidChange = (event) => {
+        if (event.target.value === "") {
+            setNid({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_nid")} </Translate>),
+            });
+        } else {
+            setNid({value: event.target.value, error: ""});
+        }
+    };
+    const onGenderChange = (event) => {
+        if (event.target.value === "") {
+            setGender({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_gender")} </Translate>),
+            });
+        } else {
+            setGender({value: event.target.value, error: ""});
+        }
+    };
+    const onTypeChange = (event) => {
+        if (event.target.value === "") {
+            setType({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_type")} </Translate>),
+            });
+        } else {
+            setType({value: event.target.value, error: ""});
+        }
+    }; // const onPasswordChange = (event) => { // if (event.target.value === "") { // setPassword({ // value: "", // error: ( // <Translate> // {({ translate }) => translate("users.forms.hints.user_password")} // </Translate> // ), // }); // } else { // setPassword({ value: event.target.value, error: "" }); // } // };
+
+    const onOrganizationChange = (event, v) => {
+        if (v.organization_id == null) {
+            setOrganization({
+                value: {},
+                error: (<Translate> {({translate}) => translate("roles.forms.hints.role_organization")} </Translate>),
+            });
+        } else {
+            const temp = allRoles.filter((obj) => obj.organization_id == v.organization_id);
+            setOrganization({value: v, error: ""});
+            if (temp.length == 0) {
+                setRoles([]);
+                setOrganization({
+                    value: v,
+                    error: "This organization does not have any role,create one in roles privileges",
+                });
+            } else {
+                setRoles(temp);
+            }
+        }
+    };
+    const onRoleChange = (event) => {
+        if (event.target.value === "") {
+            setRole({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_role")} </Translate>),
+            });
+        } else {
+            setRole({value: event.target.value, error: ""});
+        }
+    };
+    ////////
+    const onRegisterClick = () => {
+        if (firstName.value === "") {
+            setFirstName({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_first_name")} </Translate>),
+            });
+        } else if (new Validator().tooShort(firstName.value)) {
+            setFirstName({
+                value: firstName.value,
+                error: (
+                    <Translate> {({translate}) => translate("users.forms.hints.user_first_name_short")} </Translate>),
+            });
+        } else if (lastName.value === "") {
+            setLastName({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_last_name")} </Translate>),
+            });
+        } else if (new Validator().tooShort(lastName.value)) {
+            setLastName({
+                value: lastName.value,
+                error: (
+                    <Translate> {({translate}) => translate("users.forms.hints.user_last_name_short")} </Translate>),
+            });
+        } else if (email.value === "") {
+            setEmail({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_email")} </Translate>),
+            });
+        } else if (!new Validator().validEmail(email.value)) {
+            setEmail({
+                value: email.value,
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_email_invalid")} </Translate>),
+            });
+        } else if (username.value === "" && !agentEditMode.status) {
+            setUsername({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_username")} </Translate>),
+            });
+        } else if (new Validator().tooShort(username.value) && !agentEditMode.status) {
+            setUsername({
+                value: username.value,
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_username_short")} </Translate>),
+            });
+        } else if (!new Validator().validUsername(username.value) && !agentEditMode.status) {
+            setUsername({
+                value: username.value,
+                error: (
+                    <Translate> {({translate}) => translate("users.forms.hints.user_username_invalid")} </Translate>),
+            });
+        } else if (phone.value === "") {
+            setPhone({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_phone")} </Translate>),
+            });
+        } else if (NID.value === "") {
+            setNid({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_nid")} </Translate>),
+            });
+        } else if (gender.value === "") {
+            setGender({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_gender")} </Translate>),
+            });
+        } else if (type.value === "" && !agentEditMode.status) {
+            setType({
+                value: "",
+                error: (<Translate> {({translate}) => translate("users.forms.hints.user_type")} </Translate>),
+            });
+        } // else if (password.value === "" && !agentEditMode.status) { // setPassword({ // value: "", // error: ( // <Translate> // {({ translate }) => translate("users.forms.hints.user_password")} // </Translate> // ), // }); // } else if (organization.value.organization_id == null && !agentEditMode.status) { setOrganization({ value: "", error: ( <Translate> {({ translate }) => translate("roles.forms.hints.role_organization") } </Translate> ), }); } else if (role.value === "") { setRole({ value: "", error: ( <Translate> {({ translate }) => translate("users.forms.hints.user_role")} </Translate> ), }); }
+        else {
+            createUser();
+        }
+    };
+    ////////////////////////
+    ///////////// const toggleUser = (id) => { const assInstance = axios.create( new AdminService().getHeaders(accountData.token) );
+    const user = users.data.filter((obj) => obj.user_id == id)[0];
+    const i = users.data.indexOf(user);
+    var url = user.user_status == "ENABLED" ? new AdminService().DEACTIVATE_USER + id : new AdminService().REACTIVATE_USER + id;
+    user["user_status"] = user.user_status == "ENABLED" ? "DISABLED" : "ENABLED";
+    console.log("togglinguser.....");
+    setUsers({...users, toggling: true});
+    assInstance.put(url).then(function (response) {
+        const d = response.data;
+        user["status2"] = user.user_status;
+        const usrs = users.data;
+        usrs[i] = user;
+        setUsers({...users, data: usrs, toggling: false});
+        notify("success", d.data);
+    }).catch(function (error) {
+        user["user_status"] = user.user_status == "ENABLED" ? "DISABLED" : "ENABLED";
+        user["status2"] = user.user_status;
+        const usrs = users.data;
+        users[i] = user;
+        setUsers({...users, data: usrs, toggling: false});
+        var e = error.message;
+        if (error.response) {
+            e = error.response.data.message;
+        }
+        notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+    });
+}; //////////////////////////////// ////////////// const showUserEdit = (id) => { setAddNewOpen(true); setAgentEditMode({ ...agentEditMode, status: true, id: id });
+const user = users.data.filter((obj) => obj.user_id == id)[0];
+const i = users.data.indexOf(user);
+setRoles(allRoles.filter((obj) => obj.organization_id == user.role_id));
+setFirstName({...firstName, value: user.user_first_name});
+setLastName({...lastName, value: user.user_last_name});
+setEmail({...email, value: user.user_email});
+setGender({...gender, value: user.user_gender});
+setPhone({...phone, value: user.user_phone});
+setNid({...NID, value: user.user_nid});
+setType({...type, value: user.user_type});
+setOrganization({...organization, value: orgs?.filter((obj) => obj.organization_id == user.organization_id)[0]});
+setRole({...role, value: user.role_id});
+}
+;
+const updateUser = (data) => {
+    const updateInstance = axios.create(new AdminService().getHeaders(accountData.token));
+    setUsers({...users, saving: true});
+    updateInstance.put(new AdminService().UPDATE_USER + agentEditMode.id, data).then(function (response) {
+        setUsers({...users, saving: false});
+        var d = response.data;
+        var usrs = users.data;
+        const user = users.data.filter((obj) => obj.user_id == agentEditMode.id)[0];
+        const j = users.data.indexOf(user);
+        const newUser = d.data;
+        newUser["status2"] = newUser.user_status;
+        newUser["user_name"] = newUser.user_first_name + " " + newUser.user_last_name;
+        usrs[j] = newUser;
+        setUsers({...users, data: usrs,});
+        clearUserInfo();
+        notify("success", response.data.message);
+        setAgentEditMode({status: false});
+        setAddNewOpen(false);
+    }).catch(function (error) {
+        setUsers({...users, saving: false});
+        var e = error.message;
+        if (error.response) {
+            e = error.response.data.message;
+        }
+        notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+    });
+};
+const columns = [{
+    name: "user_id",
+    label: "User id",
+    options: {filter: false, sort: false, display: 'excluded',},
+}, {name: "user_names", label: "User name", options: {filter: false, sort: true,},}, {
+    name: "user_phone",
+    label: "Phone",
+    options: {filter: false, sort: false,},
+}, {name: "user_email", label: "Email", options: {filter: false, sort: false,},}, {
+    name: "user_gender",
+    label: "Gender",
+    options: {filter: true, sort: true,},
+}, {name: "user_type", label: "User type", options: {filter: true, sort: true,},}, {
+    name: "user_name",
+    label: "Username",
+    options: {filter: false, sort: false, display: false,},
+}, {
+    name: "status2",
+    label: "Status2",
+    options: {filter: false, sort: false, display: 'excluded',},
+}, {
+    name: "user_status",
+    label: "Status",
+    options: {
+        filter: true, sort: false, customBodyRenderLite: function (dataI, rowI) {
+            return (<Chip avatar={<Avatar> {users.data[dataI].user_status.toLowerCase() == "enabled" ? (
+                <CheckCircle fontSize="small"/>) : (<Block fontSize="small"/>)} </Avatar>} variant="outlined"
+                          color={users.data[dataI].user_status.toLowerCase() == "enabled" ? "primary" : "default"}
+                          size="small" label={capitalize(users.data[dataI]?.user_status)}/>);
+        },
+    },
+},];
+const options = {
+    filterType: "multiselect",
+    elevation: 0,
+    selectableRows: "single",
+    searchPlaceholder: "Search user...",
+    selectableRowsOnClick: true,
+    fixedHeader: true, // serverSide:true, // count:20, // rowsPerPage:10, onCellClick: (cellData, cellMeta) => { var user = users.data[cellMeta.dataIndex];
+    if(user == null
+)
+{
+    return
+}
+getOperators(accountData.token, user.user_id)
+setSelectedAgent({...selectedAgent, data: user, open: true})
+},
+searchProps: {
+    variant: "outlined", margin
+:
+    "dense",
+}
+,
+customSearch: (searchQuery, currentRow, columns) => {
+    console.log(searchQuery)
+    console.log(JSON.stringify(currentRow))
+}, textLabels
+:
+{
+    body: {
+        noMatch: status,
+    }
+,
+}
+,
+customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
+    <CustomUsersToolbar selectedRows={selectedRows} displayData={displayData} setSelectedRows={setSelectedRows}
+                        toggleUser={toggleUser} openEdit={showUserEdit} toggling={users.toggling}/>),
+}
+;
+const notify = (variant, msg, status) => {
+    if (status == 401) {
+        history.push("/", {expired: true});
+    }
+    enqueueSnackbar(msg, {
+        variant: variant, action: (k) => (<IconButton onClick={() => {
+            closeSnackbar(k);
+        }} size="small"> <Close fontSize="small"/> </IconButton>),
+    });
+};
+const capitalize = (s) => {
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}; ///////////////////////////////////
+const getUsers = (token, id) => {
+    const usersInstance = axios.create(new AdminService().getHeaders(token));
+    setUsers({...users, loading: true});
+    usersInstance.get(new AdminService().GET_USERS_BY_TYPE + 'ORG_USER?size=10000').then(function (response) {
+        setUsers({...users, loading: false});
+        const d = response.data;
+        if (d.data.length == 0) {
+            setStatus("There are no users available.");
+        } else {
+            var usrs = [];
+            d.data.forEach((u, i) => {
+                const newUser = u;
+                newUser["status2"] = u.user_status;
+                newUser["user_names"] = u.user_first_name + " " + u.user_last_name;
+                usrs.push(u);
+            });
+            setUsers({...users, data: usrs,}); //set status setStatus("Users loaded") } }) .catch(function (error) { setUsers({ ...users, loading: false }); var e = error.message;
+            if (error.response) {
+                e = error.response.data.message;
+            }
+            setStatus(e);
+            notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+        }
+    )
+        ;
+    };
+    ////////////////
+    const clearUserInfo = () => {
+        setRole({value: "", error: ""});
+        setEmail({value: "", error: ""});
+        setFirstName({value: "", error: ""});
+        setLastName({value: "", error: ""});
+        setUsername({value: "", error: ""});
+        setNid({value: "", error: ""}); //setPassword({ value: "", error: "" }); setPhone({ value: "", error: "" }); setType({ value: "", error: "" }); };
+        const createUser = () => {
+            const createInstance = axios.create(new AdminService().getHeaders(accountData.token));
+            setUsers({...users, saving: true});
+            const data = {
+                organization_id: organization.value.organization_id,
+                role_id: role.value,
+                user_email: email.value,
+                user_first_name: firstName.value,
+                user_gender: gender.value,
+                user_last_name: lastName.value,
+                user_name: username.value,
+                user_nid: NID.value, // user_password: password.value, user_phone: phone.value,
+                user_type: type.value,
+            };
+            if (agentEditMode.status) {
+                updateUser(data);
+                return;
+            }
+            createInstance.post(new AdminService().CREATE_USER, data).then(function (response) {
+                setUsers({...users, saving: false});
+                var d = response.data;
+                var usrs = users.data;
+                const newUser = d.data;
+                newUser["status2"] = newUser.user_status;
+                newUser["user_name"] = d.data.user_first_name + " " + d.data.user_last_name;
+                usrs.unshift(newUser);
+                setUsers({...users, data: usrs,});
+                clearUserInfo();
+                notify("success", response.data.message);
+                setAddNewOpen(false);
+            }).catch(function (error) {
+                setUsers({...users, saving: false});
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+        };
+
+        ////////////
+        const getOperators = (token, id, p = 0) => {
+            const usersInstance = axios.create(new AdminService().getHeaders(token));
+            setOperators({...operators, loading: true, page: p});
+            console.log("getting operators.....");
+            usersInstance.get(new AdminService().GET_USER_ALLOWED_OPERATORS + id + "?page=" + p + "&size=" + operators.per_page).then(function (response) {
+                setOperators({...operators, loading: false});
+                const d = response.data;
+                setOperators({
+                    ...operators,
+                    data: d.data,
+                    page: d.current_page,
+                    count: d.total_items,
+                    pages: d.total_pages,
+                });
+            }).catch(function (error) {
+                setOperators({...operators, loading: false});
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+        };
+        ////////////////////////////
+        const assignOperator = (ogs) => {
+            const privInstance = axios.create(new AdminService().getHeaders(accountData.token));
+            setOperators({...operators, loading: true})
+            console.log("Assigning privilege .....");
+            setAnchorAssign(null);
+            const data = {"organization_id": ogs, "user_id": selectedAgent.data.user_id}
+            const url = new AdminService().ASSIGN_OPERATORS_TO_USER;
+            privInstance.post(url, data).then(function (response) {
+                setOperators({...operators, loading: false})
+                const d = response.data;
+                getOperators(accountData.token, selectedAgent.data.user_id);
+                notify("success", d.message);
+            }).catch(function (error) {
+                setOperators({...operators, loading: false})
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+        };
+
+        ////////////////////////// const removeOperator = () => { const roleInstance = axios.create( new AdminService().getHeaders(accountData.token) );
+        console.log("Removing.....");
+        const url = new AdminService().REMOVE_ONE_USER_ALLOWED_OPERATOR_RECORD + warning.allowed;
+        roleInstance.delete(url).then(function (response) {
+            const d = response.data;
+            operators.data.splice(warning.index, 1);
+            setOperators({...operators});
+            notify("success", d.message);
+        }).catch(function (error) {
+            var e = error.message;
+            if (error.response) {
+                e = error.response.data.message;
+            }
+            notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+        });
+    };
+    return (
+
+        <div className={classes.root}> {/* Dialogs starts here */} {/* Dialogs starts here */} <Dialog
+            open={warning.open} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+            <DialogTitle id="alert-dialog-title">{"Warning"}</DialogTitle> <DialogContent> <DialogContentText
+            id="alert-dialog-description"> You are about to remove this operator from this global agent, he won't
+            transact
+            for this operator anymore. </DialogContentText> </DialogContent> <DialogActions> <Button onClick={() => {
+            setWarning({...warning, open: false});
+        }} color="primary"> Cancel </Button> <Button onClick={() => {
+            removeOperator();
+            setWarning({...warning, open: false});
+        }} color="primary" autoFocus> Remove </Button> </DialogActions> </Dialog> {/* /////////////////// */} <Popover
+            id={"pop-id-2"} style={{minWidth: 200}} open={anchorAssign != null} anchorEl={anchorAssign} onClose={() => {
+            setAnchorAssign(null);
+            setTempAssign({data: []});
+        }} anchorOrigin={{vertical: "bottom", horizontal: "center",}}
+            transformOrigin={{vertical: "top", horizontal: "center",}} elevation={4}>
+            {tempAssign.data.length != 0 && (<Box display="flex" justifyContent="center" p={2} mb={4} width={"250px"}
+                                                  style={{position: "fixed", zIndex: 100, bottom: 0}}> <Button
+                color="primary" size="large" variant="contained" onClick={() => assignOperator(tempAssign.data)}> Assign
+                all {"(" + tempAssign.data.length + ")"} </Button> </Box>)}
+            <List> <ListItem key="987hh"> <ListItemIcon> <Checkbox disabled={ops?.data == null} color="primary"
+                                                                   checked={tempAssign.all} onChange={(e) => {
+                var d = tempAssign.data;
+                if (e.target.checked) {
+                    ops.data.forEach((o, i) => {
+                        d.push(o.organization_id);
+                    });
+                    setTempAssign({data: d, all: true,});
+                } else {
+                    setTempAssign({...tempAssign, data: [], all: false,});
+                }
+            }}/> </ListItemIcon> <ListItemText primary="Select all"/>
+            </ListItem> {ops?.data != null != null ? ops?.data?.map((org, i) => (<> {i != 0 && i != ops?.data.length && (
+                    <Divider variant="middle"/>)} <ListItem key={i} dense
+                                                            selected={tempAssign.data.includes(org.organization_id)}>
+                    <ListItemIcon> <Checkbox color="primary" checked={tempAssign.data.includes(org.organization_id)}
+                                             onChange={(e) => {
+                                                 var d = tempAssign.data;
+                                                 if (e.target.checked) {
+                                                     d.push(org.organization_id);
+                                                     setTempAssign({data: d,});
+                                                 } else {
+                                                     const i2 = d.indexOf(org.organization_id);
+                                                     d.splice(i2, 1);
+                                                     setTempAssign({...tempAssign, data: d,});
+                                                 }
+                                             }}/> </ListItemIcon> <ListItemText primary={org.name}
+                                                                                secondary={org.organization_type}/>
+                </ListItem> </>)) :
+                <Box p={2} mt={3} mb={3} height={1} display="flex" alignItems="center" flexDirection="column"
+                     justifyContent="center"> <Box mt={2}> <img src={Empty} alt="Empty data" height={200}/> </Box>
+                    <Typography color="textSecondary"> There are no operators at the moment. </Typography> </Box>}
+            </List>
+        </Popover> {/* //////////////////////// */} {/* ////////////////////////// */}
+            <Dialog open={selectedAgent.open} aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                    onClose={() => setSelectedAgent({...selectedAgent, open: false})} fullWidth maxWidth="sm">
+                <DialogTitle
+                    id="alert-dialog-title"> {selectedAgent.data.user_first_name + " " + selectedAgent.data.user_last_name}{" "} </DialogTitle>
+                <DialogContent> <Box display="flex" justifyContent="center" mt={2}> <Button color='primary'
+                                                                                            variant='outlined'
+                                                                                            onClick={(e) => setAnchorAssign(e.currentTarget)}> Assign
+                    operators</Button> </Box> {!operators.loading && operators.data.length == 0 &&
+                    <Box p={2} mt={3} height={1} display="flex" alignItems="center" flexDirection="column"
+                         justifyContent="center"> <Box mt={2}> <img src={Empty} alt="Empty data" height={100}/> </Box>
+                        <Typography color="textSecondary"> There are no assigned oparators to this agent at the
+                            moment. </Typography> </Box>} <Box p={2}> <Typography gutterBottom> List of assigned
+                    operators
+                    to this agent. </Typography> </Box> <List> {!operators.loading ? operators.data.map((op, i) => (
+                    <ListItem key={i} button // selected={selectedRole.index == i} // onClick={() => { // setSelectedRole({ index: i, role: role }); // getPrivileges(accountData.token, role.role_id); // }} > <ListItemIcon> <BusinessCenter /> </ListItemIcon> <ListItemText primary={op.organization.name} /> <ListItemSecondaryAction> <IconButton onClick={(e) => setWarning({ op: op, allowed: op.user_allowed_operator_id, open: true, index: i, }) } size="small" > <Delete fontSize="small" /> </IconButton> </ListItemSecondaryAction> </ListItem> )) : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, ].map((item, i) => ( <ListItem key={i}> <ListItemIcon> <Skeleton variant="circle" width={20} /> </ListItemIcon> <ListItemText primary={ <Skeleton variant="text" width={"100%"} style={{ borderRadius: 7 }} /> } /> </ListItem> ))} </List>
+                    </DialogContent> <DialogActions> <Button onClick={() => {setSelectedAgent({...selectedAgent, open: false});}}
+                    color="primary"> Close dialog </Button> </DialogActions> </Dialog> {/* //////////////////////// */}
+            <Dialog open={idData.open} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description"
+                    maxWidth='sm' fullWidth onClose={() => setIdData({...idData, open: false})}> <DialogTitle
+                id="alert-dialog-title">{"User ID number"}</DialogTitle> <DialogContent> <Box mb={1} display="flex"
+                                                                                              alignItems="center"
+                                                                                              justifyContent="center">
+                <Typography color="textSecondary" align="center"> Enter user national identification number for
+                    verification </Typography> </Box> <Box mt={2}> <FormControl fullWidth error={id.error != ""}>
+                <InputLabel htmlFor="formatted-code" size="small"> National ID number </InputLabel> <Input
+                onChange={onIdChange} value={id.value} color="primary" varient="outlined" inputComponent={MaskedNID}
+                placeholder="Enter your ID number here"/> <FormHelperText id="code">{id.error}</FormHelperText>
+            </FormControl> </Box> <Box mt={2} width={1} diaplay='flex' justifyContent='center'><Button color='primary'
+                                                                                                       className={classes.btn}
+                                                                                                       onClick={() => {
+                                                                                                           setIdData({
+                                                                                                               loading: false,
+                                                                                                               saving: false,
+                                                                                                               Open: false
+                                                                                                           })
+                                                                                                           setAddNewOpen(true)
+                                                                                                       }}>Continue
+                manually?</Button></Box> </DialogContent> <DialogActions> <Button variant='outlined' onClick={() => {
+                setIdData({...idData, open: false})
+            }} color="primary"> Cancel </Button> <Button variant='contained' disableElevation disabled={idData.loading}
+                                                         onClick={() => {
+                                                             onSearchClick()
+                                                         }} color="primary" autoFocus> {idData.loading ?
+                <CircularProgress size={23}/> : "Continue"} </Button> </DialogActions> </Dialog>
+            {/* ////////////////////////// */}
+            <Dialog open={addNewOpen} maxWidth="sm" fullWidth onClose={() => {
+                setAddNewOpen(false)
+            }}> <DialogTitle id="new-op"> <Translate id="users.forms.dialog_title"/> </DialogTitle>
+                <DialogContent> {idData.data != null &&
+                    <Box display="flex" width={1} justifyContent="center"> <img style={{height: 110, width: 90}}
+                                                                                src={"data:image/jpg;base64," + idData?.data?.photo}
+                                                                                alt="Person"/> </Box>} <Box mt={2}>
+                    <Translate> {({translate}) => (
+                        <TextField required size="small" variant="outlined" color="primary" value={firstName.value}
+                                   placeholder={translate("users.forms.hints.user_first_name")}
+                                   label={<Translate id="users.forms.labels.user_first_name"/>} fullWidth
+                                   onChange={onFirstNameChange} helperText={firstName.error}
+                                   error={firstName.error !== ""}/>)} </Translate> </Box> <Box mt={2}>
+                    <Translate> {({translate}) => (
+                        <TextField size="small" variant="outlined" color="primary" value={lastName.value}
+                                   placeholder={translate("users.forms.hints.user_last_name")}
+                                   label={<Translate id="users.forms.labels.user_last_name"/>} fullWidth
+                                   onChange={onLastNameChange} helperText={lastName.error}
+                                   error={lastName.error !== ""}/>)} </Translate> </Box> <Box mt={2}>
+                    <Translate> {({translate}) => (
+                        <TextField size="small" variant="outlined" color="primary" value={email.value}
+                                   placeholder={translate("users.forms.hints.user_email")}
+                                   label={<Translate id="users.forms.labels.user_email"/>} fullWidth
+                                   onChange={onEmailChange} helperText={email.error}
+                                   error={email.error !== ""}/>)} </Translate> </Box> {!agentEditMode.status &&
+                    <Box mt={2}> <Translate> {({translate}) => (
+                        <TextField size="small" variant="outlined" color="primary" value={username.value}
+                                   placeholder={translate("users.forms.hints.user_username")}
+                                   label={<Translate id="users.forms.labels.user_username"/>} fullWidth
+                                   disabled={agentEditMode.status} onChange={onUsernameChange}
+                                   helperText={username.error}
+                                   error={username.error !== ""}/>)} </Translate> </Box>} <Box mt={2}>
+                    <Translate> {({translate}) => (
+                        <TextField size="small" variant="outlined" color="primary" value={phone.value}
+                                   placeholder={translate("users.forms.hints.user_phone")}
+                                   label={<Translate id="users.forms.labels.user_phone"/>} fullWidth
+                                   onChange={onPhoneChange} helperText={phone.error}
+                                   error={phone.error !== ""}/>)} </Translate> </Box> <Box mt={2}>
+                    <Translate> {({translate}) => (
+                        <TextField size="small" variant="outlined" color="primary" value={NID.value}
+                                   placeholder={translate("users.forms.hints.user_nid")}
+                                   label={<Translate id="users.forms.labels.user_nid"/>} fullWidth
+                                   onChange={onNidChange}
+                                   helperText={NID.error} error={NID.error !== ""}/>)} </Translate> </Box>
+                    <Box mt={2}> <FormControl className={classes.formControl} fullWidth variant="outlined" size="small"
+                                              error={type.error !== ""}> <InputLabel id="type"> <Translate
+                        id="users.forms.labels.user_gender"/> </InputLabel> <Select
+                        label={<Translate id="users.forms.labels.user_gender"/>} value={gender.value}
+                        onChange={onGenderChange}> <MenuItem value="MALE">Male</MenuItem> <MenuItem
+                        value="FEMALE">Female</MenuItem> </Select> <FormHelperText>{gender.error}</FormHelperText>
+                    </FormControl> </Box>
+                    <Box mt={2}> <FormControl className={classes.formControl} fullWidth variant="outlined" size="small"
+                                              disabled={agentEditMode.status} error={type.error !== ""}> <InputLabel
+                        id="type"> <Translate id="users.forms.labels.user_type"/> </InputLabel> <Select
+                        label={<Translate id="users.forms.labels.user_type"/>} value={type.value}
+                        onChange={onTypeChange}>
+                        <MenuItem value="ORG_USER">Organization user</MenuItem> <MenuItem value="POS_USER">POS
+                        user</MenuItem> <MenuItem value="WALLET_USER">Wallet user</MenuItem> <MenuItem
+                        value="INTEGRATION_USER">Integration user</MenuItem> <MenuItem value="INTEGRATION_AGENT">Integration
+                        agent</MenuItem> <MenuItem value="POS_AGENT">POS Agent</MenuItem> <MenuItem
+                        value="VEHICLE_OWNER">Vehicle
+                        owner</MenuItem> </Select> <FormHelperText>{type.error}</FormHelperText> </FormControl>
+                    </Box> {/* { !agentEditMode.status && <Box mt={2}> <Translate> {({ translate }) => ( <TextField type="password" size="small" variant="outlined" color="primary" value={password.value} placeholder={translate("users.forms.hints.user_password")} label={<Translate id="users.forms.labels.user_password" />} fullWidth disabled={agentEditMode.status} onChange={onPasswordChange} helperText={password.error} error={password.error !== ""} /> )} </Translate> </Box>} */}
+                    {/* <Box mt={2}> <FormControl className={classes.formControl} fullWidth variant="outlined" size="small" error={organization.error !== ""} > <InputLabel id="type"> <Translate id="roles.forms.labels.role_organization" /> </InputLabel> <Select label={<Translate id="roles.forms.labels.role_organization" />} value={organization.value} onChange={onOrganizationChange} > {orgs.map((org, i) => ( <MenuItem value={org.organization_id}>{org.name}</MenuItem> ))} </Select> <FormHelperText>{organization.error}</FormHelperText> </FormControl> </Box> */}
+                    {!agentEditMode.status && <Box mt={2}> <Autocomplete fullWidth openOnFocus options={orgs}
+                                                                         getOptionLabel={(option) => option.name}
+                                                                         onChange={onOrganizationChange}
+                                                                         renderInput={(params) => (
+                                                                             <TextField {...params} fullWidth
+                                                                                        label={<Translate
+                                                                                            id="roles.forms.labels.role_organization"/>}
+                                                                                        variant="outlined" size="small"
+                                                                                        helperText={organization.error}
+                                                                                        error={organization.error !== ""}/>)}/>
+                    </Box>}
+                    {!agentEditMode.status &&
+                        <Box mt={2}> <FormControl className={classes.formControl} fullWidth variant="outlined"
+                                                  size="small"
+                                                  error={role.error !== ""}
+                                                  disabled={organization?.value?.organization_id == null}> <InputLabel
+                            id="type"> <Translate id="users.forms.labels.user_role"/> </InputLabel> <Select
+                            label={<Translate id="users.forms.labels.user_role"/>} value={role.value}
+                            onChange={onRoleChange}> {roles.map((rl, i) => (
+                            <MenuItem value={rl.role_id}>{rl.name}</MenuItem>))} </Select>
+                            <FormHelperText>{role.error}</FormHelperText> </FormControl> </Box>}
+
+                </DialogContent> <DialogActions> <Button onClick={() => {
+                    clearUserInfo();
+                    setAddNewOpen(false);
+                    setIdData({loading: false, saving: false, Open: false})
+                    setAgentEditMode({...agentEditMode, status: false})
+                }} variant="outlined" color="primary"> <Translate id="users.forms.buttons.cancel"/> </Button> <Button
+                    disabled={users.saving} variant="contained" color="primary" onClick={onRegisterClick}
+                    disableElevation> {users.saving ? (
+                    <CircularProgress size={23}/>) : agentEditMode.status ? ("Save") : (
+                    <Translate id="users.forms.buttons.register"/>)} </Button> </DialogActions> </Dialog>
+            {/* Dialogs ends here */} <Box display="flex"> <Box mr={2}> {" "} <AccountCircle color="primary"
+                                                                                             fontSize="large"/> </Box>
+                <Typography variant="h5" className={classes.title}> <b>System users</b> </Typography> <Button
+                    className={classes.btn} color="primary" variant="contained" size="medium" startIcon={<Add/>}
+                    disableElevation onClick={() => {
+                    setIdData({...idData, open: true})
+                }}> New user </Button> </Box> <Box mt={3}/>
+            {users.loading && <LinearProgress/>} <MUIDataTable title={"List of system users"} data={users.data}
+                                                               columns={columns} options={options}/></div>
+);}
+function CustomUsersToolbar(props) {
+    const {toggleUser, displayData, selectedRows, openEdit} = props;
+    var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
+    return (<Box display="flex" alignItems="center"> <FormControlLabel
+        control={<Switch disabled={props.toggling} checked={check} onChange={() => {
+            toggleUser(displayData[selectedRows?.data[0]?.index]?.data[0]);
+        }} value="vertical" color="primary"/>} label={check ? "Deactivate user" : "Activate user"}/>
+        <Button color="primary" variant="outlined" size="small" startIcon={<Edit/>}
+                onClick={() => openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])}> Edit </Button>
+        <Box mr={2} ml={2}> <Button color="primary" variant="outlined" size="small" startIcon={<Delete/>} // onClick={() => // openEdit(displayData[selectedRows?.data[0]?.index]?.data[0]) // } > Suspend </Button> </Box> </Box> );}export default withLocalize(SystemUsers);

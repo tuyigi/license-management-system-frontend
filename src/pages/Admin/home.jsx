@@ -47,9 +47,13 @@ import { withLocalize } from "react-localize-redux";
 import { Link, Switch, Route, useHistory } from "react-router-dom";
 
 import Dashboard from "./dashboard"
-
-
-
+import Licenses from "./licenses";
+import Organizations from "./organizations";
+import RolePermission from "./role_permission";
+import Settings from "./settings";
+import Users from "./users";
+import LicenseTracking from "./reports/license_tracking";
+import OrganizationLicenses from "./reports/organization_licenses";
 
 const routes = [
     {
@@ -64,7 +68,46 @@ const routes = [
         permission: "CAN_VIEW_HOME",
         main: () =>  <Dashboard/>,
     },
-
+    {
+        path: "/bnr/license",
+        exact: true,
+        permission: "CAN_VIEW_LICENSE",
+        main: () =>  <Licenses/>,
+    },
+    {
+        path: "/bnr/organization",
+        exact: true,
+        permission: "CAN_VIEW_ORGANIZATION",
+        main: () =>  <Organizations/>,
+    },
+    {
+        path: "/bnr/rolePermission",
+        exact: true,
+        permission: "CAN_VIEW_ROLE_PERMISSION",
+        main: () =>  <RolePermission/>,
+    },
+    {
+        path: "/bnr/user",
+        exact: true,
+        permission: "CAN_VIEW_ROLE_USER",
+        main: () =>  <Users/>,
+    },
+    {
+        path: "/bnr/licenseTracking",
+        exact: true,
+        main: () =>  <LicenseTracking/>,
+    },
+    {
+        path: "/bnr/licenseOrganization",
+        exact: true,
+        main: () =>  <OrganizationLicenses/>,
+    },
+    {
+        path: "/bnr/settings",
+        permission:"CAN_VIEW_SETTINGS",
+        exact: true,
+        main: () =>  <Settings/>,
+    },
     {
       main: () => <></>,
     },
@@ -74,8 +117,8 @@ const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/bnr/home",permission: "CAN_VIEW_HOME", },
     { name: "Licenses", icon: <Receipt color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
     { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
-    { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ROLE_PERMISSION"},
-    { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ROLE_PERMISSION"},
+    { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/rolePermission", permission: "CAN_VIEW_ROLE_PERMISSION"},
+    { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/user", permission: "CAN_VIEW_ROLE_USER"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/bnr/report", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "License Tracking", path: "/bnr/licenseTracking"},

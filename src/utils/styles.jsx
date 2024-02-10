@@ -15,7 +15,6 @@ function MyTheme(t) {
       fontFamily: "lato",
     },
   });
-
   return theme;
 }
 
