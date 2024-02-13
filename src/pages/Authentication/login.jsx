@@ -29,7 +29,9 @@ import { useSnackbar } from "notistack";
 import { useHistory } from "react-router-dom";
 
 import LogoWhite from "../../assets/img/bnr_logo.png";
-import HomeLicenseImage from "../../assets/svg/home_license.svg"
+import HomeLicenseImage from "../../assets/svg/home_license.svg";
+
+import { BackendService} from "../../utils/web_config.jsx";
 
 const axios = require("axios");
 
@@ -71,8 +73,20 @@ function Login(props) {
   useEffect(() => {
     var ex = history?.location?.state?.expired;
     if (ex != null) {
+      localStorage.removeItem("LMIS");
       history.replace(history.location.pathname);
       setExpired(true);
+    }
+    const data1 = localStorage.getItem("LMIS");
+    if (data1 != null) {
+      var data = JSON.parse(data1);
+      if (data?.organization.organization_type == "c") {
+        if (data?.role_name === "AC_GROUP_USER") {
+          history.push("/bnr");
+          return;
+        }
+        history.push("/orgAdmin");
+      }
     }
 
 
@@ -113,8 +127,147 @@ function Login(props) {
   const [tempToken,setTempToken] = useState("");
 
   const doLogin = () => {
+    
+    const loginInstance = axios.create({
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": process.env.REACT_APP_ORIGIN,
+      },
+    });
+    setLogging(true);
 
-  
+    const data = {
+      user_name: username.value,
+      user_password: password.value,
+      device_type:"OTHER"
+    };
+
+
+    loginInstance
+      .post(new BackendService().LOGIN, data)
+      .then(function (response) {
+        setLogging(false);
+
+
+
+        if (response.data.status === 401) {
+          enqueueSnackbar("You password is expired! Please change it now", {
+            variant: "error",
+            action: (k) => (
+              <IconButton
+                onClick={() => {
+                  closeSnackbar(k);
+                }}
+                size="small"
+              >
+                <Close fontSize="small" />
+              </IconButton>
+            ),
+          });
+
+          setTempToken(response.data.data.token)
+
+
+
+          return;
+        }
+
+        if (
+          (response.data.data.user_type != "ORG_USER" &&
+          response.data.data.organization.organization_type != "CENTRIKA" &&
+          response.data.data.organization.organization_type != "AGENT" && 
+          response.data.data.user_type!="AGENT_MANAGER") || (response.data.data.organization.organization_type == "AGENT" && response.data.data.user_type=="AGENT")
+        ) {
+          enqueueSnackbar("You are not allowed to use this system", {
+            variant: "error",
+            action: (k) => (
+              <IconButton
+                onClick={() => {
+                  closeSnackbar(k);
+                }}
+                size="small"
+              >
+                <Close fontSize="small" />
+              </IconButton>
+            ),
+          });
+
+          return;
+        }
+
+
+
+
+
+        enqueueSnackbar("Logged in successfuly", {
+          variant: "success",
+          action: (k) => (
+            <IconButton
+              onClick={() => {
+                closeSnackbar(k);
+              }}
+              size="small"
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          ),
+        });
+        switch (response.data.data.organization.organization_type) {
+          case "ISSUER":
+            if (response.data.data.user_type == "AGENT") {
+              localStorage.setItem(
+                "nx_ind",
+                JSON.stringify(response.data.data)
+              );
+              history.push("/individual");
+            } 
+            break;
+          case "OPERATOR":
+            localStorage.setItem("nx_op", JSON.stringify(response.data.data));
+            localStorage.setItem("nx_ag", JSON.stringify(response.data.data));
+            break;
+          default:
+            enqueueSnackbar("Unimplemeted or unknown organization", {
+              variant: "warning",
+              action: (k) => (
+                <IconButton
+                  onClick={() => {
+                    closeSnackbar(k);
+                  }}
+                  size="small"
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              ),
+            });
+        }
+      })
+      .catch(function (error) {
+     
+        setLogging(false);
+        var e = error.message;
+
+        if (error.response) {
+          e = error.response.data.message;
+        }
+
+        //console.log(error.response);
+
+        enqueueSnackbar(e, {
+          variant: "error",
+          action: (k) => (
+            <IconButton
+              size="small"
+              onClick={() => {
+                closeSnackbar(k);
+              }}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          ),
+        });
+
+      });  
   };
 
 
