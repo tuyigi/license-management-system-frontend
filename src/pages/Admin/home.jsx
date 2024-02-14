@@ -331,7 +331,7 @@ function BnrHome(props) {
             </Button>
             <Button
               onClick={() => {
-                localStorage.removeItem("nx_cent");
+                localStorage.removeItem("LMIS");
                 history.replace("/");
               }}
               color="primary"

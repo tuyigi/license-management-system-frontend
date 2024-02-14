@@ -46,6 +46,9 @@ import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
 import { Link, Switch, Route, useHistory } from "react-router-dom";
 import Dashboard from "./dashboard";
+import LicenseRequest from "./license_requests";
+import LicenseRequestReport from "./reports/report_approved_license";
+import Settings from "./../shared/settings";
 
 
 
@@ -64,6 +67,24 @@ const routes = [
         main: () => <Dashboard/>,
     },
     {
+        path: "/orgAdmin/requests",
+        exact: true,
+        permission: "CAN_VIEW_REQUEST",
+        main: () => <LicenseRequest/>,
+    },
+    {
+        path: "/orgAdmin/report",
+        exact: true,
+        permission: "CAN_VIEW_REPORT",
+        main: () => <LicenseRequestReport/>,
+    },
+    {
+        path: "/orgAdmin/settings",
+        exact: true,
+        permission: "CAN_VIEW_SETTINGS",
+        main: () => <Settings/>,
+    },
+    {
       main: () => <></>,
     },
   ];
@@ -73,7 +94,7 @@ const menus = [
     { name: "Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/report", permission: "CAN_VIEW_REPORT",
         submenu:[
-            { name: "Approved Licenses ", path: "/orgAdmin/licenseRequests"}
+            { name: "Approved Licenses ", path: "/orgAdmin/report"}
         ]
     }
 ];
@@ -241,7 +262,7 @@ function OrgAdminHome(props) {
               button
               key={menu.name}
               onClick={() => {
-                if (menu.path === "/bnr/logout") {
+                if (menu.path === "/orgAdmin/logout") {
                   setLogoutOpen(true);
                 } else {
                   history.push(menu.path);
@@ -283,7 +304,7 @@ function OrgAdminHome(props) {
             </Button>
             <Button
               onClick={() => {
-                localStorage.removeItem("nx_cent");
+                localStorage.removeItem("LMIS");
                 history.replace("/");
               }}
               color="primary"

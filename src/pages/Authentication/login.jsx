@@ -57,10 +57,7 @@ const useStyles = makeStyles((theme) => ({
 function Login(props) {
   const classes = useStyles();
   const history = useHistory();
-
   const [confirming, setConfirming] = useState(false);
-
-
   const [username, setUsername] = useState({ value: "", error: "" });
   const [password, setPassword] = useState({ value: "", error: "" });
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -80,12 +77,19 @@ function Login(props) {
     const data1 = localStorage.getItem("LMIS");
     if (data1 != null) {
       var data = JSON.parse(data1);
-      if (data?.organization.organization_type == "c") {
-        if (data?.role_name === "AC_GROUP_USER") {
+      if (data?.user.organization_id.organization_type == "LISENCE_ISSUER") {
+        if (data?.user.user_type === "SUPER_ADMIN") {
           history.push("/bnr");
           return;
+        }else if(data?.user.organization_id.organization_type =="LICENSE_MANAGER"){
+          history.push("/licenseManager");
+          return;
         }
-        history.push("/orgAdmin");
+      }else {
+        if(data?.user.user_type === "ORG_ADMIN"){
+          history.push("/orgAdmin");
+          return;
+        }
       }
     }
 
@@ -124,10 +128,7 @@ function Login(props) {
 
   //////////////////////
 
-  const [tempToken,setTempToken] = useState("");
-
   const doLogin = () => {
-    
     const loginInstance = axios.create({
       headers: {
         "Content-Type": "application/json",
@@ -135,49 +136,17 @@ function Login(props) {
       },
     });
     setLogging(true);
-
     const data = {
-      user_name: username.value,
-      user_password: password.value,
-      device_type:"OTHER"
+      username: username.value,
+      password: password.value
     };
-
 
     loginInstance
       .post(new BackendService().LOGIN, data)
       .then(function (response) {
         setLogging(false);
-
-
-
-        if (response.data.status === 401) {
-          enqueueSnackbar("You password is expired! Please change it now", {
-            variant: "error",
-            action: (k) => (
-              <IconButton
-                onClick={() => {
-                  closeSnackbar(k);
-                }}
-                size="small"
-              >
-                <Close fontSize="small" />
-              </IconButton>
-            ),
-          });
-
-          setTempToken(response.data.data.token)
-
-
-
-          return;
-        }
-
-        if (
-          (response.data.data.user_type != "ORG_USER" &&
-          response.data.data.organization.organization_type != "CENTRIKA" &&
-          response.data.data.organization.organization_type != "AGENT" && 
-          response.data.data.user_type!="AGENT_MANAGER") || (response.data.data.organization.organization_type == "AGENT" && response.data.data.user_type=="AGENT")
-        ) {
+        // check if user is disabled in system and prevent him/her to use system
+        if (response.data.data.user.status!="ENABLED"){
           enqueueSnackbar("You are not allowed to use this system", {
             variant: "error",
             action: (k) => (
@@ -191,15 +160,11 @@ function Login(props) {
               </IconButton>
             ),
           });
-
           return;
         }
 
 
-
-
-
-        enqueueSnackbar("Logged in successfuly", {
+        enqueueSnackbar("Logged in successfully", {
           variant: "success",
           action: (k) => (
             <IconButton
@@ -212,19 +177,28 @@ function Login(props) {
             </IconButton>
           ),
         });
-        switch (response.data.data.organization.organization_type) {
-          case "ISSUER":
-            if (response.data.data.user_type == "AGENT") {
-              localStorage.setItem(
-                "nx_ind",
+        switch (response.data.data.user.user_type) {
+          case "SUPER_ADMIN":
+            localStorage.setItem(
+                "LMIS",
                 JSON.stringify(response.data.data)
               );
-              history.push("/individual");
-            } 
+            history.push("/bnr");
             break;
-          case "OPERATOR":
-            localStorage.setItem("nx_op", JSON.stringify(response.data.data));
-            localStorage.setItem("nx_ag", JSON.stringify(response.data.data));
+
+          case "ORG_ADMIN":
+            localStorage.setItem(
+                "LMIS",
+                JSON.stringify(response.data.data)
+            );
+            history.push("/orgAdmin");
+            break;
+          case "LICENSE_MANAGER":
+            localStorage.setItem(
+                "LMIS",
+                JSON.stringify(response.data.data)
+            );
+            history.push("/licenseManager");
             break;
           default:
             enqueueSnackbar("Unimplemeted or unknown organization", {

@@ -1,5 +1,4 @@
-import { AccountBalance, AccountBalanceWallet, AcUnit, Atm, CompareArrows, ConfirmationNumber, Contactless, CreditCard, Dvr, Group, Person, RotateLeft, TrendingDown } from "@material-ui/icons";
-import React, { useEffect } from "react";
+import React from "react";
 
 class BackendService {
   constructor() {
@@ -9,18 +8,22 @@ class BackendService {
       data = JSON.parse(data1);
     }
     this.accountData = data;
-
     this.ORIGIN = process.env.REACT_APP_ORIGIN;
-    this.BASE_URL = getMsUrl('ad');
-    this.LOGIN = this.BASE_URL + "/api/v1/auth/login";
-    this.GET_ALL_USERS = this.BASE_URL + "/api/v1/users";
-    this.GET_USERS_BY_ORGANIZATION_ID =
-      this.BASE_URL + "/api/v1/user/organization/";
-      this.GET_USERS_BY_TYPE =
-      this.BASE_URL + "/api/v1/user/type/";
-    this.CREATE_USER = this.BASE_URL + "/api/v1/user/register";
-    this.UPDATE_USER = this.BASE_URL + "/api/v1/user/";
-
+    this.BASE_URL = process.env.REACT_APP_BASE_URL;
+    this.LOGIN = this.BASE_URL + "/api/v1/auth/sign-in";
+    this.GENERAL_STATS = this.BASE_URL + "/api/v1/reports/generalStats";
+    this.GET_ORGANIZARION_TYPE_STATS = this.BASE_URL + "/api/v1/reports/organizationTypeStats";
+    this.LICENSES = this.BASE_URL + "/api/v1/license";
+    this.ORGANIZATIONS = this.BASE_URL + "/api/v1/organization";
+    this.ROLES = this.BASE_URL + "/api/v1/role";
+    this.PRIVILEGE = this.BASE_URL + "/api/v1/privilege";
+    this.LICENSE_REQUEST_TYPE_STATS = this.BASE_URL + "/api/v1/reports/licenseRequestStatusStats";
+    this.GET_ROLE_PRIVILEGE = this.BASE_URL + "/api/v1/role/privileges/";
+    this.USERS = this.BASE_URL + "/api/v1/user";
+    this.ORGANIZATION_LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest/organization/"
+    this.LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest"
+    this.REVIEW_LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest/reportView/"
+    this.DECISION_LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest/decision/";
   }
 
   getHeaders = (token) => {
@@ -28,77 +31,9 @@ class BackendService {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": this.ORIGIN,
-        Authorization: "Bearer " + token,
-        "DeviceType":"OTHER"
+        Authorization: "Bearer " + this.accountData.access_token,
       },
     };
-  };
-
-  getMsHeaders = () => {
-    return {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": this.ORIGIN,
-        Authorization: "Basic online::"+process.env.REACT_APP_TOKEN,
-        "DeviceType":"OTHER"
-      },
-    };
-  };
-
-  getBankCodes= () => {
-    return [
-      {
-         "code": "00000","name":"BNR KIGALI"
-      },
-      {
-          "code": "00010","name":"I AND M BANK"
-      },
-      {
-          "code": "00020","name":"AB BANK"
-      },
-      {
-          "code": "00025","name":"Commercial Bank of Africa Rwanda Plc"
-      },
-      {
-          "code": "00040","name":"BK KIGALI"
-      },
-      {
-          "code": "00070","name":"FINABANK KIGALI"
-      },
-      {
-          "code": "00090","name":"UMWALIMU SACCO"
-      },
-      {
-          "code": "00100","name":"ECOBANK KIGALI"
-      },
-      {
-          "code": "00115","name":"ACCESS BANK KIGALI"
-      },
-      {
-          "code": "00130","name":"CGBK CENTRALE"
-      },
-      {
-          "code": "00145","name":"UOB KIGALI"
-      },
-      {
-          "code": "00160","name":"KCB KIGALI"
-      },
-      {
-          "code": "00175","name":"ZIGAMA CREDIT SAVING SCHEME"
-      },
-      {
-          "code": "00192","name":"EQUITY BANK"
-      },
-      {
-          "code": "00208","name":"BANK OF AFRICA RWANDA"
-      },
-      {
-          "code": "00224","name":"UNGUKA"
-      },
-      {
-          "code": "00400","name":"BPR KIGALI"
-      }
-  ];
   };
 }
 
@@ -203,10 +138,6 @@ class Validator {
      return out;
     }
 }
-
-function p(){
-  return window.location.protocol==='https:'
-}
 const hasPermission = (perm) => {
   var data = new BackendService().accountData;
   if (data.permissions == null) {
@@ -228,29 +159,11 @@ function Permissions(props) {
   return <>{match ? props.children : <></>}</>;
 }
 
-const getMsUrl=(ms)=>{
-  switch(ms){
-    case 'ad':
-      return p()?process.env.REACT_APP_ADMIN_URL_SECURE:process.env.REACT_APP_ADMIN_URL
-    case 'fin':
-      return p()?process.env.REACT_APP_FINANCE_URL_SECURE:process.env.REACT_APP_FINANCE_URL
-    case 'tr':
-      return p()?process.env.REACT_APP_TRANSPORT_URL_SECURE:process.env.REACT_APP_TRANSPORT_URL
-    case 're':
-      return p()?process.env.REACT_APP_REPORTING_URL_SECURE:process.env.REACT_APP_REPORTING_URL
-    case 'wz':
-      return p()?process.env.WIZANALYTICS_BASEURL:process.env.WIZANALYTICS_BASEURL
-    default:
-      return "Unknown url"
-
-  }
-}
 
 
 export {
   BackendService,
   Validator,
   Permissions,
-  hasPermission,
-  getMsUrl
+  hasPermission
 };

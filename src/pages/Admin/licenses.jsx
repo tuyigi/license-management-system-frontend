@@ -9,8 +9,8 @@ import {
     FormControlLabel,
     Avatar,
     Switch,
-    Box
-  } from "@material-ui/core";
+    Box, IconButton
+} from "@material-ui/core";
   import {
     CircularProgress,
     Dialog,
@@ -24,12 +24,15 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt
-  } from "@material-ui/icons";
-
+    Receipt, Close
+} from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
+  import { Capitalize } from "../../helpers/capitalize";
+  import axios from "axios";
+  import {BackendService} from "../../utils/web_config";
+  import {useSnackbar} from "notistack";
+  import {useHistory} from "react-router-dom";
 
-  import { Capitalize } from "../../helpers/capitalize"
 
 
 const useStyles = makeStyles((theme) => ({
@@ -41,58 +44,190 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function Licenses(props){
+function Licenses(props) {
     const classes = useStyles();
-
-
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const history = useHistory();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [licenses, setLicenses] = useState({
-      page: 0,
-      count: 1,
-      rowsPerPage: 10,
-      sortOrder: {},
-      saving: false,
-      loading: false,
-      toggling: false,
-      data: [],
+        page: 0,
+        count: 1,
+        rowsPerPage: 10,
+        sortOrder: {},
+        saving: false,
+        loading: false,
+        toggling: false,
+        data: [],
     });
+    const [accountData, setAccountData] = useState(null);
+    useEffect(() => {
+        var accData = new BackendService().accountData;
+        setAccountData(accData);
+        getLicenses(accData.access_token);
+    }, [])
 
     const [status, setStatus] = useState("No licenses available....");
-    const [name, setName] = useState({ value: "", error: "" });
-    const [code, setCode] = useState({ value: "", error: "" });
-    const [description, setDescription] = useState({ value: "", error: "" });
+    const getLicenses = (token) => {
+        const licenseInstance = axios.create(new BackendService().getHeaders(token));
+        setLicenses({...licenses, loading: true});
+        licenseInstance
+            .get(new BackendService().LICENSES)
+            .then(function (response) {
+                setLicenses({...licenses, loading: false});
+                const d = response.data;
+                if (d.data.length == 0) {
+                    setStatus("There are no users available.");
+                } else {
+                    var lcs = d.data;
+
+                    setLicenses({
+                        ...licenses,
+                        data: lcs,
+                    });
+                    //set status
+                    setStatus("Licenses loaded")
+                }
+            })
+            .catch(function (error) {
+                setLicenses({...licenses, loading: false});
+                var e = error.message;
+
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                setStatus(e);
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    };
+
+
+    const [name, setName] = useState({value: "", error: ""});
+    const [code, setCode] = useState({value: "", error: ""});
+    const [description, setDescription] = useState({value: "", error: ""});
     const onNameChange = (event) => {
         if (event.target.value === "") {
-          setName({
-            value: "",
-            error: "Please enter valid license name",
-          });
+            setName({
+                value: "",
+                error: "Please enter valid license name",
+            });
         } else {
-          setName({ value: event.target.value, error: "" });
+            setName({value: event.target.value, error: ""});
         }
     };
     const onCodeChange = (event) => {
         if (event.target.value === "") {
-          setCode({
-            value: "",
-            error: "Please enter valid license code",
-          });
+            setCode({
+                value: "",
+                error: "Please enter valid license code",
+            });
         } else {
-          setCode({ value: event.target.value, error: "" });
+            setCode({value: event.target.value, error: ""});
         }
-      };
-      const onDescriptionChange = (event) => {
+    };
+    const onDescriptionChange = (event) => {
         if (event.target.value === "") {
             setDescription({
-            value: "",
-            error: "Please enter valid description",
-          });
+                value: "",
+                error: "Please enter valid description",
+            });
         } else {
-            setDescription({ value: event.target.value, error: "" });
+            setDescription({value: event.target.value, error: ""});
         }
-      };
+    };
 
-      // start table config
+
+    const addLicense = () => {
+        if (name.value === "") {
+            setName({
+                value: "",
+                error: "Please provide valid name",
+            });
+        } else if (code.value === "") {
+            setCode({
+                value: '',
+                error: 'Please provide valid code'
+            });
+        } else if (description.value === "'") {
+            setDescription({
+                value: '',
+                error: 'Please fulfill description'
+            })
+        } else {
+            createLicense();
+        }
+    }
+
+    const createLicense = () => {
+        const licenseInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        setLicenses({...licenses, saving: true});
+
+        const data = {
+            name: name.value,
+            code: code.value,
+            description: description.value
+        }
+
+
+    licenseInstance
+        .post(new BackendService().LICENSES, data)
+        .then(function (response) {
+            setLicenses({...licenses, saving: false});
+            var d = response.data;
+            var lcs = licenses.data;
+            const newLicense = d.data;
+            lcs.unshift(newLicense);
+            setLicenses({
+                ...licenses,
+                data: lcs,
+            });
+            clearLicenseInfo()
+            notify("success", response.data.message);
+            setAddNewOpen(false);
+        })
+        .catch(function (error) {
+            setLicenses({...licenses, saving: false});
+            var e = error.message;
+            if (error.response) {
+                e = error.response.data.message;
+            }
+            notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+        });
+
+}
+
+    // clear data
+
+    const clearLicenseInfo = () => {
+        setName({ value: "", error: "" });
+        setDescription({ value: "", error: "" });
+        setCode({ value: "", error: "" });
+    };
+
+    // notify
+
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
+
+
+    // start table config
       const columns = [
         {
           name: "id",
@@ -305,7 +440,7 @@ function Licenses(props){
               disabled={licenses.saving}
               variant="contained"
               color="primary"
-              onClick={()=>{}}
+              onClick={()=>{ addLicense() }}
               disableElevation
             >
               {licenses.saving ? (

@@ -61,6 +61,9 @@ import { useSnackbar } from "notistack";
 import { Skeleton, Autocomplete, Pagination } from "@material-ui/lab";
 import NoData from "../../assets/svg/no_data.svg";
 import SelectRole from "../../assets/svg/select_role.svg";
+import axios from "axios";
+import {BackendService, Validator} from "../../utils/web_config";
+import {useHistory} from "react-router-dom";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -92,6 +95,7 @@ function RolePermission(props){
     const classes = useStyles();
     const theme = useTheme();
     const matches = useMediaQuery(theme.breakpoints.up("sm"));
+    const history = useHistory();
 
     const [loadingPriv, setLoadingPriv] = useState(false);
     const [savingPriv, setSavingPriv] = useState(false);
@@ -111,6 +115,19 @@ function RolePermission(props){
       data: [],
       data2: [],
     });
+
+    const [accountData,setAccountData] = useState(null);
+
+    useEffect(()=>{
+        const accData = new BackendService().accountData;
+        setAccountData(accData);
+        getRoles(accData.access_token)
+        getPrivileges(accData.access_token,0,true)
+    },[])
+
+
+
+
     const [privileges, setPrivileges] = useState([]);
     const [privileges2, setPrivileges2] = useState([]);
   
@@ -244,6 +261,105 @@ function RolePermission(props){
           setPrivileges(priv2);
         }
       };
+
+    // get roles
+    const getRoles = (token) => {
+        const usersInstance = axios.create(new BackendService().getHeaders(token));
+        setRoles({ ...roles, loading: true });
+        setSelectedRole("none");
+        console.log("getting roles .....");
+
+        usersInstance
+            .get(
+                new BackendService().ROLES
+            )
+            .then(function (response) {
+
+                setRoles({ ...roles, loading: false });
+                const d = response.data;
+
+                setRoles({
+                    ...roles,
+                    data: d.data,
+                    data2: d.data
+                });
+            })
+            .catch(function (error) {
+                setRoles({ ...roles, loading: false });
+
+                var e = error.message;
+
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status==404?"info":"error", e, error?.response?.status);
+            });
+    };
+
+    // get privileges
+    const getPrivileges = (token,role_id,all = false) => {
+        const privilegeInstance = axios.create(new BackendService().getHeaders(token));
+        setLoadingPriv(true);
+        setPrivileges([]);
+        setPrivileges2([]);
+        console.log("getting privileges .....");
+
+        const url =all
+                ? new BackendService().PRIVILEGE
+            : new BackendService().GET_ROLE_PRIVILEGE + role_id;
+
+        privilegeInstance
+            .get(url)
+            .then(function (response) {
+                setLoadingPriv(false);
+                const d = response.data;
+
+                if (all) {
+                    setAllPrivileges(d.data);
+                    setAllPrivileges2(d.data);
+                } else {
+                    setPrivileges(d.data);
+                    setPrivileges2(d.data);
+
+                    var diff = new Validator().difference(d.data, allPrivileges);
+                    console.log(diff.length);
+                }
+            })
+            .catch(function (error) {
+                setLoadingPriv(false);
+
+                var e = error.message;
+
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status==404?"info":"error", e, error?.response?.status);
+            });
+    };
+
+
+
+
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
+
+
 
     return(
         <div className={classes.root}>
@@ -451,11 +567,11 @@ function RolePermission(props){
           }}
           elevation={4}
         >
-          <Box p={2}>
+          <Box  style={{padding: 10}}>
             <Typography color="textSecondary">
               Edit priviledge detailed description here
             </Typography>
-            <Box mt={2} mb={2}>
+            <Box style={{marginTop:10, marginBottom: 10}}>
               <TextField
                 label="Description"
                 placeholder="Priviledge description"
@@ -537,12 +653,7 @@ function RolePermission(props){
   
           {tempAssign.data.length != 0 && (
             <Box
-              display="flex"
-              justifyContent="center"
-              p={2}
-              mb={4}
-              width={"250px"}
-              style={{ position: "fixed", zIndex: 100, bottom: 0 }}
+              style={{ display:"flex",justifyContent:"center",width:"250px",marginBottom:20,padding:10,position: "fixed", zIndex: 100, bottom: 0 }}
             >
               <Button
                 color="primary"
@@ -778,7 +889,7 @@ function RolePermission(props){
             </Box>
           </Grid>
           <Grid item xs={12} sm={12} md={5}>
-            <Paper elevation={0} style={{ minHeight: 350 }}>
+            <Paper elevation={0} style={{ minHeight: 500 }}>
               <Box style={{paddingTop: 10, paddingRight: 5, paddingLeft: 5}}>
                 <TextField
                   size="small"
@@ -797,8 +908,8 @@ function RolePermission(props){
               </Box>
   
               {!roles.loading && roles.data.length == 0 && <Box
-              style={{p:10,
-              mt:10,
+              style={{padding:10,
+              marginTop:10,
               height:"100%",
               display:"flex",
               alignItems:"center",
@@ -821,7 +932,7 @@ function RolePermission(props){
                       selected={selectedRole.index == i}
                       onClick={() => {
                         setSelectedRole({ index: i, role: role });
-                        // getPrivileges(accountData.token, role.role_id);
+                        getPrivileges(accountData.token, role.id, false);
                       }}
                     >
                       <ListItemIcon>
@@ -879,17 +990,17 @@ function RolePermission(props){
                     </ListItem>
                   ))}
               </List>
-              <Box  style={{width:"100%",pb:10,display:"flex",justifyContent:"center"}} >
-                <Pagination
-                  disabled={roles.loading}
-                  count={roles.pages}
-                  page={roles.page + 1}
-                  onChange={(e, v) => {
-                    // getRoles(accountData.token, v - 1);
-                  }}
-                  size="large"
-                />
-              </Box>
+              {/*<Box  style={{width:"100%",pb:10,display:"flex",justifyContent:"center"}} >*/}
+              {/*  <Pagination*/}
+              {/*    disabled={roles.loading}*/}
+              {/*    count={roles.pages}*/}
+              {/*    page={roles.page + 1}*/}
+              {/*    onChange={(e, v) => {*/}
+              {/*      // getRoles(accountData.token, v - 1);*/}
+              {/*    }}*/}
+              {/*    size="large"*/}
+              {/*  />*/}
+              {/*</Box>*/}
             </Paper>
           </Grid>
   
@@ -910,7 +1021,7 @@ function RolePermission(props){
                 </Box>
               </Box>
             ) : (
-                <Box height={1} style={{height:"100%"}} mx={2}>
+                <Box  >
                   <Box style={{display:"flex",justifyContent:"space-between"}}>
                     <Typography variant="h5">{selectedRole.role.name}</Typography>
                     <IconButton
@@ -936,43 +1047,48 @@ function RolePermission(props){
                       {selectedRole.role.role_status}
                     </Typography>
                   </Button>
+
+                    <Box style={{display: "flex"}}>
+                        <Button
+                        color="primary"
+                        variant="outlined"
+                        className={classes.btn}
+                        disableElevation
+                        onClick={(e) => {
+                            setAnchorAssignPriv(e?.currentTarget);
+                            setAllPrivileges(allPrivileges2);
+                        }}
+                        startIcon={<Add />}
+                    >
+                        Assign privileges
+                    </Button>
+
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            className={classes.btn}
+                            disableElevation
+                            onClick={() => {
+                                setEditRoleMode(true);
+                                setNewRoleOpen(true);
+                                setName({ value: selectedRole.role.name, error: "" });
+                                setDescription({
+                                    value: selectedRole.role.description,
+                                    error: "",
+                                });
+                                setOrganization({
+                                    value: selectedRole.role.organization_id,
+                                    error: "",
+                                });
+                            }}
+                            startIcon={<Edit />}
+                        >
+                            Edit
+                        </Button>
+                    </Box>
+
   
-                  <Button
-                    color="primary"
-                    variant="outlined"
-                    className={classes.btn}
-                    disableElevation
-                    onClick={(e) => {
-                      setAnchorAssignPriv(e?.currentTarget);
-                      setAllPrivileges(allPrivileges2);
-                    }}
-                    startIcon={<Add />}
-                  >
-                    Assign privileges
-                </Button>
-  
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    className={classes.btn}
-                    disableElevation
-                    onClick={() => {
-                      setEditRoleMode(true);
-                      setNewRoleOpen(true);
-                      setName({ value: selectedRole.role.name, error: "" });
-                      setDescription({
-                        value: selectedRole.role.description,
-                        error: "",
-                      });
-                      setOrganization({
-                        value: selectedRole.role.organization_id,
-                        error: "",
-                      });
-                    }}
-                    startIcon={<Edit />}
-                  >
-                    Edit
-                </Button>
+
   
                   {/* <Button
                   variant="text"
@@ -1009,13 +1125,10 @@ function RolePermission(props){
   
                     {!loadingPriv && privileges.length == 0 && 
                     <Box
-                      p={2}
-                      mt={3}
-                      height={1}
-                      display="flex"
-                      alignItems="center"
-                      flexDirection="column"
-                      justifyContent="center"
+                      style={{
+                          marginTop:15,padding:10,height:"100%",display:"flex",alignItems:"center",flexDirection:"column",justifyContent:"center"
+                      }}
+
                     >
                       <Box mt={2}>
                         <img src={NoData} alt="Empty data" height={100} />
@@ -1037,7 +1150,7 @@ function RolePermission(props){
                               onMouseEnter={() =>
                                 setItemOver({
                                   index: i,
-                                  priv: priv.privilege,
+                                  priv: priv.privilege_id,
                                   role: true,
                                 })
                               }
@@ -1045,8 +1158,8 @@ function RolePermission(props){
                               selected={itemOver.index == i}
                             >
                               <ListItemText
-                                primary={priv.privilege?.name.split("_").join(" ")}
-                                secondary={priv.privilege?.description}
+                                primary={priv.privilege_id.name.split("_").join(" ")}
+                                secondary={priv.privilege_id?.description}
                               />
                               <ListItemSecondaryAction>
                                 <Box>
@@ -1056,12 +1169,14 @@ function RolePermission(props){
                                       onMouseEnter={() =>
                                         setItemOver({
                                           index: i,
-                                          priv: priv.privilege,
+                                          priv: priv.privilege_id,
                                           role: true,
                                         })
                                       }
-                                      onClick={(e) =>
-                                        setAnchorEditPriv(e.currentTarget)
+                                      onClick={(e) =>{
+                                          console.log(priv);
+                                          setAnchorEditPriv(e.currentTarget);
+                                      }
                                       }
                                       size="small"
                                     >
@@ -1071,7 +1186,7 @@ function RolePermission(props){
                                   <IconButton
                                     onClick={(e) =>
                                       setWarning({
-                                        role: selectedRole.role.role_id,
+                                        role: selectedRole.role.id,
                                         priv: priv.role_privilege_id,
                                         open: true,
                                         index: i,

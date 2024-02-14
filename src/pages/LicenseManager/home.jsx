@@ -46,6 +46,7 @@ import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
 import { Link, Switch, Route, useHistory } from "react-router-dom";
 import  Dashboard  from "./dashboard";
+import LicenseRequest from "./license_requests";
 
 
 
@@ -63,7 +64,12 @@ const routes = [
         permission: "CAN_VIEW_HOME",
         main: () =>  <Dashboard/>,
     },
-
+    {
+        path: "/licenseManager/license",
+        exact: true,
+        permission: "CAN_VIEW_LICENSE_REQUEST",
+        main: () =>  <LicenseRequest/>,
+    },
     {
       main: () => <></>,
     },
@@ -71,7 +77,7 @@ const routes = [
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/licenseManager/home",permission: "CAN_VIEW_HOME", },
-    { name: "License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE"},
+    { name: "License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/report", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "Organization Licenses", path: "/licenseManager/licenseRequests"},
@@ -284,7 +290,7 @@ function LicenseManagerHome(props) {
             </Button>
             <Button
               onClick={() => {
-                localStorage.removeItem("nx_cent");
+                localStorage.removeItem("LMIS");
                 history.replace("/");
               }}
               color="primary"

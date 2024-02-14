@@ -66,6 +66,11 @@ import {
 
 import { Skeleton, Pagination } from "@material-ui/lab";
 import NoData from "../../assets/svg/no_data.svg";
+import {BackendService} from "../../utils/web_config";
+import axios from "axios";
+import {useSnackbar} from "notistack";
+import {useHistory} from "react-router-dom";
+
 
 
 const useStyles = makeStyles((theme) => ({
@@ -102,7 +107,8 @@ function getSteps() {
 
 function Organizations(props) {
     const classes = useStyles();
-
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const history = useHistory();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [organizations, setOrganizations] = useState({
         saving: false,
@@ -114,6 +120,56 @@ function Organizations(props) {
         data: [],
     });
 
+    // get organizations
+
+    const getOrganizations = (token) => {
+        const organizationInstance = axios.create(new BackendService().getHeaders(token));
+        setOrganizations({...organizations, loading: true});
+        organizationInstance
+            .get(new BackendService().ORGANIZATIONS)
+            .then(function (response) {
+                setOrganizations({...organizations, loading: false});
+                const d = response.data;
+                var orgs = d.data;
+                setOrganizations({
+                        ...organizations,
+                        data: orgs,
+                    });
+
+            })
+            .catch(function (error) {
+                setOrganizations({...organizations, loading: false});
+                var e = error.message;
+
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    };
+
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
+
+
+
+
     //// 
     const theme = useTheme();
     const matches = useMediaQuery(theme.breakpoints.up("sm"));
@@ -124,17 +180,173 @@ function Organizations(props) {
         setActiveStep(activeStep - 1);
     };
 
+    const [accountData,setAccountData] = useState(null);
     const [menuOpen, setMenuOpen] = useState(null);
-
     const [organizationName, setOrganizationName] = useState({ value: "", error: "" });
     const [organizationTin, setOrganizationTin] = useState({ value: "", error: "" });
     const [province, setProvince] = useState({ value: "", error: "" });
-    const [district, setDistrict] = useState({ value: "", error: "" });
     const [representativeName, setRepresentativeName] = useState({ value: "", error: "" });
     const [representativePhoneNumber, setRepresentativePhoneNumber] = useState({ value: "", error: "" });
     const [organizationType, setOrganizationType] = useState({ value: "", error: "" });
 
+    useEffect(()=>{
+        const accData = new BackendService().accountData;
+        setAccountData(accData);
+        getOrganizations(accData.access_token)
 
+    },[])
+
+    const onOrgNameChange = (event) => {
+        if (event.target.value === "") {
+            setOrganizationName({
+                value: "",
+                error: "Please enter valid name",
+            });
+        } else {
+            setOrganizationName({value: event.target.value, error: ""});
+        }
+    };
+    const onOrgTinChange = (event) => {
+        if (event.target.value === "") {
+            setOrganizationTin({
+                value: "",
+                error: "Please enter valid name",
+            });
+        } else {
+            setOrganizationTin({value: event.target.value, error: ""});
+        }
+    };
+    const onOrgTypeChange = (event) => {
+        if (event.target.value === "") {
+            setOrganizationType({
+                value: "",
+                error: "Please select organization type",
+            });
+        } else {
+            setOrganizationType({value: event.target.value, error: ""});
+        }
+    };
+    const onOrgProvChange= (event) =>{
+        if (event.target.value === "") {
+            setProvince({
+                value: "",
+                error: "Please select province",
+            });
+        } else {
+            setProvince({value: event.target.value, error: ""});
+        }
+    }
+    const onRepNameChange= (event)=>{
+        if (event.target.value === "") {
+            setRepresentativeName({
+                value: "",
+                error: "Please enter representative name",
+            });
+        } else {
+            setRepresentativeName({value: event.target.value, error: ""});
+        }
+    }
+    const onRepPhoneChange = (event) => {
+        if (event.target.value === "") {
+            setRepresentativePhoneNumber({
+                value: "",
+                error: "Please enter representative phone",
+            });
+        } else {
+            setRepresentativePhoneNumber({value: event.target.value, error: ""});
+        }
+    }
+
+    const registerOrganization = ()=>{
+        if(activeStep != steps.length - 1){
+            setActiveStep(activeStep+1);
+            return;
+        }
+        if (representativePhoneNumber.value === "") {
+            setRepresentativePhoneNumber({
+                value: "",
+                error: "Please enter representative phone",
+            });
+        }else if (representativeName.value === "") {
+            setRepresentativeName({
+                value: "",
+                error: "Please enter representative name",
+            });
+        }else if (province.value === "") {
+            setProvince({
+                value: "",
+                error: "Please select province",
+            });
+        }else if (organizationType.value === "") {
+            setOrganizationType({
+                value: "",
+                error: "Please select organization type",
+            });
+        }else if (organizationTin.value === "") {
+            setOrganizationTin({
+                value: "",
+                error: "Please enter valid name",
+            });
+        }else if (organizationName.value === "") {
+            setOrganizationName({
+                value: "",
+                error: "Please enter valid name",
+            });
+        }else {
+            createOrganization();
+        }
+    }
+
+    const createOrganization = () =>{
+        const organizationInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        setOrganizations({...organizations, saving: true});
+
+        const data = {
+            name: organizationName.value,
+            tin: organizationTin.value,
+            province: province.value,
+            representative_name: representativeName.value,
+            representative_phone_number: representativePhoneNumber.value,
+            organization_type : organizationType.value
+        }
+
+        organizationInstance
+            .post(new BackendService().ORGANIZATIONS, data)
+            .then(function (response) {
+                setOrganizations({...organizations, saving: false});
+                var d = response.data;
+                var lcs = organizations.data;
+                const newOrganization = d.data;
+                lcs.unshift(newOrganization);
+                setOrganizations({
+                    ...organizations,
+                    data: lcs,
+                });
+                clearLicenseInfo()
+                notify("success", response.data.message);
+                setAddNewOpen(false);
+            })
+            .catch(function (error) {
+                setOrganizations({...organizations, saving: false});
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    }
+
+    const clearLicenseInfo=()=>{
+        setActiveStep(0);
+        setOrganizationName({ value: "", error: "" });
+        setOrganizationTin({ value: "", error: "" });
+        setProvince({ value: "", error: "" });
+        setRepresentativeName({ value: "", error: "" });
+        setRepresentativePhoneNumber({ value: "", error: "" });
+        setOrganizationType({ value: "", error: "" });
+    }
 
 
     return (
@@ -188,7 +400,7 @@ function Organizations(props) {
                                                             placeholder={"Organization Name"}
                                                             label={"Organization Name"}
                                                             fullWidth
-                                                            onChange={() => { }}
+                                                            onChange={onOrgNameChange}
                                                             helperText={organizationName.error}
                                                             error={organizationName.error !== ""}
                                                         />
@@ -207,7 +419,7 @@ function Organizations(props) {
                                                             placeholder={"Organization TIN"}
                                                             label={"Organization TIN"}
                                                             fullWidth
-                                                            onChange={() => { }}
+                                                            onChange={onOrgTinChange}
                                                             helperText={organizationTin.error}
                                                             error={organizationTin.error !== ""}
                                                         />
@@ -229,16 +441,16 @@ function Organizations(props) {
                                                         <Select
                                                             label={"Organization Type"}
                                                             value={organizationType.value}
-                                                            onChange={() => { }}
+                                                            onChange={onOrgTypeChange}
                                                         >
                                                             <MenuItem value="EMONEY">EMONEY</MenuItem>
                                                             <MenuItem value="REMITTANCE">REMITTANCE</MenuItem>
                                                             <MenuItem value="PAYMENT_AGGREGATOR">
                                                                 PAYMENT_AGGREGATOR
                                                             </MenuItem>
-                                                            <MenuItem value="PAYMENT_SYSTEM_OPERATOR">PAYMENT_SYSTEM_OPERATOR</MenuItem>
-                                                            <MenuItem value="CHEQUE_PRINTING_COMPANY">CHEQUE_PRINTING_COMPANY</MenuItem>
-                                                            <MenuItem value="CSD_STOCK_BROKER">CSD_STOCK_BROKER</MenuItem>
+                                                            <MenuItem value="PAYMENT_SYSTEM_OPERATOR">PAYMENT SYSTEM OPERATOR</MenuItem>
+                                                            <MenuItem value="CHEQUE_PRINTING_COMPANY">CHEQUE PRINTING COMPANY</MenuItem>
+                                                            <MenuItem value="CSD_STOCK_BROKER">CSD STOCK BROKER</MenuItem>
                                                         </Select>
                                                         <FormHelperText>{organizationType.error}</FormHelperText>
                                                     </FormControl>
@@ -260,7 +472,7 @@ function Organizations(props) {
                                                         <Select
                                                             label={"Province"}
                                                             value={province.value}
-                                                            onChange={() => { }}
+                                                            onChange={onOrgProvChange}
                                                         >
                                                             <MenuItem value="Kigali">Kigali</MenuItem>
                                                             <MenuItem value="Western">Western</MenuItem>
@@ -273,28 +485,6 @@ function Organizations(props) {
                                            
                                             </Box>
 
-                                            <Box style={{marginTop: 10}}>
-                                                    <FormControl
-                                                        className={classes.formControl}
-                                                        fullWidth
-                                                        variant="outlined"
-                                                        size="small"
-                                                        error={district.error !== ""}
-                                                    >
-                                                        <InputLabel id="type">
-                                                            Province
-                                                        </InputLabel>
-                                                        <Select
-                                                            label={"Province"}
-                                                            value={district.value}
-                                                            onChange={() => { }}
-                                                        >
-                                                            <MenuItem value="district">one</MenuItem>
-                                                        </Select>
-                                                        <FormHelperText>{district.error}</FormHelperText>
-                                                    </FormControl>
-                                       
-                                            </Box>
 
                                         </Box>
                                     ) : activeStep === 1 ? (
@@ -311,7 +501,7 @@ function Organizations(props) {
                                                             placeholder={"Representative Name"}
                                                             label={"Representative Name"}
                                                             fullWidth
-                                                            onChange={() => { }}
+                                                            onChange={onRepNameChange}
                                                             helperText={representativeName.error}
                                                             error={representativeName.error !== ""}
                                                         />
@@ -331,7 +521,7 @@ function Organizations(props) {
                                                             placeholder={"Representative Phone"}
                                                             label={"Representative Phone"}
                                                             fullWidth
-                                                            onChange={() => { }}
+                                                            onChange={onRepPhoneChange}
                                                             helperText={representativePhoneNumber.error}
                                                             error={representativePhoneNumber.error !== ""}
                                                         />
@@ -373,7 +563,7 @@ function Organizations(props) {
                                 disableElevation
                                 disabled={organizations.saving}
                                 onClick={() => {
-
+                                        registerOrganization();
                                 }}
                             >
                                 {organizations.saving ? (
@@ -557,10 +747,10 @@ function Organizations(props) {
                                 >
                                     <Paper className={classes.card} elevation={0}>
                                         <Box
-                                            height="150px"
                                             width={1}
-
-                                            style={{display:"flex",
+                                            style={{
+                                                height:"150px",
+                                                display:"flex",
                                             justifyContent:"center",
                                             alignItems:"center",
                                             flexDirection:"column",

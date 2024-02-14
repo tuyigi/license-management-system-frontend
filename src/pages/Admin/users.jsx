@@ -9,8 +9,8 @@ import {
     FormControlLabel,
     Avatar,
     Switch,
-    Box
-  } from "@material-ui/core";
+    Box, IconButton, FormControl, InputLabel, Select, MenuItem, FormHelperText
+} from "@material-ui/core";
   import {
     CircularProgress,
     Dialog,
@@ -25,12 +25,18 @@ import {
     Block,
     Edit,
     Receipt,
-    PeopleAltOutlined
-  } from "@material-ui/icons";
+    PeopleAltOutlined, Close
+} from "@material-ui/icons";
 
   import MUIDataTable from "mui-datatables";
 
   import { Capitalize } from "../../helpers/capitalize"
+import {BackendService} from "../../utils/web_config";
+import axios from "axios";
+import {useSnackbar} from "notistack";
+import {useHistory} from "react-router-dom";
+import {useOrganizations, useRoles} from "../../hooks/use_hooks";
+import {Autocomplete} from "@material-ui/lab";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -45,8 +51,10 @@ const useStyles = makeStyles((theme) => ({
 
 function Users(props){
     const classes = useStyles();
-
-
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const history = useHistory();
+    const orgs = useOrganizations();
+    const allRoles = useRoles();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [users, setUsers] = useState({
       page: 0,
@@ -59,44 +67,286 @@ function Users(props){
       data: [],
     });
 
+    const [accountData, setAccountData] = useState(null);
+    useEffect(()=>{
+        var accData = new BackendService().accountData;
+        setAccountData(accData);
+        getUsers(accData.access_token);
+    },[])
+    // get Users
+    const getUsers = (token)=>{
+        const usersInstance = axios.create(new BackendService().getHeaders(token));
+        setUsers({...users, loading: true});
+        usersInstance
+            .get(new BackendService().USERS)
+            .then(function (response) {
+                setUsers({...users, loading: false});
+                const d = response.data;
+                if (d.data.length == 0) {
+                    setStatus("There are no users available.");
+                } else {
+                    var lcs = d.data;
+                    lcs.map((d)=>{
+                        d['role'] = d.role_id.name;
+                        d['organization'] = d.organization_id.name
+                    })
+
+                    setUsers({
+                        ...users,
+                        data: lcs,
+                    });
+                    //set status
+                    setStatus("Licenses loaded")
+                }
+            })
+            .catch(function (error) {
+                setUsers({...users, loading: false});
+                var e = error.message;
+
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                setStatus(e);
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    }
+
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
+
     const [status, setStatus] = useState("No users available....");
-    const [name, setName] = useState({ value: "", error: "" });
-    const [code, setCode] = useState({ value: "", error: "" });
-    const [description, setDescription] = useState({ value: "", error: "" });
-    const onNameChange = (event) => {
+    const [firstName, setFirstName] = useState({ value: "", error: "" });
+    const [lastName, setLastName] = useState({ value: "", error: "" });
+    const [userName, setUserName] = useState({ value: "", error: "" });
+    const [password, setPassword] = useState({ value: "", error: "" });
+    const [email, setEmail] = useState({ value: "", error: "" });
+    const [phoneNumber, setPhoneNumber] = useState({ value: "", error: "" });
+    const [roleId, setRoleId] = useState({ value: "", error: "" });
+    const [organizationId, setOrganizationId] = useState({ value: "", error: "" });
+    const [userType, setUserType] = useState({ value: "", error: "" });
+
+
+    const onFirstNameChange = (event) => {
         if (event.target.value === "") {
-          setName({
+          setFirstName({
             value: "",
-            error: "Please enter valid name",
+            error: "Please enter first name",
           });
         } else {
-          setName({ value: event.target.value, error: "" });
+          setFirstName({ value: event.target.value, error: "" });
         }
     };
-    const onCodeChange = (event) => {
+    const onLastNameChange = (event) => {
         if (event.target.value === "") {
-          setCode({
+          setLastName({
             value: "",
-            error: "Please enter valid code",
+            error: "Please enter last name",
           });
         } else {
-          setCode({ value: event.target.value, error: "" });
+          setLastName({ value: event.target.value, error: "" });
         }
       };
-      const onDescriptionChange = (event) => {
+    const onUsernameChange = (event) => {
         if (event.target.value === "") {
-            setDescription({
+            setUserName({
             value: "",
-            error: "Please enter valid description",
+            error: "Please enter username",
           });
         } else {
-            setDescription({ value: event.target.value, error: "" });
+            setUserName({ value: event.target.value, error: "" });
         }
       };
+    const onPasswordChange = (event) => {
+        if (event.target.value === "") {
+            setPassword({
+                value: "",
+                error: "Please enter password",
+            });
+        } else {
+            setPassword({ value: event.target.value, error: "" });
+        }
+    };
+    const onEmailChange = (event) => {
+        if (event.target.value === "") {
+            setEmail({
+                value: "",
+                error: "Please enter email",
+            });
+        } else {
+            setEmail({ value: event.target.value, error: "" });
+        }
+    };
+    const onPhoneChange = (event) => {
+        if (event.target.value === "") {
+            setPhoneNumber({
+                value: "",
+                error: "Please enter phone number",
+            });
+        } else {
+            setPhoneNumber({ value: event.target.value, error: "" });
+        }
+    };
+    const onRoleChange = (event, v) => {
+        if (v == null) {
+            setRoleId({
+                value: '',
+                error: 'Please select role',
+            });
+        } else {
+            setRoleId({ value: v.id, error: "" });
+        }
+    };
+    const onOrganizationChange = (event, v) => {
+        console.log('event',event);
+        console.log('v',v);
+        if (v == null) {
+            setOrganizationId({
+                value: '',
+                error: 'Please select organization',
+            });
+        } else {
+            setOrganizationId({ value: v.id, error: "" });
+        }
+    };
+    const onUserTypeChange = (event) => {
+        if (event.target.value === "") {
+            setUserType({
+                value: "",
+                error: "Please select user type",
+            });
+        } else {
+            setUserType({ value: event.target.value, error: "" });
+        }
+    };
+
+    const registerUser = () =>{
+        if (firstName.value === "") {
+            setFirstName({
+                value: "",
+                error: "Please enter first name",
+            });
+        } else if (lastName.value === "") {
+            setLastName({
+                value: "",
+                error: "Please enter last name",
+            });
+        } else if (userName.value === "") {
+            setUserName({
+                value: "",
+                error: "Please enter valid username",
+            });
+        } else if (password.value === "") {
+            setPassword({
+                value: "",
+                error: "Please enter  password",
+            });
+        } else  if (email.value === "") {
+            setEmail({
+                value: "",
+                error: "Please enter valid email",
+            });
+        } else if (phoneNumber.value === "") {
+            setPhoneNumber({
+                value: "",
+                error: "Please enter valid phone number",
+            });
+        } else if (roleId.value === "") {
+            setRoleId({
+                value: "",
+                error: "Please Select Role",
+            });
+        } else if (organizationId.value === "") {
+            setOrganizationId({
+                value: "",
+                error: "Please select organization",
+            });
+        } else if (userType.value === "") {
+            setUserType({
+                value: "",
+                error: "Please select user type",
+            });
+        } else{
+            createUser()
+        }
+    }
+
+    const createUser = () =>{
+        const userInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        setUsers({...users, saving: true});
+        const data = {
+            first_name: firstName.value,
+            last_name: lastName.value,
+            username: userName.value,
+            password: password.value,
+            email: email.value,
+            phone_number: phoneNumber.value,
+            role_id: roleId.value,
+            organization_id: organizationId.value,
+            user_type: userType.value
+        };
+
+        userInstance
+            .post(new BackendService().USERS, data)
+            .then(function (response) {
+                setUsers({...users, saving: false});
+                var d = response.data;
+                var lcs = users.data;
+                lcs['role'] = lcs['role_id']['name']
+                lcs['organization'] = lcs['organization_id']['name']
+                const newLicense = d.data;
+                lcs.unshift(newLicense);
+                setUsers({
+                    ...users,
+                    data: lcs,
+                });
+                clearLicenseInfo()
+                notify("success", response.data.message);
+                setAddNewOpen(false);
+            })
+            .catch(function (error) {
+                setUsers({...users, saving: false});
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+
+    }
+
+    const clearLicenseInfo = () =>{
+        setFirstName({ value: "", error: "" });
+        setLastName({ value: "", error: "" });
+        setUserName({ value: "", error: "" });
+        setPassword({ value: "", error: "" });
+        setEmail({ value: "", error: "" });
+        setPhoneNumber({ value: "", error: "" });
+        setRoleId({ value: "", error: "" });
+        setOrganizationId({ value: "", error: "" });
+        setUserType({ value: "", error: "" });
+    }
 
 
-            // start table config
-            const columns = [
+    // start table config
+    const columns = [
                 {
                   name: "id",
                   label: "id",
@@ -154,6 +404,14 @@ function Users(props){
                       sort: true,
                     },
                   },
+                {
+                    name: "organization",
+                    label: "Organization",
+                    options: {
+                        filter: true,
+                        sort: true,
+                    },
+                },
                   {
                     name: "created_at",
                     label: "Created At",
@@ -253,69 +511,176 @@ function Users(props){
             Add New User
           </DialogTitle>
           <DialogContent>
-            <Box style={{marginTop:10}}>
-              <Translate>
-                {({ translate }) => (
-                  <TextField
-                    required
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    value={name.value}
-                    placeholder={"Name"}
-                    label={"Name"}
-                    fullWidth
-                    onChange={onNameChange}
-                    helperText={name.error}
-                    error={name.error !== ""}
-                  />
-                )}
-              </Translate>
-            </Box>
+              <Box>
 
-            <Box style={{marginTop:10}}>
-              <Translate>
-                {({ translate }) => (
-                  <TextField
-                    required
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    value={code.value}
-                    placeholder={"Code"}
-                    label={"Code"}
-                    fullWidth
-                    onChange={onCodeChange}
-                    helperText={code.error}
-                    error={code.error !== ""}
-                  />
-                )}
-              </Translate>
-            </Box>
+                  <Box style={{marginTop:10}}>
+                      <TextField
+                          required
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          value={firstName.value}
+                          placeholder={"First Name"}
+                          label={"First Name"}
+                          fullWidth
+                          onChange={onFirstNameChange}
+                          helperText={firstName.error}
+                          error={firstName.error !== ""}
+                      />
+                  </Box>
+
+                  <Box style={{marginTop:10}}>
+                      <TextField
+                          required
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          value={lastName.value}
+                          placeholder={"Last Name"}
+                          label={"Last Name"}
+                          fullWidth
+                          onChange={onLastNameChange}
+                          helperText={lastName.error}
+                          error={lastName.error !== ""}
+                      />
+                  </Box>
+
+                  <Box style={{marginTop:10}}>
+                      <TextField
+                          required
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          value={email.value}
+                          placeholder={"Email"}
+                          label={"Email Name"}
+                          fullWidth
+                          onChange={onEmailChange}
+                          helperText={email.error}
+                          error={email.error !== ""}
+                      />
+                  </Box>
+                  <Box style={{marginTop:10}}>
+                      <TextField
+                          required
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          type={'text'}
+                          value={phoneNumber.value}
+                          placeholder={"Phone Number"}
+                          label={"Phone Number"}
+                          fullWidth
+                          onChange={onPhoneChange}
+                          helperText={phoneNumber.error}
+                          error={phoneNumber.error !== ""}
+                      />
+                  </Box>
+
+                  <Box style={{marginTop:10}}>
+                      <TextField
+                          required
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          value={userName.value}
+                          placeholder={"Username"}
+                          label={"Username"}
+                          fullWidth
+                          onChange={onUsernameChange}
+                          helperText={userName.error}
+                          error={userName.error !== ""}
+                      />
+                  </Box>
+
+                  <Box style={{marginTop:10}}>
+                      <TextField
+                          required
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          type={'password'}
+                          value={password.value}
+                          placeholder={"Password"}
+                          label={"Password"}
+                          fullWidth
+                          onChange={onPasswordChange}
+                          helperText={password.error}
+                          error={password.error !== ""}
+                      />
+                  </Box>
+
+                  <Box style={{marginTop: 10}}>
+
+                      <FormControl
+                          className={classes.formControl}
+                          fullWidth
+                          variant="outlined"
+                          size="small"
+                          error={userType.error !== ""}
+                      >
+                          <InputLabel id="type">
+                              User Type
+                          </InputLabel>
+                          <Select
+                              label={"User Type"}
+                              value={userType.value}
+                              onChange={onUserTypeChange}
+                          >
+                              <MenuItem value="SUPER_ADMIN">SUPER ADMIN</MenuItem>
+                              <MenuItem value="ORG_ADMIN">ORG ADMIN</MenuItem>
+                              <MenuItem value="LICENSE_MANAGER">LICENSE MANAGER</MenuItem>
+                          </Select>
+                          <FormHelperText>{userType.error}</FormHelperText>
+                      </FormControl>
+
+                  </Box>
+
+                  <Box style={{marginTop: 10}}>
+                      <Autocomplete
+                          fullWidth
+                          openOnFocus
+                          options={allRoles}
+                          getOptionLabel={(option) => option.name}
+                          onChange={onRoleChange}
+                          renderInput={(params) => (
+                              <TextField
+                                  {...params}
+                                  fullWidth
+                                  label={"Role"}
+                                  variant="outlined"
+                                  size="small"
+                                  helperText={roleId.error}
+                                  error={roleId.error !== ""}
+                              />
+                          )}
+                      />
+                  </Box>
+
+                  <Box style={{marginTop: 10}}>
+                      <Autocomplete
+                          fullWidth
+                          openOnFocus
+                          options={orgs}
+                          getOptionLabel={(option) => option.name}
+                          onChange={onOrganizationChange}
+                          renderInput={(params) => (
+                              <TextField
+                                  {...params}
+                                  fullWidth
+                                  label={"Organization"}
+                                  variant="outlined"
+                                  size="small"
+                                  helperText={organizationId.error}
+                                  error={organizationId.error !== ""}
+                              />
+                          )}
+                      />
+                  </Box>
 
 
+              </Box>
 
-            <Box style={{marginTop:10}}>
-              <Translate>
-                {({ translate }) => (
-                  <TextField
-                    required
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    value={description.value}
-                    placeholder={"Code"}
-                    label={"Code"}
-                    multiline={true}
-                    minRows={5}
-                    fullWidth
-                    onChange={onDescriptionChange}
-                    helperText={description.error}
-                    error={description.error !== ""}
-                  />
-                )}
-              </Translate>
-            </Box>
           </DialogContent>
 
           <DialogActions>
@@ -332,7 +697,9 @@ function Users(props){
               disabled={users.saving}
               variant="contained"
               color="primary"
-              onClick={()=>{}}
+              onClick={()=>{
+                  registerUser();
+              }}
               disableElevation
             >
               {users.saving ? (
