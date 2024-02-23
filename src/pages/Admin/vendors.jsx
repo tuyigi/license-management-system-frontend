@@ -24,8 +24,8 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt, Close, LocationCity
-  } from "@material-ui/icons";
+    Receipt, Close, LocationCity, WorkOutlineOutlined
+} from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
   import axios from "axios";
@@ -44,12 +44,12 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function Licenses(props) {
+function Vendors(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
     const [addNewOpen, setAddNewOpen] = useState(false);
-    const [licenses, setLicenses] = useState({
+    const [vendors, setVendors] = useState({
         page: 0,
         count: 1,
         rowsPerPage: 10,
@@ -63,25 +63,25 @@ function Licenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        getLicenses(accData.access_token);
+        getVendors(accData.access_token);
     }, [])
 
-    const [status, setStatus] = useState("No licenses available....");
-    const getLicenses = (token) => {
-        const licenseInstance = axios.create(new BackendService().getHeaders(token));
-        setLicenses({...licenses, loading: true});
-        licenseInstance
-            .get(new BackendService().LICENSES)
+    const [status, setStatus] = useState("No vendors available....");
+    const getVendors = (token) => {
+        const vendorInstance = axios.create(new BackendService().getHeaders(token));
+        setVendors({...vendors, loading: true});
+        vendorInstance
+            .get(new BackendService().VENDOR)
             .then(function (response) {
-                setLicenses({...licenses, loading: false});
+                setVendors({...vendors, loading: false});
                 const d = response.data;
                 if (d.data.length == 0) {
-                    setStatus("There are no users available.");
+                    setStatus("There are no vendors available.");
                 } else {
                     var lcs = d.data;
 
-                    setLicenses({
-                        ...licenses,
+                    setVendors({
+                        ...vendors,
                         data: lcs,
                     });
                     //set status
@@ -89,7 +89,7 @@ function Licenses(props) {
                 }
             })
             .catch(function (error) {
-                setLicenses({...licenses, loading: false});
+                setVendors({...vendors, loading: false});
                 var e = error.message;
 
                 if (error.response) {
@@ -102,37 +102,23 @@ function Licenses(props) {
 
 
     const [name, setName] = useState({value: "", error: ""});
-    const [code, setCode] = useState({value: "", error: ""});
+    const [website, setWebsite] = useState({value: "", error: ""});
     const [description, setDescription] = useState({value: "", error: ""});
     const onNameChange = (event) => {
         if (event.target.value === "") {
             setName({
                 value: "",
-                error: "Please enter valid license name",
+                error: "Please enter valid vendor name",
             });
         } else {
             setName({value: event.target.value, error: ""});
         }
     };
-    const onCodeChange = (event) => {
-        if (event.target.value === "") {
-            setCode({
-                value: "",
-                error: "Please enter valid license code",
-            });
-        } else {
-            setCode({value: event.target.value, error: ""});
-        }
+    const onWebsiteChange = (event) => {
+            setWebsite({value: event.target.value, error: ""});
     };
     const onDescriptionChange = (event) => {
-        if (event.target.value === "") {
-            setDescription({
-                value: "",
-                error: "Please enter valid description",
-            });
-        } else {
             setDescription({value: event.target.value, error: ""});
-        }
     };
 
 
@@ -142,53 +128,39 @@ function Licenses(props) {
                 value: "",
                 error: "Please provide valid name",
             });
-        } else if (code.value === "") {
-            setCode({
-                value: '',
-                error: 'Please provide valid code'
-            });
-        } else if (description.value === "'") {
-            setDescription({
-                value: '',
-                error: 'Please fulfill description'
-            })
         } else {
-            createLicense();
+            createVendor();
         }
     }
 
-    const createLicense = () => {
+    const createVendor = () => {
         const licenseInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
         );
-        setLicenses({...licenses, saving: true});
-
+        setVendors({...vendors, saving: true});
         const data = {
             name: name.value,
-            code: code.value,
-            description: description.value,
-            license_category: "INSTITUTION_LICENSE"
+            website: website.value,
+            description: description.value
         }
-
-
     licenseInstance
-        .post(new BackendService().LICENSES, data)
+        .post(new BackendService().VENDOR, data)
         .then(function (response) {
-            setLicenses({...licenses, saving: false});
+            setVendors({...vendors, saving: false});
             var d = response.data;
-            var lcs = licenses.data;
+            var lcs = vendors.data;
             const newLicense = d.data;
             lcs.unshift(newLicense);
-            setLicenses({
-                ...licenses,
+            setVendors({
+                ...vendors,
                 data: lcs,
             });
-            clearLicenseInfo()
+            clearVendorInfo()
             notify("success", response.data.message);
             setAddNewOpen(false);
         })
         .catch(function (error) {
-            setLicenses({...licenses, saving: false});
+            setVendors({...vendors, saving: false});
             var e = error.message;
             if (error.response) {
                 e = error.response.data.message;
@@ -200,10 +172,10 @@ function Licenses(props) {
 
     // clear data
 
-    const clearLicenseInfo = () => {
+    const clearVendorInfo = () => {
         setName({ value: "", error: "" });
         setDescription({ value: "", error: "" });
-        setCode({ value: "", error: "" });
+        setWebsite({ value: "", error: "" });
     };
 
     // notify
@@ -240,16 +212,16 @@ function Licenses(props) {
           },
         },
         {
-          name: "name",
-          label: "License Name",
+          name: "vendor_name",
+          label: "Vendor Name",
           options: {
             filter: false,
             sort: true,
           },
         },
         {
-          name: "code",
-          label: "License Code",
+          name: "vendor_website",
+          label: "Website",
           options: {
             filter: false,
             sort: false,
@@ -282,7 +254,7 @@ function Licenses(props) {
                 <Chip
                   avatar={
                     <Avatar>
-                      {licenses.data[dataI].status.toLowerCase() == "enabled" ? (
+                      {vendors.data[dataI].status.toLowerCase() == "enabled" ? (
                         <CheckCircle fontSize="small" />
                       ) : (
                           <Block fontSize="small" />
@@ -291,12 +263,12 @@ function Licenses(props) {
                   }
                   variant="outlined"
                   color={
-                    licenses.data[dataI].status.toLowerCase() == "enabled"
+                    vendors.data[dataI].status.toLowerCase() == "enabled"
                       ? "primary"
                       : "default"
                   }
                   size="small"
-                  label={Capitalize(licenses.data[dataI]?.status)}
+                  label={Capitalize(vendors.data[dataI]?.status)}
                 />
               );
             },
@@ -312,7 +284,7 @@ function Licenses(props) {
         selectableRowsOnClick: true,
         fixedHeader: true,
         onCellClick: (cellData, cellMeta) => {
-          var license = licenses.data[cellMeta.dataIndex];
+          var license = vendors.data[cellMeta.dataIndex];
 
         },
         searchProps: {
@@ -337,7 +309,7 @@ function Licenses(props) {
             setSelectedRows={setSelectedRows}
             toggleUser={()=>{}}
             openEdit={()=>{}}
-            toggling={licenses.toggling}
+            toggling={vendors.toggling}
           />
         ),
       };
@@ -359,7 +331,7 @@ function Licenses(props) {
           }}
         >
           <DialogTitle id="new-op">
-            Add New License Type
+            Add New Vendor
           </DialogTitle>
           <DialogContent>
             <Box style={{marginTop:10}}>
@@ -372,7 +344,7 @@ function Licenses(props) {
                     color="primary"
                     value={name.value}
                     placeholder={"Name"}
-                    label={"License Name"}
+                    label={"Vendor Name"}
                     fullWidth
                     onChange={onNameChange}
                     helperText={name.error}
@@ -386,17 +358,16 @@ function Licenses(props) {
               <Translate>
                 {({ translate }) => (
                   <TextField
-                    required
                     size="small"
                     variant="outlined"
                     color="primary"
-                    value={code.value}
-                    placeholder={"Code"}
-                    label={"License Code"}
+                    value={website.value}
+                    placeholder={"Website"}
+                    label={"Website"}
                     fullWidth
-                    onChange={onCodeChange}
-                    helperText={code.error}
-                    error={code.error !== ""}
+                    onChange={onWebsiteChange}
+                    helperText={website.error}
+                    error={website.error !== ""}
                   />
                 )}
               </Translate>
@@ -408,7 +379,6 @@ function Licenses(props) {
               <Translate>
                 {({ translate }) => (
                   <TextField
-                    required
                     size="small"
                     variant="outlined"
                     color="primary"
@@ -438,13 +408,13 @@ function Licenses(props) {
               Cancel
             </Button>
             <Button
-              disabled={licenses.saving}
+              disabled={vendors.saving}
               variant="contained"
               color="primary"
               onClick={()=>{ addLicense() }}
               disableElevation
             >
-              {licenses.saving ? (
+              {vendors.saving ? (
                 <CircularProgress size={23} />
               ) : (
                 "Save"
@@ -457,10 +427,10 @@ function Licenses(props) {
         <Box display="flex" style={{display: "flex"}}>
           <Box mr={2}>
             {" "}
-            <LocationCity color="primary" fontSize="large" />
+            <WorkOutlineOutlined color="primary" fontSize="large" />
           </Box>
           <Typography variant="h5" className={classes.title}>
-            <b>Institution License Types</b>
+            <b>Vendors</b>
           </Typography>
           <Button
             className={classes.btn}
@@ -473,15 +443,15 @@ function Licenses(props) {
              setAddNewOpen(true);
             }}
           >
-            New License Type
+            New Vendor
           </Button>
         </Box>
         <Box style={{marginTop: 20}} />
   
-        {licenses.loading && <LinearProgress />}
+        {vendors.loading && <LinearProgress />}
         <MUIDataTable
-          title={"List of License Types"}
-          data={licenses.data}
+          title={"List of vendors"}
+          data={vendors.data}
           columns={columns}
           options={options}
         />
@@ -491,28 +461,10 @@ function Licenses(props) {
 
 
 function CustomLicenseToolbar(props) {
-    const { toggleUser, displayData, selectedRows, openEdit } = props;
-  
-    var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
-  
+    const {displayData, selectedRows, openEdit } = props;
     return (
       <Box display="flex" alignItems="center">
-        <FormControlLabel
-          control={
-            <Switch
-              disabled={props.toggling}
-              checked={check}
-              onChange={() => {
-                toggleUser(displayData[selectedRows?.data[0]?.index]?.data[0]);
-              }}
-              value="vertical"
-              color="primary"
-            />
-          }
-          label={check ? "Deactivate License" : "Activate License"}
-        />
-  
-        <Button
+          <Button
           color="primary"
           variant="outlined"
           size="small"
@@ -523,10 +475,8 @@ function CustomLicenseToolbar(props) {
         >
           Edit
         </Button>
-  
-
       </Box>
     );
   }
 
-export default withLocalize(Licenses);
+export default withLocalize(Vendors);

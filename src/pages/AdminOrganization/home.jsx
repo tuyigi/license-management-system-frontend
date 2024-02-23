@@ -40,7 +40,12 @@ import {
     ExpandLess,
     ExpandMore,
     ArrowRight,
-    Receipt, Business, AccountTree, PeopleAltOutlined, AssessmentOutlined,
+    Receipt,
+    Business,
+    AccountTree,
+    PeopleAltOutlined,
+    AssessmentOutlined,
+    Computer
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -49,6 +54,7 @@ import Dashboard from "./dashboard";
 import LicenseRequest from "./license_requests";
 import LicenseRequestReport from "./reports/report_approved_license";
 import Settings from "./../shared/settings";
+import SoftwareLicenseRequest from "./software_license_requests";
 
 
 
@@ -73,6 +79,12 @@ const routes = [
         main: () => <LicenseRequest/>,
     },
     {
+        path: "/orgAdmin/softwareRequests",
+        exact: true,
+        permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST",
+        main: () => <SoftwareLicenseRequest/>,
+    },
+    {
         path: "/orgAdmin/report",
         exact: true,
         permission: "CAN_VIEW_REPORT",
@@ -91,7 +103,8 @@ const routes = [
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
-    { name: "Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
+    { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
+    { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/report", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "Approved Licenses ", path: "/orgAdmin/report"}

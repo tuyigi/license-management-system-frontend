@@ -147,7 +147,6 @@ function RolePermission(props){
     const [privOpen, setPrivOpen] = useState(false);
     const [name, setName] = useState({ value: "", error: "" });
     const [description, setDescription] = useState({ value: "", error: "" });
-    const [organization, setOrganization] = useState({ value: "", error: "" });
   
     const [privDescription, setPrivDescription] = useState({
       value: "",
@@ -337,6 +336,52 @@ function RolePermission(props){
             });
     };
 
+    const createRole = () => {
+        const roleInstance = axios.create(
+            new BackendService().getHeaders()
+        );
+        setRoles({ ...roles, saving: true });
+        console.log("Create role .....");
+        const data = {
+            description: description.value,
+            name: name.value,
+        };
+        const url = new BackendService().ROLES;
+        roleInstance
+            .post(url, data)
+            .then(function (response) {
+                setRoles({ ...roles, saving: false });
+                const d = response.data;
+
+                const rls = roles.data;
+                rls.push(d.data);
+                setRoles({ ...roles, data: rls, data2: rls });
+                setSelectedRole({ index: selectedRole.index, role: d.data });
+
+                notify("success", d.message);
+
+                clearRoleForm();
+                setEditRoleMode(false);
+                setNewRoleOpen(false);
+            })
+            .catch(function (error) {
+                setRoles({ ...roles, saving: false });
+
+                var e = error.message;
+
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+
+                notify(error?.response?.status==404?"info":"error", e, error?.response?.status);
+            });
+    };
+
+    const clearRoleForm=()=>{
+        setName({ value: "", error: ""});
+        setDescription({ value: "", error: ""});
+    }
+
 
 
 
@@ -365,6 +410,8 @@ function RolePermission(props){
         <div className={classes.root}>
         <Dialog
           open={newRoleOpen}
+          maxWidth="sm"
+          fullWidth
           onClose={() => setNewRoleOpen(false)}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
@@ -372,7 +419,7 @@ function RolePermission(props){
           <DialogTitle id="alert-dialog-title">{"Add new role"}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              Create new role in given organization and adjust privileges later.
+              Create new role and adjust privileges later.
             </DialogContentText>
   
             <Box style={{marginTop: 10}}>
@@ -386,7 +433,14 @@ function RolePermission(props){
                     placeholder={"Name"}
                     label={"Name"}
                     fullWidth
-                    onChange={()=>{}}
+                    onChange={(v)=>{
+                        if(v.target.value===""){
+                            setName({value: "", error: "Name is required"});
+                        }else{
+                            setName({value: v.target.value, error: ""})
+                        }
+                    }
+                  }
                     helperText={name.error}
                     error={name.error !== ""}
                   />
@@ -407,44 +461,26 @@ function RolePermission(props){
                     placeholder={"Description"}
                     label={"Description"}
                     fullWidth
-                    onChange={()=>{}}
+                    onChange={(v)=>{
+                        if(v.target.value === ""){
+                            setDescription({ value: "", error: "Description is required"})
+                        }else{
+                            setDescription({ value: v.target.value, error: ""})
+                        }
+                    }}
                     helperText={description.error}
                     error={description.error !== ""}
                   />
                 )}
               </Translate>
             </Box>
-  
-            {/* <Box mt={2}>
-              <FormControl
-                className={classes.formControl}
-                fullWidth
-                variant="outlined"
-                size="small"
-                error={organization.error !== ""}
-              >
-                <InputLabel id="type">
-                  <Translate id="roles.forms.labels.role_organization" />
-                </InputLabel>
-                <Select
-                  label={<Translate id="roles.forms.labels.role_organization" />}
-                  value={organization.value}
-                  onChange={()=>{}}
-                >
-                  {orgs.map((org, i) => (
-                    <MenuItem value={org.organization_id}>{org.name}</MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{organization.error}</FormHelperText>
-              </FormControl>
-            </Box> */}
           </DialogContent>
           <DialogActions>
             <Button
               variant="outlined"
               onClick={() => {
                 setNewRoleOpen(false);
-                // clearRoleForm();
+                clearRoleForm();
               }}
               color="primary"
             >
@@ -455,7 +491,9 @@ function RolePermission(props){
               color="primary"
               autoFocus
               disabled={roles.saving}
-              onClick={()=>{}}
+              onClick={()=>{
+                  createRole();
+              }}
               disableElevation
             >
               {roles.saving ? <CircularProgress size={23} /> : "Save"}
@@ -633,7 +671,7 @@ function RolePermission(props){
           }}
           elevation={4}
         >
-          <Box m={2}>
+          <Box style={{margin: 10}}>
             <TextField
               size="small"
               variant="outlined"
@@ -1063,28 +1101,28 @@ function RolePermission(props){
                         Assign privileges
                     </Button>
 
-                        <Button
-                            variant="outlined"
-                            color="primary"
-                            className={classes.btn}
-                            disableElevation
-                            onClick={() => {
-                                setEditRoleMode(true);
-                                setNewRoleOpen(true);
-                                setName({ value: selectedRole.role.name, error: "" });
-                                setDescription({
-                                    value: selectedRole.role.description,
-                                    error: "",
-                                });
-                                setOrganization({
-                                    value: selectedRole.role.organization_id,
-                                    error: "",
-                                });
-                            }}
-                            startIcon={<Edit />}
-                        >
-                            Edit
-                        </Button>
+                        {/*<Button*/}
+                        {/*    variant="outlined"*/}
+                        {/*    color="primary"*/}
+                        {/*    className={classes.btn}*/}
+                        {/*    disableElevation*/}
+                        {/*    onClick={() => {*/}
+                        {/*        setEditRoleMode(true);*/}
+                        {/*        setNewRoleOpen(true);*/}
+                        {/*        setName({ value: selectedRole.role.name, error: "" });*/}
+                        {/*        setDescription({*/}
+                        {/*            value: selectedRole.role.description,*/}
+                        {/*            error: "",*/}
+                        {/*        });*/}
+                        {/*        setOrganization({*/}
+                        {/*            value: selectedRole.role.organization_id,*/}
+                        {/*            error: "",*/}
+                        {/*        });*/}
+                        {/*    }}*/}
+                        {/*    startIcon={<Edit />}*/}
+                        {/*>*/}
+                        {/*    Edit*/}
+                        {/*</Button>*/}
                     </Box>
 
   
@@ -1130,8 +1168,8 @@ function RolePermission(props){
                       }}
 
                     >
-                      <Box mt={2}>
-                        <img src={NoData} alt="Empty data" height={100} />
+                      <Box style={{marginTop: 10}}>
+                        <img src={NoData} alt="Empty data" height={200} />
                       </Box>
                       <Typography color="textSecondary">
                         There are no privileges found.

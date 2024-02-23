@@ -40,7 +40,14 @@ import {
     ExpandLess,
     ExpandMore,
     ArrowRight,
-    Receipt, Business, AccountTree, PeopleAltOutlined, AssessmentOutlined,
+    Receipt,
+    Business,
+    AccountTree,
+    PeopleAltOutlined,
+    AssessmentOutlined,
+    Computer,
+    LocationCity,
+    WorkOutlineOutlined
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -54,6 +61,8 @@ import Settings from "./settings";
 import Users from "./users";
 import LicenseTracking from "./reports/license_tracking";
 import OrganizationLicenses from "./reports/organization_licenses";
+import SoftwareLicenses from "./sofwate_licenses";
+import Vendors from "./vendors";
 
 const routes = [
     {
@@ -73,6 +82,18 @@ const routes = [
         exact: true,
         permission: "CAN_VIEW_LICENSE",
         main: () =>  <Licenses/>,
+    },
+    {
+        path: "/bnr/vendors",
+        exact: true,
+        permission: "CAN_VIEW_VENDOR",
+        main: () =>  <Vendors/>,
+    },
+    {
+        path: "/bnr/softwareLicense",
+        exact: true,
+        permission: "CAN_VIEW_SOFTWARE_LICENSE",
+        main: () =>  <SoftwareLicenses/>,
     },
     {
         path: "/bnr/organization",
@@ -115,7 +136,9 @@ const routes = [
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/bnr/home",permission: "CAN_VIEW_HOME", },
-    { name: "Licenses", icon: <Receipt color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
+    { name: "Vendors", icon: <WorkOutlineOutlined color={"primary"}/>, path: "/bnr/vendors", permission: "CAN_VIEW_VENDOR"},
+    { name: "Software Licenses", icon: <Computer color={"primary"}/>, path: "/bnr/softwareLicense", permission: "CAN_VIEW_SOFTWARE_LICENSE"},
+    { name: "Institution Licenses", icon: <LocationCity color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
     { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
     { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/rolePermission", permission: "CAN_VIEW_ROLE_PERMISSION"},
     { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/user", permission: "CAN_VIEW_ROLE_USER"},

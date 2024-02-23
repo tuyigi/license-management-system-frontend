@@ -26,7 +26,8 @@ import {
     Edit,
     Receipt,
     Close,
-    VisibilityOutlined
+    VisibilityOutlined,
+    Computer
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import { Capitalize } from "../../helpers/capitalize";
@@ -48,11 +49,11 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function LicenseRequest(props) {
+function SoftwareLicenseRequest(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
-    const licensess = useLicenses("INSTITUTION_LICENSE");
+    const licensess = useLicenses("SOFTWARE_LICENSE");
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [licenses, setLicenses] = useState({
         page: 0,
@@ -88,7 +89,7 @@ function LicenseRequest(props) {
                         console.log(da);
                         da['license_name']=da.license_id.name;
                     })
-                    lcs = lcs.filter((l)=>l['license_id']['license_category']==='INSTITUTION_LICENSE');
+                    lcs = lcs.filter((l)=>l['license_id']['license_category']==='SOFTWARE_LICENSE');
                     setLicenses({
                         ...licenses,
                         data: lcs,
@@ -557,10 +558,10 @@ function LicenseRequest(props) {
             <Box display="flex" style={{display: "flex"}}>
                 <Box mr={2}>
                     {" "}
-                    <Receipt color="primary" fontSize="large" />
+                    <Computer color="primary" fontSize="large" />
                 </Box>
                 <Typography variant="h5" className={classes.title}>
-                    <b>License Requests</b>
+                    <b>Software License Requests</b>
                 </Typography>
                 <Button
                     className={classes.btn}
@@ -588,4 +589,4 @@ function LicenseRequest(props) {
     );
 }
 
-export default withLocalize(LicenseRequest);
+export default withLocalize(SoftwareLicenseRequest);

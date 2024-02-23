@@ -24,6 +24,8 @@ class BackendService {
     this.LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest"
     this.REVIEW_LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest/reportView/"
     this.DECISION_LICENSE_REQUEST = this.BASE_URL + "/api/v1/licenseRequest/decision/";
+    this.APPROVED_LICENSE_TYPE_STATS = this.BASE_URL + "/api/v1/reports/licenseTypeStats";
+    this.VENDOR= this.BASE_URL + "/api/v1/vendor";
   }
 
   getHeaders = (token) => {

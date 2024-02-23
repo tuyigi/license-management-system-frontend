@@ -9,7 +9,17 @@ import {
     FormControlLabel,
     Avatar,
     Switch,
-    Box, IconButton, FormControl, InputLabel, Select, MenuItem, FormHelperText
+    Box,
+    IconButton,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormHelperText,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText
 } from "@material-ui/core";
 import {
     CircularProgress,
@@ -27,7 +37,7 @@ import {
     Receipt,
     Close,
     NoteOutlined,
-    VisibilityOutlined
+    VisibilityOutlined, HelpOutline, Business, AvTimer, MergeType, DescriptionOutlined
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import { Capitalize } from "../../../helpers/capitalize";
@@ -53,7 +63,6 @@ function LicenseRequestReport(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
-    const licensess = useLicenses();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [licenses, setLicenses] = useState({
         page: 0,
@@ -84,11 +93,12 @@ function LicenseRequestReport(props) {
                 if (d.data.length == 0) {
                     setStatus("There are no license requests available.");
                 } else {
-                    var lcs = d.data;
+                    var lcs = d.data.filter((d)=>d.request_status=="APPROVED");
                     lcs.map((da)=>{
                         console.log(da);
                         da['license_name']=da.license_id.name;
                     })
+
                     setLicenses({
                         ...licenses,
                         data: lcs,
@@ -108,150 +118,6 @@ function LicenseRequestReport(props) {
             });
     };
 
-
-    const [licenseId, setLicenseId] = useState({value: "", error: ""});
-    const [licensePeriod, setLicensePeriod] = useState({value: "", error: ""});
-    const [licensePeriodCount, setLicensePeriodCount] = useState({value: "", error: ""});
-    const [requestType, setRequestType] = useState({value: "", error: ""});
-    const [description, setDescription] = useState({value: "", error: ""});
-
-    const onLicenseIdChange = (event,v) => {
-        if (v === null) {
-            setLicenseId({
-                value: "",
-                error: "Please select license",
-            });
-        } else {
-            setLicenseId({value: v.id, error: ""});
-        }
-    };
-    const onLicensePeriodChange = (event) => {
-        if (event.target.value === "") {
-            setLicensePeriod({
-                value: "",
-                error: "Please select license period",
-            });
-        } else {
-            setLicensePeriod({value: event.target.value, error: ""});
-        }
-    };
-    const onDescriptionChange = (event) => {
-        if (event.target.value === "") {
-            setDescription({
-                value: "",
-                error: "Please enter valid description",
-            });
-        } else {
-            setDescription({value: event.target.value, error: ""});
-        }
-    };
-
-    const onLicensePeriodCountChange = (event) => {
-        if (event.target.value === "") {
-            setLicensePeriodCount({
-                value: "",
-                error: "Please enter valid license period count",
-            });
-        } else {
-            setLicensePeriodCount({value: event.target.value, error: ""});
-        }
-    };
-
-    const onRequstTypeChange = (event) => {
-        if (event.target.value === "") {
-            setRequestType({
-                value: "",
-                error: "Please select request type",
-            });
-        } else {
-            setRequestType({value: event.target.value, error: ""});
-        }
-    };
-
-
-    const addLicense = () => {
-        if (licenseId.value === "") {
-            setLicenseId({
-                value: "",
-                error: "Please select license type",
-            });
-        } else if (requestType.value === "") {
-            setRequestType({
-                value: '',
-                error: 'Please select request type'
-            });
-        } else if (description.value === "'") {
-            setDescription({
-                value: '',
-                error: 'Please fulfill description'
-            })
-        }else if (licensePeriod.value === "'") {
-            setLicensePeriod({
-                value: '',
-                error: 'Please select license period'
-            })
-        } else if (licensePeriodCount.value === "'") {
-            setLicensePeriod({
-                value: '',
-                error: 'Please enter license period count'
-            })
-        } else {
-            requestLicense();
-        }
-    }
-
-    const requestLicense = () => {
-        const licenseInstance = axios.create(
-            new BackendService().getHeaders(accountData.token)
-        );
-        setLicenses({...licenses, saving: true});
-
-        const data = {
-            license_id:licenseId.value,
-            organization_id:accountData.user.organization_id.id,
-            license_period:licensePeriod.value,
-            license_period_count:parseInt(licensePeriodCount.value),
-            requested_by:accountData.user.id,
-            request_type:requestType.value,
-            description: description.value
-        }
-        licenseInstance
-            .post(new BackendService().LICENSE_REQUEST, data)
-            .then(function (response) {
-                setLicenses({...licenses, saving: false});
-                var d = response.data;
-                var lcs = licenses.data;
-                const newLicense = d.data;
-                newLicense['license_name'] = newLicense.license_id.name
-                lcs.unshift(newLicense);
-                setLicenses({
-                    ...licenses,
-                    data: lcs,
-                });
-                clearLicenseInfo()
-                notify("success", response.data.message);
-                setAddNewOpen(false);
-            })
-            .catch(function (error) {
-                setLicenses({...licenses, saving: false});
-                var e = error.message;
-                if (error.response) {
-                    e = error.response.data.message;
-                }
-                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
-            });
-
-    }
-
-    // clear data
-
-    const clearLicenseInfo = () => {
-        setLicenseId({value: "", error: ""});
-        setLicensePeriod({value: "", error: ""});
-        setLicensePeriodCount({value: "", error: ""});
-        setRequestType({value: "", error: ""});
-        setDescription({value: "", error: ""});
-    };
 
     // notify
 
@@ -274,6 +140,9 @@ function LicenseRequestReport(props) {
         });
     };
 
+    // dialog for displaying software license details
+    const [currentApprovedLicense, setCurrentApprovedLicense] = useState(null);
+    const [detailsDialog,setDetailsDialog] = useState(false);
 
     // start table config
     const columns = [
@@ -391,7 +260,16 @@ function LicenseRequestReport(props) {
                 displayData={displayData}
                 setSelectedRows={setSelectedRows}
                 toggleUser={()=>{}}
-                openEdit={()=>{}}
+                openEdit={(id)=>{
+                    const approvedLicense = licenses.data.filter((d)=>d.id===id)[0];
+                    console.log(approvedLicense);
+                    if(approvedLicense['license_id']['license_category']=='SOFTWARE_LICENSE'){
+                        setCurrentApprovedLicense(approvedLicense);
+                        setDetailsDialog(true);
+                    }else{
+                        window.open("http://localhost:8000/api/v1/licenseRequest/download/"+id, "_blank");
+                    }
+                }}
                 toggling={licenses.toggling}
             />
         ),
@@ -401,7 +279,75 @@ function LicenseRequestReport(props) {
 
     return(
         <div className={classes.root}>
-            {/* Dialogs ends here */}
+            {/*start details dialog*/}
+            <Dialog
+                open={detailsDialog}
+                maxWidth="sm"
+                fullWidth
+                onClose={() => {
+                    setDetailsDialog(false);
+                }}
+            >
+                <DialogContent>
+                        <Box style={{display:'flex',justifyContent:'center'}}>
+                            <Typography variant={"h5"}>License Details</Typography>
+                        </Box>
+                        <Box style={{display:'flex',justifyContent:'center',alignContent:'center',alignItems:'center',justifyItems:'center'}}>
+                            <List dense={true}>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <Receipt />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="License"
+                                        secondary={currentApprovedLicense?.license_name}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <AvTimer />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="Duration"
+                                        secondary={`${currentApprovedLicense?.license_period_count} ${currentApprovedLicense?.license_period}`}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <MergeType />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="Request Type"
+                                        secondary={`${currentApprovedLicense?.request_type}`}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <DescriptionOutlined />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="Description"
+                                        secondary={`${currentApprovedLicense?.description}`}
+                                    />
+                                </ListItem>
+                            </List>
+                        </Box>
+
+                </DialogContent>
+
+                <DialogActions>
+                        <Button
+                            onClick={() => {
+                                setDetailsDialog(false)
+                            }}
+                            variant="outlined"
+                            color="primary"
+                        >
+                            Close
+                        </Button>
+                </DialogActions>
+            </Dialog>
+            {/*end details dialog*/}
             <Box display="flex" style={{display: "flex"}}>
                 <Box mr={2}>
                     {" "}
@@ -428,7 +374,6 @@ function LicenseRequestReport(props) {
 
 function CustomLicenseToolbar(props) {
     const { toggleUser, displayData, selectedRows, openEdit } = props;
-    var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
     return (
         <Box display="flex" alignItems="center">
             <Button
@@ -436,9 +381,10 @@ function CustomLicenseToolbar(props) {
                 variant="outlined"
                 size="small"
                 startIcon={<VisibilityOutlined />}
-                onClick={() =>
+                onClick={() =>{
                     openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
                 }
+            }
             >
                 View License
             </Button>

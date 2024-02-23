@@ -40,13 +40,20 @@ import {
     ExpandLess,
     ExpandMore,
     ArrowRight,
-    Receipt, Business, AccountTree, PeopleAltOutlined, AssessmentOutlined,
+    Receipt,
+    Business,
+    AccountTree,
+    PeopleAltOutlined,
+    AssessmentOutlined,
+    Computer
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
-import { Link, Switch, Route, useHistory } from "react-router-dom";
+import { Switch, Route, useHistory } from "react-router-dom";
 import  Dashboard  from "./dashboard";
 import LicenseRequest from "./license_requests";
+import Settings from "../shared/settings";
+import SoftwareLicenseRequest from "../LicenseManager/software_license_requests";
 
 
 
@@ -65,10 +72,22 @@ const routes = [
         main: () =>  <Dashboard/>,
     },
     {
+        path: "/licenseManager/softwareLicenseRequest",
+        exact: true,
+        permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST",
+        main: () =>  <SoftwareLicenseRequest/>,
+    },
+    {
         path: "/licenseManager/license",
         exact: true,
         permission: "CAN_VIEW_LICENSE_REQUEST",
         main: () =>  <LicenseRequest/>,
+    },
+    {
+        path: "/licenseManager/settings",
+        exact: true,
+        permission: "CAN_VIEW_SETTINGS",
+        main: () =>  <Settings/>,
     },
     {
       main: () => <></>,
@@ -77,7 +96,8 @@ const routes = [
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/licenseManager/home",permission: "CAN_VIEW_HOME", },
-    { name: "License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
+    { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
+    { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/report", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "Organization Licenses", path: "/licenseManager/licenseRequests"},
@@ -87,8 +107,8 @@ const menus = [
 ];
 
 const menus2 = [
-    { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/bnr/settings" ,permission:"CAN_VIEW_SETTINGS",},
-    { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/bnr/logout" },
+    { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/licenseManager/settings" ,permission:"CAN_VIEW_SETTINGS",},
+    { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/licenseManager/logout" },
   ];
 
 const drawerWidth = 250;
@@ -248,7 +268,7 @@ function LicenseManagerHome(props) {
               button
               key={menu.name}
               onClick={() => {
-                if (menu.path === "/bnr/logout") {
+                if (menu.path === "/licenseManager/logout") {
                   setLogoutOpen(true);
                 } else {
                   history.push(menu.path);

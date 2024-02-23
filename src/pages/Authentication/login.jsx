@@ -77,12 +77,15 @@ function Login(props) {
     const data1 = localStorage.getItem("LMIS");
     if (data1 != null) {
       var data = JSON.parse(data1);
-      if (data?.user.organization_id.organization_type == "LISENCE_ISSUER") {
+      if (data?.user.organization_id.organization_type == "LICENSE_ISSUER") {
         if (data?.user.user_type === "SUPER_ADMIN") {
           history.push("/bnr");
           return;
-        }else if(data?.user.organization_id.organization_type =="LICENSE_MANAGER"){
+        }else if(data?.user.user_type =="LICENSE_MANAGER"){
           history.push("/licenseManager");
+          return;
+        }else if(data?.user.user_type === "END_USER"){
+          history.push("/orgAdmin");
           return;
         }
       }else {
@@ -199,6 +202,13 @@ function Login(props) {
                 JSON.stringify(response.data.data)
             );
             history.push("/licenseManager");
+            break;
+          case "END_USER":
+            localStorage.setItem(
+                "LMIS",
+                JSON.stringify(response.data.data)
+            );
+            history.push("/orgAdmin");
             break;
           default:
             enqueueSnackbar("Unimplemeted or unknown organization", {

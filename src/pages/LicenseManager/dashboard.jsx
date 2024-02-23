@@ -11,6 +11,17 @@ import RejectIcon from "../../assets/img/reject.png";
 import ApproveIcon from "../../assets/img/approve.png";
 import { useSnackbar } from 'notistack';
 import Format from "date-fns/format";
+import {useGlobalOrganizationLicenseRequest, useOrganizationLicenseRequest} from "../../hooks/use_hooks";
+import {
+    allocatedLicenseChart,
+    licenseRequestStatusChart,
+    organizationLicenseRequestStats
+} from "../../hooks/dashboard_data";
+import {
+    useApprovedLicenseTypeStats,
+    useLicenseRequestStatusStats,
+    useOrganizationLicenseRequestStatusStats
+} from "../../hooks/use_dashboard";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -53,71 +64,12 @@ const useStyles = makeStyles((theme) => ({
 function Dashboard(){
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const licenseStats = useGlobalOrganizationLicenseRequest();
+    const [licenseRequestStatusStats, getLicenseRequestStatusStats] = useLicenseRequestStatusStats()
+    const [approvedLicenseRequestStats, getApprovedLicenseTypeStats] = useApprovedLicenseTypeStats()
     useEffect(()=>{
 
     },[]);
-
-    // metric organization  by type
-    const [ allocatedLicenseChart, setAllocatedLicenseChart ] = useState(
-        {
-
-            series: [{
-                data: [21, 22, 10, 28, 16, 21]
-            }],
-            options: {
-                chart: {
-                    height: 350,
-                    type: 'bar',
-                    events: {
-                        click: function(chart, w, e) {
-                            // console.log(chart, w, e)
-                        }
-                    }
-                },
-                colors: [],
-                plotOptions: {
-                    bar: {
-                        columnWidth: '45%',
-                        distributed: true,
-                    }
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                legend: {
-                    show: false
-                },
-                xaxis: {
-                    categories: [
-                        'E-Money',
-                        'Remittance',
-                        'Payment aggregation',
-                        'Payment System Operator',
-                        'Cheque Printing',
-                        'CSD Stock Broker',
-                    ],
-                    labels: {
-                        style: {
-                            colors: [],
-                            fontSize: '12px'
-                        }
-                    }
-                }
-            },
-
-
-        }
-    );
-
-
-    // metric license request by status
-    const [ licenseRequestStatusChart, setLicenseRequestStatusChart ] = useState(
-        {
-            options: {
-                series: [44, 55, 41, 17],
-                labels: ['PENDING', 'REVIEWED', 'APPROVED', 'REJECTED']},
-        }
-    );
 
 
     return(
@@ -134,7 +86,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}} ><Typography variant="h8"><b>Pending</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">0</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="PENDING")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="PENDING")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -150,7 +102,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}}><Typography variant="h8" ><b>Reviewed</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">0</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="REVIEWED")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="REVIEWED")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -161,12 +113,12 @@ function Dashboard(){
                         </Paper>
                     </Grid>
 
-                    <Grid item xs={12} md={3} lg={3} sm={3} >
+                    <Grid item xs={12} md={3} lg={3} sm={3}>
                         <Paper className={classes.paper3} elevation={0}>
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}}><Typography variant="h8" ><b>Approved</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">0</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="APPROVED")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="APPROVED")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -177,12 +129,12 @@ function Dashboard(){
                         </Paper>
                     </Grid>
 
-                    <Grid item xs={12} md={3} lg={3} sm={3} >
+                    <Grid item xs={12} md={3} lg={3} sm={3}>
                         <Paper className={classes.paper3} elevation={0}>
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}}><Typography variant="h8" ><b>Rejected</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">0</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="REJECTED")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="REJECTED")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -196,16 +148,18 @@ function Dashboard(){
 
                     <Grid item xs={12} md={4} lg={4} sm={4}>
                         <Paper style={{minHeight: 380,}} elevation={0}>
-                            <Typography style={{marginLeft: 20}}> Licenses Status </Typography>
-                            <Chart options={licenseRequestStatusChart.options} series={licenseRequestStatusChart.options.series} type="pie" height={350} />
+                            <Typography style={{marginLeft: 20}}><b>Licenses Status</b></Typography>
+                            {/*<Chart type="donut" options={licenseRequestStatusChart(licenseRequestStatusStats).options}*/}
+                            {/*       series={licenseRequestStatusChart(licenseRequestStatusStats).series}  width={380}/>*/}
+                            <Chart type="pie" options={licenseRequestStatusChart(licenseRequestStatusStats).options}
+                                   series={licenseRequestStatusChart(licenseRequestStatusStats).series}  width={380}/>
                         </Paper>
                     </Grid>
 
-
                     <Grid item xs={12} md={8} lg={8} sm={8}>
                         <Paper style={{minHeight: 380,}} elevation={0}>
-                            <Typography style={{marginLeft: 20}}> Licenses Allocated </Typography>
-                            <Chart options={allocatedLicenseChart.options} series={allocatedLicenseChart.series} type="bar" height={350} />
+                            <Typography style={{marginLeft: 20}}><b>Licenses Allocated</b></Typography>
+                            <Chart options={allocatedLicenseChart(approvedLicenseRequestStats).options} series={allocatedLicenseChart(approvedLicenseRequestStats).series} type="bar" height={350} />
                         </Paper>
                     </Grid>
 

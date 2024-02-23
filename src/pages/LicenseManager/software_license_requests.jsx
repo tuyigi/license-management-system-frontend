@@ -9,7 +9,18 @@ import {
     FormControlLabel,
     Avatar,
     Switch,
-    Box, IconButton, FormControl, InputLabel, Select, MenuItem, FormHelperText
+    Box,
+    IconButton,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormHelperText,
+    Grid,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText
 } from "@material-ui/core";
 import {
     CircularProgress,
@@ -28,7 +39,13 @@ import {
     Close,
     VisibilityOutlined,
     RateReviewOutlined,
-    HelpOutline
+    HelpOutline,
+    Computer,
+    Business,
+    AvTimer,
+    MergeType,
+    DescriptionOutlined,
+    Cached
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import {Capitalize} from "../../helpers/capitalize";
@@ -49,7 +66,7 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function LicenseRequest(props) {
+function SoftwareLicenseRequest(props) {
     const classes = useStyles();
     const {enqueueSnackbar, closeSnackbar} = useSnackbar();
     const history = useHistory();
@@ -88,8 +105,9 @@ function LicenseRequest(props) {
                     lcs.map((da) => {
                         da['license_name'] = da.license_id.name;
                         da['organization_name'] = da.organization_id.name;
+                        da['vendor_name'] = da.license_id?.vendor?.vendor_name;
                     })
-                    lcs = lcs.filter((l)=>l['license_id']['license_category']==='INSTITUTION_LICENSE');
+                    lcs = lcs.filter((l)=>l['license_id']['license_category']==='SOFTWARE_LICENSE');
                     setLicenses({
                         ...licenses,
                         data: lcs,
@@ -201,6 +219,9 @@ function LicenseRequest(props) {
         });
     };
 
+    // set current license request
+    const [licenseRequestOne,setLicenseRequestOne] = useState(null);
+
 
     // start table config
     const columns = [
@@ -214,8 +235,8 @@ function LicenseRequest(props) {
             },
         },
         {
-            name: "organization_name",
-            label: "Organization Name",
+            name: "vendor_name",
+            label: "Vendor Name",
             options: {
                 filter: false,
                 sort: true,
@@ -283,7 +304,7 @@ function LicenseRequest(props) {
                                     {licenses.data[dataI].request_status.toLowerCase() == "approved" ? (
                                         <CheckCircle fontSize="small"/>
                                     ) : (
-                                        <Block fontSize="small"/>
+                                        <Cached fontSize="small"/>
                                     )}
                                 </Avatar>
                             }
@@ -330,19 +351,23 @@ function LicenseRequest(props) {
                 selectedRows={selectedRows}
                 displayData={displayData}
                 setSelectedRows={setSelectedRows}
-                toggleUser={() => {
-                }}
+                setCurrentRequest={setCurrentRequest}
                 openReview={reviewLicenseRequest}
                 toggling={licenses.toggling}
             />
         ),
     };
 
+    const setCurrentRequest = (id) =>{
+        const obj = licenses.filter((d)=> d.id===id);
+        setLicenseRequestOne(obj);
+    }
+
     // end table config
     const [licenseRequest,setLicenseRequest] = useState(null);
 
     const reviewLicenseRequest = (id) => {
-        const request = licenses.data.filter((d) => d.id == id)[0]
+        const request = licenses.data.filter((d) => d.id === id)[0]
         setLicenseRequest(request);
         console.log('request',request);
         if (request['request_status'] === "PENDING") {
@@ -442,8 +467,59 @@ function LicenseRequest(props) {
                         <HelpOutline style={{fontSize:'60'}}/>
                     </Box>
                         <Box style={{display:'flex',justifyContent:'center'}}>
-                            Please decide whether license request is approved or reject
-                        </Box></>}
+                            Please review and decide whether license request is approved or reject
+                        </Box>
+                        <Box style={{display:'flex',justifyContent:'center',alignContent:'center',alignItems:'center',justifyItems:'center'}}>
+                            <List dense={true}>
+                                    <ListItem>
+                                        <ListItemIcon>
+                                            <Business />
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary="Vendor"
+                                            secondary={licenseRequest?.vendor_name}
+                                        />
+                                    </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <Receipt />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="License"
+                                        secondary={licenseRequest?.license_name}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <AvTimer />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="Duration"
+                                        secondary={`${licenseRequest?.license_period_count} ${licenseRequest?.license_period}`}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <MergeType />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="Request Type"
+                                        secondary={licenseRequest?.request_type}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <DescriptionOutlined />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="Description"
+                                        secondary={licenseRequest?.description}
+                                    />
+                                </ListItem>
+                            </List>
+                        </Box>
+
+                    </>}
                     {licenseRequest?.request_status=="APPROVED"&&<Box style={{display:'flex',justifyContent:'center'}}>
                         Decision already taken!
                     </Box>}
@@ -484,10 +560,10 @@ function LicenseRequest(props) {
             <Box display="flex" style={{display: "flex"}}>
                 <Box mr={2}>
                     {" "}
-                    <Receipt color="primary" fontSize="large"/>
+                    <Computer color="primary" fontSize="large"/>
                 </Box>
                 <Typography variant="h5" className={classes.title}>
-                    <b>License Requests</b>
+                    <b>Software License Requests</b>
                 </Typography>
             </Box>
             <Box style={{marginTop: 20}}/>
@@ -503,7 +579,7 @@ function LicenseRequest(props) {
 }
 
 function CustomLicenseToolbar(props) {
-    const {toggleUser, displayData, selectedRows, openReview} = props;
+    const {setCurrentRequest, displayData, selectedRows, openReview} = props;
     var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
     console.log('check',check);
     console.log(displayData[selectedRows?.data[0]?.index].data[6])
@@ -514,16 +590,19 @@ function CustomLicenseToolbar(props) {
                 variant="outlined"
                 size="small"
                 startIcon={<RateReviewOutlined/>}
-                onClick={() =>
+                onClick={() => {
                     openReview(displayData[selectedRows?.data[0]?.index]?.data[0])
+                    // setCurrentRequest(displayData[selectedRows?.data[0]?.index]?.data[0]);
+                    console.log(displayData[selectedRows?.data[0]?.index]?.data[0]);
+                    console.log(displayData[selectedRows?.data[0]?.index]?.data);
+
                 }
+             }
             >
                 Review Request
             </Button>
-
-
         </Box>
     );
 }
 
-export default withLocalize(LicenseRequest);
+export default withLocalize(SoftwareLicenseRequest);

@@ -24,14 +24,18 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt, Close, LocationCity
-  } from "@material-ui/icons";
+    Receipt,
+      Close,
+      Computer
+} from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
   import axios from "axios";
   import {BackendService} from "../../utils/web_config";
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
+import {Autocomplete} from "@material-ui/lab";
+import {useVendorLicense} from "../../hooks/use_hooks";
 
 
 
@@ -44,11 +48,12 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function Licenses(props) {
+function SoftwareLicenses(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
     const [addNewOpen, setAddNewOpen] = useState(false);
+    const vendors = useVendorLicense();
     const [licenses, setLicenses] = useState({
         page: 0,
         count: 1,
@@ -74,12 +79,12 @@ function Licenses(props) {
             .get(new BackendService().LICENSES)
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
-                const d = response.data;
-                if (d.data.length == 0) {
+                const d = response.data.data.filter((dd)=>dd.license_category === "SOFTWARE_LICENSE");
+                if (d.length == 0) {
                     setStatus("There are no users available.");
                 } else {
-                    var lcs = d.data;
-
+                    var lcs = d
+                    lcs.map((o)=>o['vendor_name']=o['vendor']['vendor_name'])
                     setLicenses({
                         ...licenses,
                         data: lcs,
@@ -104,6 +109,7 @@ function Licenses(props) {
     const [name, setName] = useState({value: "", error: ""});
     const [code, setCode] = useState({value: "", error: ""});
     const [description, setDescription] = useState({value: "", error: ""});
+    const [vendor, setVendor] = useState({value: "", error: ""});
     const onNameChange = (event) => {
         if (event.target.value === "") {
             setName({
@@ -135,6 +141,17 @@ function Licenses(props) {
         }
     };
 
+    const onVendorChange = (event,v) => {
+        if (v === null) {
+            setVendor({
+                value: "",
+                error: "Please select vendor",
+            });
+        } else {
+            setVendor({value: v.id, error: ""});
+        }
+    };
+
 
     const addLicense = () => {
         if (name.value === "") {
@@ -147,12 +164,17 @@ function Licenses(props) {
                 value: '',
                 error: 'Please provide valid code'
             });
-        } else if (description.value === "'") {
+        } else if (description.value === "") {
             setDescription({
                 value: '',
                 error: 'Please fulfill description'
             })
-        } else {
+        }else if (vendor.value === "") {
+            setDescription({
+                value: '',
+                error: 'Please select vendor'
+            })
+        }else {
             createLicense();
         }
     }
@@ -162,12 +184,12 @@ function Licenses(props) {
             new BackendService().getHeaders(accountData.token)
         );
         setLicenses({...licenses, saving: true});
-
         const data = {
             name: name.value,
             code: code.value,
             description: description.value,
-            license_category: "INSTITUTION_LICENSE"
+            vendor: vendor.value,
+            license_category: "SOFTWARE_LICENSE"
         }
 
 
@@ -178,6 +200,7 @@ function Licenses(props) {
             var d = response.data;
             var lcs = licenses.data;
             const newLicense = d.data;
+            newLicense['vendor_name'] = newLicense['vendor']['vendor_name']
             lcs.unshift(newLicense);
             setLicenses({
                 ...licenses,
@@ -204,6 +227,7 @@ function Licenses(props) {
         setName({ value: "", error: "" });
         setDescription({ value: "", error: "" });
         setCode({ value: "", error: "" });
+        setVendor({ value: "", error: "" });
     };
 
     // notify
@@ -239,6 +263,14 @@ function Licenses(props) {
             display: 'excluded',
           },
         },
+          {
+              name: "vendor_name",
+              label: "Vendor",
+              options: {
+                  filter: false,
+                  sort: true,
+              },
+          },
         {
           name: "name",
           label: "License Name",
@@ -362,6 +394,26 @@ function Licenses(props) {
             Add New License Type
           </DialogTitle>
           <DialogContent>
+              <Box style={{marginTop: 10}}>
+                  <Autocomplete
+                      fullWidth
+                      openOnFocus
+                      options={vendors}
+                      getOptionLabel={(option) => option.vendor_name}
+                      onChange={onVendorChange}
+                      renderInput={(params) => (
+                          <TextField
+                              {...params}
+                              fullWidth
+                              label={"Vendor"}
+                              variant="outlined"
+                              size="small"
+                              helperText={vendor.error}
+                              error={vendor.error !== ""}
+                          />
+                      )}
+                  />
+              </Box>
             <Box style={{marginTop:10}}>
               <Translate>
                 {({ translate }) => (
@@ -457,10 +509,10 @@ function Licenses(props) {
         <Box display="flex" style={{display: "flex"}}>
           <Box mr={2}>
             {" "}
-            <LocationCity color="primary" fontSize="large" />
+            <Computer color="primary" fontSize="large" />
           </Box>
           <Typography variant="h5" className={classes.title}>
-            <b>Institution License Types</b>
+            <b>Software License Types</b>
           </Typography>
           <Button
             className={classes.btn}
@@ -480,7 +532,7 @@ function Licenses(props) {
   
         {licenses.loading && <LinearProgress />}
         <MUIDataTable
-          title={"List of License Types"}
+          title={"List of Software License Types"}
           data={licenses.data}
           columns={columns}
           options={options}
@@ -529,4 +581,4 @@ function CustomLicenseToolbar(props) {
     );
   }
 
-export default withLocalize(Licenses);
+export default withLocalize(SoftwareLicenses);

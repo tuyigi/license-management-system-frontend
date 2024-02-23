@@ -308,14 +308,14 @@ function Users(props){
             .then(function (response) {
                 setUsers({...users, saving: false});
                 var d = response.data;
-                var lcs = users.data;
+                var lcss = users.data;
+                var lcs = d.data;
                 lcs['role'] = lcs['role_id']['name']
                 lcs['organization'] = lcs['organization_id']['name']
-                const newLicense = d.data;
-                lcs.unshift(newLicense);
+                lcss.unshift(lcs);
                 setUsers({
                     ...users,
-                    data: lcs,
+                    data: lcss,
                 });
                 clearLicenseInfo()
                 notify("success", response.data.message);
@@ -630,6 +630,7 @@ function Users(props){
                               <MenuItem value="SUPER_ADMIN">SUPER ADMIN</MenuItem>
                               <MenuItem value="ORG_ADMIN">ORG ADMIN</MenuItem>
                               <MenuItem value="LICENSE_MANAGER">LICENSE MANAGER</MenuItem>
+                              <MenuItem value="END_USER">END USER</MenuItem>
                           </Select>
                           <FormHelperText>{userType.error}</FormHelperText>
                       </FormControl>
