@@ -142,7 +142,7 @@ const menus = [
     { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
     { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/rolePermission", permission: "CAN_VIEW_ROLE_PERMISSION"},
     { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/user", permission: "CAN_VIEW_ROLE_USER"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/bnr/report", permission: "CAN_VIEW_REPORT",
+    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/bnr/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "License Tracking", path: "/bnr/licenseTracking"},
             { name: "Organization Licenses", path: "/bnr/licenseOrganization"}

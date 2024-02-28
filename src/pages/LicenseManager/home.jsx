@@ -54,6 +54,7 @@ import  Dashboard  from "./dashboard";
 import LicenseRequest from "./license_requests";
 import Settings from "../shared/settings";
 import SoftwareLicenseRequest from "../LicenseManager/software_license_requests";
+import ExpirationReport from "./reports/expiration_report";
 
 
 
@@ -90,6 +91,12 @@ const routes = [
         main: () =>  <Settings/>,
     },
     {
+        path: "/licenseManager/expirationReport",
+        exact: true,
+        permission: "CAN_VIEW_REPORTS",
+        main: () =>  <ExpirationReport/>,
+    },
+    {
       main: () => <></>,
     },
   ];
@@ -98,10 +105,10 @@ const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/licenseManager/home",permission: "CAN_VIEW_HOME", },
     { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/report", permission: "CAN_VIEW_REPORT",
+    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
-            { name: "Organization Licenses", path: "/licenseManager/licenseRequests"},
-            { name: "Audit Trail Report", path: "/licenseManager/licenseRequests"}
+            { name: "License Expiration Report", path: "/licenseManager/expirationReport"},
+            // { name: "Audit Trail Report", path: "/licenseManager/licenseRequests"}
         ]
     }
 ];

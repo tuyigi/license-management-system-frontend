@@ -55,6 +55,7 @@ import LicenseRequest from "./license_requests";
 import LicenseRequestReport from "./reports/report_approved_license";
 import Settings from "./../shared/settings";
 import SoftwareLicenseRequest from "./software_license_requests";
+import ExpirationReport from "./reports/expiration_report";
 
 
 
@@ -85,7 +86,7 @@ const routes = [
         main: () => <SoftwareLicenseRequest/>,
     },
     {
-        path: "/orgAdmin/report",
+        path: "/orgAdmin/reports",
         exact: true,
         permission: "CAN_VIEW_REPORT",
         main: () => <LicenseRequestReport/>,
@@ -97,6 +98,12 @@ const routes = [
         main: () => <Settings/>,
     },
     {
+        path: "/orgAdmin/expirationReport",
+        exact: true,
+        permission: "CAN_VIEW_REPORT",
+        main: () => <ExpirationReport/>,
+    },
+    {
       main: () => <></>,
     },
   ];
@@ -105,9 +112,10 @@ const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
     { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/report", permission: "CAN_VIEW_REPORT",
+    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
-            { name: "Approved Licenses ", path: "/orgAdmin/report"}
+            { name: "Approved Licenses ", path: "/orgAdmin/reports"},
+            { name: "Expiration Report", path: "/orgAdmin/expirationReport"}
         ]
     }
 ];
