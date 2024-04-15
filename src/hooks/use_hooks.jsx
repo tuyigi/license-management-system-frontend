@@ -197,6 +197,105 @@ function useVendorLicense() {
 
 
 
+function useSystemTools() {
+  const [systemTools, setSystemTools] = useState([]);
+
+  useEffect(() => {
+    var accountData = new BackendService().accountData;
+
+    if (systemTools.length === 0) {
+      getSystemTools(accountData.token);
+    }
+  }, [systemTools]);
+
+  const getSystemTools = (token) => {
+    const systemToolsInstance = axios.create(new BackendService().getHeaders(token));
+    systemToolsInstance
+        .get(new BackendService().SYSTME_TOOLS)
+        .then(function (response) {
+          const d = response.data.data;
+          setSystemTools(d);
+        })
+        .catch(function (error) { });
+  };
+  return systemTools;
+}
+
+
+function useContracts() {
+  const [contracts, setContracts] = useState([]);
+  useEffect(() => {
+    const accountData = new BackendService().accountData;
+    if (contracts.length === 0) {
+      getContracts(accountData.token);
+    }
+  }, [contracts]);
+  const getContracts = (token) => {
+    const contractsInstance = axios.create(new BackendService().getHeaders(token));
+    contractsInstance
+        .get(new BackendService().CONTRACT)
+        .then(function (response) {
+          setContracts(response.data.data);
+        })
+        .catch(function (error) { });
+  };
+  return contracts;
+}
+
+
+
+
+function useFunctions() {
+  const [functions, setFunctions] = useState([]);
+
+  useEffect(() => {
+    var accountData = new BackendService().accountData;
+
+    if (functions.length === 0) {
+      getFunctions(accountData.token);
+    }
+  }, [functions]);
+
+  const getFunctions = (token) => {
+    const functionsInstance = axios.create(new BackendService().getHeaders(token));
+    functionsInstance
+        .get(new BackendService().FUNCTION)
+        .then(function (response) {
+          const d = response.data.data;
+          setFunctions(d);
+        })
+        .catch(function (error) { });
+  };
+  return functions;
+}
+
+function useDepartments() {
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    var accountData = new BackendService().accountData;
+
+    if (departments.length === 0) {
+      getDepartments(accountData.token);
+    }
+  }, [departments]);
+
+  const getDepartments = (token) => {
+    const departmentInstance = axios.create(new BackendService().getHeaders(token));
+    departmentInstance
+        .get(new BackendService().DEPARTMENT)
+        .then(function (response) {
+          const d = response.data.data;
+          setDepartments(d);
+        })
+        .catch(function (error) { });
+  };
+  return departments;
+}
+
+
+
+
 export {
   useOrganizations,
   useRoles,
@@ -204,5 +303,9 @@ export {
   useOrganizationLicenseRequest,
   useOrganizationMyLicense,
   useGlobalOrganizationLicenseRequest,
-  useVendorLicense
+  useVendorLicense,
+  useSystemTools,
+  useContracts,
+  useFunctions,
+  useDepartments
 };

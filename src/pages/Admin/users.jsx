@@ -611,7 +611,6 @@ function Users(props){
                   </Box>
 
                   <Box style={{marginTop: 10}}>
-
                       <FormControl
                           className={classes.formControl}
                           fullWidth
@@ -628,13 +627,14 @@ function Users(props){
                               onChange={onUserTypeChange}
                           >
                               <MenuItem value="SUPER_ADMIN">SUPER ADMIN</MenuItem>
-                              <MenuItem value="ORG_ADMIN">ORG ADMIN</MenuItem>
-                              <MenuItem value="LICENSE_MANAGER">LICENSE MANAGER</MenuItem>
-                              <MenuItem value="END_USER">END USER</MenuItem>
+                              {/*<MenuItem value="ORG_ADMIN">ORG ADMIN</MenuItem>*/}
+                              {/*<MenuItem value="LICENSE_MANAGER">LICENSE MANAGER</MenuItem>*/}
+                              {/*<MenuItem value="END_USER">END USER</MenuItem>*/}
+                              <MenuItem value="CONTRACT_MANAGER">CONTRACT MANAGER</MenuItem>
+                              <MenuItem value="LICENSE_OWNER">LICENSE OWNER</MenuItem>
                           </Select>
                           <FormHelperText>{userType.error}</FormHelperText>
                       </FormControl>
-
                   </Box>
 
                   <Box style={{marginTop: 10}}>

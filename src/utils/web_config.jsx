@@ -27,6 +27,15 @@ class BackendService {
     this.APPROVED_LICENSE_TYPE_STATS = this.BASE_URL + "/api/v1/reports/licenseTypeStats";
     this.VENDOR= this.BASE_URL + "/api/v1/vendor";
     this.EXPIRE_LICENSE_REPORT= this.BASE_URL + "/api/v1/reports/expires/";
+    this.ASSIGN_PRIV_ROLE= this.BASE_URL + "/api/v1/privilege/assign/";
+    this.CONTRACT= this.BASE_URL + "/api/v1/contract";
+    this.SYSTME_TOOLS= this.BASE_URL + "/api/v1/systemTool";
+    this.RECORD_LICENSE= this.BASE_URL + "/api/v1/reportLicense";
+    this.FUNCTION= this.BASE_URL + "/api/v1/systemFunction";
+    this.CHECK_FUNCTION= this.BASE_URL + "/api/v1/systemFunction/check/functions";
+    this.ASSIGN_FUNCTION= this.BASE_URL + "/api/v1/systemFunction/assign/";
+    this.DEPARTMENT= this.BASE_URL + "/api/v1/department";
+
   }
 
   getHeaders = (token) => {

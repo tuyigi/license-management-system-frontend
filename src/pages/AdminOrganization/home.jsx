@@ -45,7 +45,7 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer
+    Computer, ListAlt
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -56,6 +56,8 @@ import LicenseRequestReport from "./reports/report_approved_license";
 import Settings from "./../shared/settings";
 import SoftwareLicenseRequest from "./software_license_requests";
 import ExpirationReport from "./reports/expiration_report";
+import RecordLicense from "./record_licenses";
+import Contracts from "./contracts";
 
 
 
@@ -104,14 +106,28 @@ const routes = [
         main: () => <ExpirationReport/>,
     },
     {
+        path: "/orgAdmin/recordedLicense",
+        exact: true,
+        permission: "CAN_VIEW_RECORDED_LICENSE",
+        main: () => <RecordLicense/>,
+    },
+    {
+        path: "/orgAdmin/contracts",
+        exact: true,
+        permission: "CAN_VIEW_CONTRACT",
+        main: () =>  <Contracts/>,
+    },
+    {
       main: () => <></>,
     },
   ];
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
-    { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
-    { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
+    { name: "License Contracts", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/contracts", permission: "CAN_VIEW_CONTRACT"},
+    // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
+    // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
+    { name: "License Status Renewal", icon: <Computer color={"primary"}/>, path: "/orgAdmin/recordedLicense", permission: "CAN_VIEW_RECORDED_LICENSE"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "Approved Licenses ", path: "/orgAdmin/reports"},

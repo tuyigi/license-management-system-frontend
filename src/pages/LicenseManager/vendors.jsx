@@ -24,7 +24,7 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt, Close, LocationCity, WorkOutlineOutlined
+    Receipt, Close, LocationCity, WorkOutlineOutlined,Business
 } from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
@@ -427,7 +427,7 @@ function Vendors(props) {
         <Box display="flex" style={{display: "flex"}}>
           <Box mr={2}>
             {" "}
-            <WorkOutlineOutlined color="primary" fontSize="large" />
+            <Business color="primary" fontSize="large" />
           </Box>
           <Typography variant="h5" className={classes.title}>
             <b>Vendors</b>

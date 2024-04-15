@@ -3,7 +3,7 @@ import React, {useState, useEffect} from "react";
 import {withLocalize, Translate} from 'react-localize-redux';
 import {makeStyles, useTheme} from '@material-ui/core/styles';
 import {
-    OrganizationTypeStats,
+    OrganizationTypeStats, useApprovedLicenseTypeStats,
     useGeneralStats,
     useLicenseRequestStatusStats,
     useOrganizationTypeStats
@@ -54,7 +54,7 @@ import UsersIcon from "../../assets/img/users.png";
 
 
 import {useSnackbar} from 'notistack';
-import {licenseRequestStats, organizationStats} from "../../hooks/dashboard_data";
+import {allocatedLicenseChart, licenseRequestStats, organizationStats} from "../../hooks/dashboard_data";
 import Format from "date-fns/format";
 
 const useStyles = makeStyles((theme) => ({
@@ -101,6 +101,8 @@ function Dashboard() {
     const [generalStatsData, getGeneralStats] = useGeneralStats();
     const [organizationTypeStats, getOrganizationTypeStats] = useOrganizationTypeStats();
     const [licenseRequestStatusStats, getLicenseRequestStatusStats] = useLicenseRequestStatusStats();
+
+    const [approvedLicenseRequestStats, getApprovedLicenseTypeStats] = useApprovedLicenseTypeStats()
 
     useEffect(() => {
 
@@ -173,8 +175,8 @@ function Dashboard() {
 
                     <Grid item xs={12} md={6} lg={6} sm={6}>
                         <Paper style={{minHeight: 380,}} elevation={0}>
-                            <Typography style={{marginLeft: 20}}> Organizations by Type </Typography>
-                            <Chart options={organizationStats(organizationTypeStats).options} series={organizationStats(organizationTypeStats).series}
+                            <Typography style={{marginLeft: 20}}> License Usage Statistics  </Typography>
+                            <Chart options={allocatedLicenseChart(approvedLicenseRequestStats).options} series={allocatedLicenseChart(approvedLicenseRequestStats).series}
                                    type="bar" height={350}/>
                         </Paper>
                     </Grid>

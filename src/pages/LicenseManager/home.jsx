@@ -45,7 +45,9 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer
+    Computer,
+    Note,
+    ListAlt
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -55,6 +57,8 @@ import LicenseRequest from "./license_requests";
 import Settings from "../shared/settings";
 import SoftwareLicenseRequest from "../LicenseManager/software_license_requests";
 import ExpirationReport from "./reports/expiration_report";
+import Vendors from "./vendors"
+// import Contracts from "./contracts";
 
 
 
@@ -96,6 +100,18 @@ const routes = [
         permission: "CAN_VIEW_REPORTS",
         main: () =>  <ExpirationReport/>,
     },
+    // {
+    //     path: "/licenseManager/contracts",
+    //     exact: true,
+    //     permission: "CAN_VIEW_CONTRACT",
+    //     main: () =>  <Contracts/>,
+    // },
+    {
+        path: "/licenseManager/vendors",
+        exact: true,
+        permission: "CAN_VIEW_VENDOR",
+        main: () =>  <Vendors/>,
+    },
     {
       main: () => <></>,
     },
@@ -103,8 +119,10 @@ const routes = [
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/licenseManager/home",permission: "CAN_VIEW_HOME", },
-    { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
-    { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
+    { name: "Vendors", icon: <Business color={"primary"}/>, path: "/licenseManager/vendors", permission: "CAN_VIEW_VENDOR"},
+    // { name: "Contracts", icon: <ListAlt color={"primary"}/>, path: "/licenseManager/contracts", permission: "CAN_VIEW_CONTRACT"},
+    { name: "License Records", icon: <Note color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
+    // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "License Expiration Report", path: "/licenseManager/expirationReport"},

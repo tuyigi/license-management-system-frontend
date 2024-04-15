@@ -45,7 +45,8 @@ import {
     AvTimer,
     MergeType,
     DescriptionOutlined,
-    Cached
+    Cached,
+    Note
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import {Capitalize} from "../../helpers/capitalize";
@@ -560,10 +561,10 @@ function SoftwareLicenseRequest(props) {
             <Box display="flex" style={{display: "flex"}}>
                 <Box mr={2}>
                     {" "}
-                    <Computer color="primary" fontSize="large"/>
+                    <Note color="primary" fontSize="large"/>
                 </Box>
                 <Typography variant="h5" className={classes.title}>
-                    <b>Software License Requests</b>
+                    <b>Software Licenses</b>
                 </Typography>
             </Box>
             <Box style={{marginTop: 20}}/>

@@ -21,21 +21,14 @@ import {
   } from "@material-ui/core";
   import {
     Add,
-    CheckCircle,
-    Block,
-    Edit,
-    Receipt,
-      Close,
-      Computer
-} from "@material-ui/icons";
+    Edit, Close, LocationCity, ImportantDevices, Ballot
+  } from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
-  import { Capitalize } from "../../helpers/capitalize";
   import axios from "axios";
   import {BackendService} from "../../utils/web_config";
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
-import {Autocomplete} from "@material-ui/lab";
-import {useVendorLicense} from "../../hooks/use_hooks";
+  import {useFunctions} from "../../hooks/use_hooks";
 
 
 
@@ -48,13 +41,12 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function SoftwareLicenses(props) {
+function Departments(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
     const [addNewOpen, setAddNewOpen] = useState(false);
-    const vendors = useVendorLicense();
-    const [licenses, setLicenses] = useState({
+    const [departments, setDepartments] = useState({
         page: 0,
         count: 1,
         rowsPerPage: 10,
@@ -68,33 +60,32 @@ function SoftwareLicenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        getLicenses(accData.access_token);
+        getDepartment(accData.access_token);
     }, [])
 
-    const [status, setStatus] = useState("No licenses available....");
-    const getLicenses = (token) => {
+    const [status, setStatus] = useState("No departments available....");
+    const getDepartment = (token) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
-        setLicenses({...licenses, loading: true});
+        setDepartments({...departments, loading: true});
         licenseInstance
-            .get(new BackendService().LICENSES)
+            .get(new BackendService().DEPARTMENT)
             .then(function (response) {
-                setLicenses({...licenses, loading: false});
-                const d = response.data.data.filter((dd)=>dd.license_category === "SOFTWARE_LICENSE");
-                if (d.length == 0) {
-                    setStatus("There are no users available.");
+                setDepartments({...departments, loading: false});
+                const d = response.data;
+                if (d.data.length == 0) {
+                    setStatus("There are no departments available.");
                 } else {
-                    var lcs = d
-                    lcs.map((o)=>o['vendor_name']=o['vendor']['vendor_name'])
-                    setLicenses({
-                        ...licenses,
+                    const lcs = d.data;
+                    setDepartments({
+                        ...departments,
                         data: lcs,
                     });
                     //set status
-                    setStatus("Licenses loaded")
+                    setStatus("Departments loaded")
                 }
             })
             .catch(function (error) {
-                setLicenses({...licenses, loading: false});
+                setDepartments({...departments, loading: false});
                 var e = error.message;
 
                 if (error.response) {
@@ -107,9 +98,7 @@ function SoftwareLicenses(props) {
 
 
     const [name, setName] = useState({value: "", error: ""});
-    const [code, setCode] = useState({value: "", error: ""});
     const [description, setDescription] = useState({value: "", error: ""});
-    const [vendor, setVendor] = useState({value: "", error: ""});
     const onNameChange = (event) => {
         if (event.target.value === "") {
             setName({
@@ -120,16 +109,7 @@ function SoftwareLicenses(props) {
             setName({value: event.target.value, error: ""});
         }
     };
-    const onCodeChange = (event) => {
-        if (event.target.value === "") {
-            setCode({
-                value: "",
-                error: "Please enter valid license code",
-            });
-        } else {
-            setCode({value: event.target.value, error: ""});
-        }
-    };
+
     const onDescriptionChange = (event) => {
         if (event.target.value === "") {
             setDescription({
@@ -141,78 +121,51 @@ function SoftwareLicenses(props) {
         }
     };
 
-    const onVendorChange = (event,v) => {
-        if (v === null) {
-            setVendor({
-                value: "",
-                error: "Please select vendor",
-            });
-        } else {
-            console.log(`vendor ID:: ${v.id}`);
-            setVendor({value: v.id, error: ""});
-        }
-    };
 
-
-    const addLicense = () => {
+    const addDepartment = () => {
         if (name.value === "") {
             setName({
                 value: "",
-                error: "Please provide valid name",
-            });
-        } else if (code.value === "") {
-            setCode({
-                value: '',
-                error: 'Please provide valid code'
+                error: "Please provide valid System/Tool name",
             });
         } else if (description.value === "") {
             setDescription({
                 value: '',
                 error: 'Please fulfill description'
             })
-        }else if (vendor.value === "") {
-            setDescription({
-                value: '',
-                error: 'Please select vendor'
-            })
-        }else {
-            createLicense();
+        } else {
+           createDepartment();
         }
     }
 
-    const createLicense = () => {
-        const licenseInstance = axios.create(
+    const createDepartment = () => {
+        const systemInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
         );
-        setLicenses({...licenses, saving: true});
+        setDepartments({...departments, saving: true});
+
         const data = {
             name: name.value,
-            code: code.value,
             description: description.value,
-            vendor_id: vendor.value,
-            license_category: "SOFTWARE_LICENSE"
         }
 
-
-    licenseInstance
-        .post(new BackendService().LICENSES, data)
+        systemInstance
+        .post(new BackendService().DEPARTMENT, data)
         .then(function (response) {
-            setLicenses({...licenses, saving: false});
             var d = response.data;
-            var lcs = licenses.data;
-            const newLicense = d.data;
-            newLicense['vendor_name'] = newLicense['vendor']['vendor_name']
-            lcs.unshift(newLicense);
-            setLicenses({
-                ...licenses,
+            var lcs = departments.data;
+            const newSystemTool = d.data;
+            lcs.unshift(newSystemTool);
+            setDepartments({
+                ...departments,
                 data: lcs,
             });
-            clearLicenseInfo()
-            notify("success", response.data.message);
+            clearSystemInfo()
             setAddNewOpen(false);
+            notify("success", response.data.message);
         })
         .catch(function (error) {
-            setLicenses({...licenses, saving: false});
+            setDepartments({...departments, saving: false});
             var e = error.message;
             if (error.response) {
                 e = error.response.data.message;
@@ -224,11 +177,9 @@ function SoftwareLicenses(props) {
 
     // clear data
 
-    const clearLicenseInfo = () => {
+    const clearSystemInfo = () => {
         setName({ value: "", error: "" });
         setDescription({ value: "", error: "" });
-        setCode({ value: "", error: "" });
-        setVendor({ value: "", error: "" });
     };
 
     // notify
@@ -253,6 +204,8 @@ function SoftwareLicenses(props) {
     };
 
 
+
+
     // start table config
       const columns = [
         {
@@ -264,28 +217,12 @@ function SoftwareLicenses(props) {
             display: 'excluded',
           },
         },
-          {
-              name: "vendor_name",
-              label: "Vendor",
-              options: {
-                  filter: false,
-                  sort: true,
-              },
-          },
         {
           name: "name",
-          label: "License Name",
+          label: "Department",
           options: {
             filter: false,
             sort: true,
-          },
-        },
-        {
-          name: "code",
-          label: "License Code",
-          options: {
-            filter: false,
-            sort: false,
           },
         },
         {
@@ -303,49 +240,18 @@ function SoftwareLicenses(props) {
             filter: true,
             sort: true,
           },
-        },
-        {
-          name: "status",
-          label: "Status",
-          options: {
-            filter: true,
-            sort: false,
-            customBodyRenderLite: function (dataI, rowI) {
-              return (
-                <Chip
-                  avatar={
-                    <Avatar>
-                      {licenses.data[dataI].status.toLowerCase() == "enabled" ? (
-                        <CheckCircle fontSize="small" />
-                      ) : (
-                          <Block fontSize="small" />
-                        )}
-                    </Avatar>
-                  }
-                  variant="outlined"
-                  color={
-                    licenses.data[dataI].status.toLowerCase() == "enabled"
-                      ? "primary"
-                      : "default"
-                  }
-                  size="small"
-                  label={Capitalize(licenses.data[dataI]?.status)}
-                />
-              );
-            },
-          },
-        },
+        }
       ];
     
       const options = {
         filterType: "multiselect",
         elevation: 0,
         selectableRows: "single",
-        searchPlaceholder: "Search user...",
+        searchPlaceholder: "Search System Tool...",
         selectableRowsOnClick: true,
         fixedHeader: true,
         onCellClick: (cellData, cellMeta) => {
-          var license = licenses.data[cellMeta.dataIndex];
+          var license = departments.data[cellMeta.dataIndex];
 
         },
         searchProps: {
@@ -370,7 +276,7 @@ function SoftwareLicenses(props) {
             setSelectedRows={setSelectedRows}
             toggleUser={()=>{}}
             openEdit={()=>{}}
-            toggling={licenses.toggling}
+            toggling={departments.toggling}
           />
         ),
       };
@@ -392,29 +298,9 @@ function SoftwareLicenses(props) {
           }}
         >
           <DialogTitle id="new-op">
-            Add New License Type
+            Add New Department
           </DialogTitle>
           <DialogContent>
-              <Box style={{marginTop: 10}}>
-                  <Autocomplete
-                      fullWidth
-                      openOnFocus
-                      options={vendors}
-                      getOptionLabel={(option) => option.vendor_name}
-                      onChange={onVendorChange}
-                      renderInput={(params) => (
-                          <TextField
-                              {...params}
-                              fullWidth
-                              label={"Vendor"}
-                              variant="outlined"
-                              size="small"
-                              helperText={vendor.error}
-                              error={vendor.error !== ""}
-                          />
-                      )}
-                  />
-              </Box>
             <Box style={{marginTop:10}}>
               <Translate>
                 {({ translate }) => (
@@ -424,8 +310,8 @@ function SoftwareLicenses(props) {
                     variant="outlined"
                     color="primary"
                     value={name.value}
-                    placeholder={"Name"}
-                    label={"License Name"}
+                    placeholder={"Department Name"}
+                    label={"Department Name"}
                     fullWidth
                     onChange={onNameChange}
                     helperText={name.error}
@@ -434,34 +320,10 @@ function SoftwareLicenses(props) {
                 )}
               </Translate>
             </Box>
-
             <Box style={{marginTop:10}}>
               <Translate>
                 {({ translate }) => (
                   <TextField
-                    required
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    value={code.value}
-                    placeholder={"Code"}
-                    label={"License Code"}
-                    fullWidth
-                    onChange={onCodeChange}
-                    helperText={code.error}
-                    error={code.error !== ""}
-                  />
-                )}
-              </Translate>
-            </Box>
-
-
-
-            <Box style={{marginTop:10}}>
-              <Translate>
-                {({ translate }) => (
-                  <TextField
-                    required
                     size="small"
                     variant="outlined"
                     color="primary"
@@ -491,13 +353,13 @@ function SoftwareLicenses(props) {
               Cancel
             </Button>
             <Button
-              disabled={licenses.saving}
+              disabled={departments.saving}
               variant="contained"
               color="primary"
-              onClick={()=>{ addLicense() }}
+              onClick={()=>{addDepartment() }}
               disableElevation
             >
-              {licenses.saving ? (
+              {departments.saving ? (
                 <CircularProgress size={23} />
               ) : (
                 "Save"
@@ -510,10 +372,10 @@ function SoftwareLicenses(props) {
         <Box display="flex" style={{display: "flex"}}>
           <Box mr={2}>
             {" "}
-            <Computer color="primary" fontSize="large" />
+            <Ballot color="primary" fontSize="large" />
           </Box>
           <Typography variant="h5" className={classes.title}>
-            <b>Software License Types</b>
+            <b> Departments</b>
           </Typography>
           <Button
             className={classes.btn}
@@ -526,15 +388,15 @@ function SoftwareLicenses(props) {
              setAddNewOpen(true);
             }}
           >
-            New License Type
+            New Department
           </Button>
         </Box>
         <Box style={{marginTop: 20}} />
   
-        {licenses.loading && <LinearProgress />}
+        {departments.loading && <LinearProgress />}
         <MUIDataTable
-          title={"List of Software License Types"}
-          data={licenses.data}
+          title={"List of Departments"}
+          data={departments.data}
           columns={columns}
           options={options}
         />
@@ -550,21 +412,6 @@ function CustomLicenseToolbar(props) {
   
     return (
       <Box display="flex" alignItems="center">
-        <FormControlLabel
-          control={
-            <Switch
-              disabled={props.toggling}
-              checked={check}
-              onChange={() => {
-                toggleUser(displayData[selectedRows?.data[0]?.index]?.data[0]);
-              }}
-              value="vertical"
-              color="primary"
-            />
-          }
-          label={check ? "Deactivate License" : "Activate License"}
-        />
-  
         <Button
           color="primary"
           variant="outlined"
@@ -576,10 +423,8 @@ function CustomLicenseToolbar(props) {
         >
           Edit
         </Button>
-  
-
       </Box>
     );
   }
 
-export default withLocalize(SoftwareLicenses);
+export default withLocalize(Departments);

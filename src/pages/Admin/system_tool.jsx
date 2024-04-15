@@ -24,18 +24,16 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt,
-      Close,
-      Computer
-} from "@material-ui/icons";
+    Receipt, Close, LocationCity, ImportantDevices
+  } from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
   import axios from "axios";
   import {BackendService} from "../../utils/web_config";
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
+import {useFunctions} from "../../hooks/use_hooks";
 import {Autocomplete} from "@material-ui/lab";
-import {useVendorLicense} from "../../hooks/use_hooks";
 
 
 
@@ -48,13 +46,13 @@ const useStyles = makeStyles((theme) => ({
     action: {borderRadius: 15,},
 }));
 
-function SoftwareLicenses(props) {
+function SystemTool(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
+    const functions = useFunctions();
     const [addNewOpen, setAddNewOpen] = useState(false);
-    const vendors = useVendorLicense();
-    const [licenses, setLicenses] = useState({
+    const [systemTools, setSystemTools] = useState({
         page: 0,
         count: 1,
         rowsPerPage: 10,
@@ -68,33 +66,33 @@ function SoftwareLicenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        getLicenses(accData.access_token);
+        getSystemTools(accData.access_token);
     }, [])
 
-    const [status, setStatus] = useState("No licenses available....");
-    const getLicenses = (token) => {
+    const [status, setStatus] = useState("No systemTools available....");
+    const getSystemTools = (token) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
-        setLicenses({...licenses, loading: true});
+        setSystemTools({...systemTools, loading: true});
         licenseInstance
-            .get(new BackendService().LICENSES)
+            .get(new BackendService().SYSTME_TOOLS)
             .then(function (response) {
-                setLicenses({...licenses, loading: false});
-                const d = response.data.data.filter((dd)=>dd.license_category === "SOFTWARE_LICENSE");
-                if (d.length == 0) {
-                    setStatus("There are no users available.");
+                setSystemTools({...systemTools, loading: false});
+                const d = response.data;
+                if (d.data.length == 0) {
+                    setStatus("There are no system tools available.");
                 } else {
-                    var lcs = d
-                    lcs.map((o)=>o['vendor_name']=o['vendor']['vendor_name'])
-                    setLicenses({
-                        ...licenses,
+                    var lcs = d.data;
+
+                    setSystemTools({
+                        ...systemTools,
                         data: lcs,
                     });
                     //set status
-                    setStatus("Licenses loaded")
+                    setStatus("System Tools loaded")
                 }
             })
             .catch(function (error) {
-                setLicenses({...licenses, loading: false});
+                setSystemTools({...systemTools, loading: false});
                 var e = error.message;
 
                 if (error.response) {
@@ -109,7 +107,7 @@ function SoftwareLicenses(props) {
     const [name, setName] = useState({value: "", error: ""});
     const [code, setCode] = useState({value: "", error: ""});
     const [description, setDescription] = useState({value: "", error: ""});
-    const [vendor, setVendor] = useState({value: "", error: ""});
+    const [functionIds, setFunctionIds] = useState({ value: [], error: ''});
     const onNameChange = (event) => {
         if (event.target.value === "") {
             setName({
@@ -141,78 +139,109 @@ function SoftwareLicenses(props) {
         }
     };
 
-    const onVendorChange = (event,v) => {
+
+    const onFunctionChange = (event,v) => {
+        console.log(v);
+        setFunctionIds([]);
         if (v === null) {
-            setVendor({
-                value: "",
-                error: "Please select vendor",
+            setFunctionIds({
+                value: [],
+                error: "Please select at least one function",
             });
         } else {
-            console.log(`vendor ID:: ${v.id}`);
-            setVendor({value: v.id, error: ""});
+            const ids = v.map((o)=>o.id);
+            checkFunctions(ids);
+            setFunctionIds({value: v.id, error: ""});
         }
     };
 
-
-    const addLicense = () => {
+    const addSystemTool = () => {
         if (name.value === "") {
             setName({
                 value: "",
-                error: "Please provide valid name",
+                error: "Please provide valid System/Tool name",
             });
-        } else if (code.value === "") {
-            setCode({
-                value: '',
-                error: 'Please provide valid code'
-            });
-        } else if (description.value === "") {
+        } else if (description.value === "'") {
             setDescription({
                 value: '',
                 error: 'Please fulfill description'
             })
-        }else if (vendor.value === "") {
-            setDescription({
-                value: '',
-                error: 'Please select vendor'
-            })
-        }else {
-            createLicense();
+        } else {
+            createSystemTool();
         }
     }
-
-    const createLicense = () => {
-        const licenseInstance = axios.create(
+    const [similarFunctions, setSimilarFunctions] = useState([]);
+    const checkFunctions = (functionsId) =>{
+        setSimilarFunctions([]);
+        const checkFunctionInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
         );
-        setLicenses({...licenses, saving: true});
+        checkFunctionInstance
+            .put(new BackendService().CHECK_FUNCTION,functionsId)
+            .then(function (response) {
+                const d = response.data.data;
+                setSimilarFunctions(d);
+            })
+            .catch(function (error) {
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+
+    }
+
+    const assignFunctions = (system_id,functionsId,message) =>{
+        const assignFunctionInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        assignFunctionInstance
+            .put(new BackendService().ASSIGN_FUNCTION,functionsId)
+            .then(function (response) {
+                const d = response.data.data;
+                setSimilarFunctions(d);
+                setSystemTools({...systemTools, saving: false});
+                notify("success", message);
+                setAddNewOpen(false);
+            })
+            .catch(function (error) {
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+
+    }
+
+    const createSystemTool = () => {
+        const systemInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        setSystemTools({...systemTools, saving: true});
+
         const data = {
             name: name.value,
-            code: code.value,
             description: description.value,
-            vendor_id: vendor.value,
-            license_category: "SOFTWARE_LICENSE"
         }
 
-
-    licenseInstance
-        .post(new BackendService().LICENSES, data)
+        systemInstance
+        .post(new BackendService().SYSTME_TOOLS, data)
         .then(function (response) {
-            setLicenses({...licenses, saving: false});
             var d = response.data;
-            var lcs = licenses.data;
-            const newLicense = d.data;
-            newLicense['vendor_name'] = newLicense['vendor']['vendor_name']
-            lcs.unshift(newLicense);
-            setLicenses({
-                ...licenses,
+            var lcs = systemTools.data;
+            const newSystemTool = d.data;
+            lcs.unshift(newSystemTool);
+            setSystemTools({
+                ...systemTools,
                 data: lcs,
             });
-            clearLicenseInfo()
-            notify("success", response.data.message);
-            setAddNewOpen(false);
+            clearSystemInfo()
+            assignFunctions(newSystemTool.id,functionIds.value,response.data.message)
         })
         .catch(function (error) {
-            setLicenses({...licenses, saving: false});
+            setSystemTools({...systemTools, saving: false});
             var e = error.message;
             if (error.response) {
                 e = error.response.data.message;
@@ -224,11 +253,9 @@ function SoftwareLicenses(props) {
 
     // clear data
 
-    const clearLicenseInfo = () => {
+    const clearSystemInfo = () => {
         setName({ value: "", error: "" });
         setDescription({ value: "", error: "" });
-        setCode({ value: "", error: "" });
-        setVendor({ value: "", error: "" });
     };
 
     // notify
@@ -253,6 +280,8 @@ function SoftwareLicenses(props) {
     };
 
 
+
+
     // start table config
       const columns = [
         {
@@ -264,28 +293,12 @@ function SoftwareLicenses(props) {
             display: 'excluded',
           },
         },
-          {
-              name: "vendor_name",
-              label: "Vendor",
-              options: {
-                  filter: false,
-                  sort: true,
-              },
-          },
         {
-          name: "name",
-          label: "License Name",
+          name: "system_tool_name",
+          label: "System / Tool",
           options: {
             filter: false,
             sort: true,
-          },
-        },
-        {
-          name: "code",
-          label: "License Code",
-          options: {
-            filter: false,
-            sort: false,
           },
         },
         {
@@ -303,49 +316,18 @@ function SoftwareLicenses(props) {
             filter: true,
             sort: true,
           },
-        },
-        {
-          name: "status",
-          label: "Status",
-          options: {
-            filter: true,
-            sort: false,
-            customBodyRenderLite: function (dataI, rowI) {
-              return (
-                <Chip
-                  avatar={
-                    <Avatar>
-                      {licenses.data[dataI].status.toLowerCase() == "enabled" ? (
-                        <CheckCircle fontSize="small" />
-                      ) : (
-                          <Block fontSize="small" />
-                        )}
-                    </Avatar>
-                  }
-                  variant="outlined"
-                  color={
-                    licenses.data[dataI].status.toLowerCase() == "enabled"
-                      ? "primary"
-                      : "default"
-                  }
-                  size="small"
-                  label={Capitalize(licenses.data[dataI]?.status)}
-                />
-              );
-            },
-          },
-        },
+        }
       ];
     
       const options = {
         filterType: "multiselect",
         elevation: 0,
         selectableRows: "single",
-        searchPlaceholder: "Search user...",
+        searchPlaceholder: "Search System Tool...",
         selectableRowsOnClick: true,
         fixedHeader: true,
         onCellClick: (cellData, cellMeta) => {
-          var license = licenses.data[cellMeta.dataIndex];
+          var license = systemTools.data[cellMeta.dataIndex];
 
         },
         searchProps: {
@@ -370,7 +352,7 @@ function SoftwareLicenses(props) {
             setSelectedRows={setSelectedRows}
             toggleUser={()=>{}}
             openEdit={()=>{}}
-            toggling={licenses.toggling}
+            toggling={systemTools.toggling}
           />
         ),
       };
@@ -392,29 +374,9 @@ function SoftwareLicenses(props) {
           }}
         >
           <DialogTitle id="new-op">
-            Add New License Type
+            Add New System/Tool
           </DialogTitle>
           <DialogContent>
-              <Box style={{marginTop: 10}}>
-                  <Autocomplete
-                      fullWidth
-                      openOnFocus
-                      options={vendors}
-                      getOptionLabel={(option) => option.vendor_name}
-                      onChange={onVendorChange}
-                      renderInput={(params) => (
-                          <TextField
-                              {...params}
-                              fullWidth
-                              label={"Vendor"}
-                              variant="outlined"
-                              size="small"
-                              helperText={vendor.error}
-                              error={vendor.error !== ""}
-                          />
-                      )}
-                  />
-              </Box>
             <Box style={{marginTop:10}}>
               <Translate>
                 {({ translate }) => (
@@ -424,8 +386,8 @@ function SoftwareLicenses(props) {
                     variant="outlined"
                     color="primary"
                     value={name.value}
-                    placeholder={"Name"}
-                    label={"License Name"}
+                    placeholder={"System/Tool"}
+                    label={"System/tool Name"}
                     fullWidth
                     onChange={onNameChange}
                     helperText={name.error}
@@ -434,28 +396,28 @@ function SoftwareLicenses(props) {
                 )}
               </Translate>
             </Box>
-
-            <Box style={{marginTop:10}}>
-              <Translate>
-                {({ translate }) => (
-                  <TextField
-                    required
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    value={code.value}
-                    placeholder={"Code"}
-                    label={"License Code"}
-                    fullWidth
-                    onChange={onCodeChange}
-                    helperText={code.error}
-                    error={code.error !== ""}
+              <Box style={{marginTop: 10}}>
+                  <Autocomplete
+                      fullWidth
+                      multiple
+                      openOnFocus
+                      options={functions}
+                      getOptionLabel={(option) => `${option.name}`}
+                      onChange={onFunctionChange}
+                      renderInput={(params) => (
+                          <TextField
+                              {...params}
+                              fullWidth
+                              label={"Functions/Roles"}
+                              variant="outlined"
+                              size="small"
+                              helperText={functionIds.error}
+                              error={functionIds.error !== ""}
+                          />
+                      )}
                   />
-                )}
-              </Translate>
-            </Box>
-
-
+              </Box>
+              <Box><Typography style={{fontSize: '12px'}}>{similarFunctions.map((v)=>`${v.system_tool_name}(${v.total})`)}</Typography></Box>
 
             <Box style={{marginTop:10}}>
               <Translate>
@@ -491,13 +453,13 @@ function SoftwareLicenses(props) {
               Cancel
             </Button>
             <Button
-              disabled={licenses.saving}
+              disabled={systemTools.saving}
               variant="contained"
               color="primary"
-              onClick={()=>{ addLicense() }}
+              onClick={()=>{ addSystemTool() }}
               disableElevation
             >
-              {licenses.saving ? (
+              {systemTools.saving ? (
                 <CircularProgress size={23} />
               ) : (
                 "Save"
@@ -510,10 +472,10 @@ function SoftwareLicenses(props) {
         <Box display="flex" style={{display: "flex"}}>
           <Box mr={2}>
             {" "}
-            <Computer color="primary" fontSize="large" />
+            <ImportantDevices color="primary" fontSize="large" />
           </Box>
           <Typography variant="h5" className={classes.title}>
-            <b>Software License Types</b>
+            <b> Systems / Tools</b>
           </Typography>
           <Button
             className={classes.btn}
@@ -526,15 +488,15 @@ function SoftwareLicenses(props) {
              setAddNewOpen(true);
             }}
           >
-            New License Type
+            New System/Tool
           </Button>
         </Box>
         <Box style={{marginTop: 20}} />
   
-        {licenses.loading && <LinearProgress />}
+        {systemTools.loading && <LinearProgress />}
         <MUIDataTable
-          title={"List of Software License Types"}
-          data={licenses.data}
+          title={"List of Systems/Tools"}
+          data={systemTools.data}
           columns={columns}
           options={options}
         />
@@ -550,21 +512,6 @@ function CustomLicenseToolbar(props) {
   
     return (
       <Box display="flex" alignItems="center">
-        <FormControlLabel
-          control={
-            <Switch
-              disabled={props.toggling}
-              checked={check}
-              onChange={() => {
-                toggleUser(displayData[selectedRows?.data[0]?.index]?.data[0]);
-              }}
-              value="vertical"
-              color="primary"
-            />
-          }
-          label={check ? "Deactivate License" : "Activate License"}
-        />
-  
         <Button
           color="primary"
           variant="outlined"
@@ -576,10 +523,8 @@ function CustomLicenseToolbar(props) {
         >
           Edit
         </Button>
-  
-
       </Box>
     );
   }
 
-export default withLocalize(SoftwareLicenses);
+export default withLocalize(SystemTool);

@@ -47,7 +47,7 @@ import {
     AssessmentOutlined,
     Computer,
     LocationCity,
-    WorkOutlineOutlined
+    WorkOutlineOutlined, ImportantDevices, Ballot
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -62,7 +62,9 @@ import Users from "./users";
 import LicenseTracking from "./reports/license_tracking";
 import OrganizationLicenses from "./reports/organization_licenses";
 import SoftwareLicenses from "./sofwate_licenses";
-import Vendors from "./vendors";
+import Vendors from "../LicenseManager/vendors";
+import SystemTool from "./system_tool";
+import Departments from "./departments";
 
 const routes = [
     {
@@ -82,12 +84,6 @@ const routes = [
         exact: true,
         permission: "CAN_VIEW_LICENSE",
         main: () =>  <Licenses/>,
-    },
-    {
-        path: "/bnr/vendors",
-        exact: true,
-        permission: "CAN_VIEW_VENDOR",
-        main: () =>  <Vendors/>,
     },
     {
         path: "/bnr/softwareLicense",
@@ -130,24 +126,31 @@ const routes = [
         main: () =>  <Settings/>,
     },
     {
+        path: "/bnr/systemTool",
+        permission:"CAN_VIEW_SYSTEM_TOOL",
+        exact: true,
+        main: () =>  <SystemTool/>,
+    },
+    {
+        path: "/bnr/departments",
+        permission:"CAN_VIEW_DEPARTMENT",
+        exact: true,
+        main: () =>  <Departments/>,
+    },
+    {
       main: () => <></>,
     },
   ];
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/bnr/home",permission: "CAN_VIEW_HOME", },
-    { name: "Vendors", icon: <WorkOutlineOutlined color={"primary"}/>, path: "/bnr/vendors", permission: "CAN_VIEW_VENDOR"},
-    { name: "Software Licenses", icon: <Computer color={"primary"}/>, path: "/bnr/softwareLicense", permission: "CAN_VIEW_SOFTWARE_LICENSE"},
-    { name: "Institution Licenses", icon: <LocationCity color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
-    { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
+    // { name: "Software Licenses", icon: <Computer color={"primary"}/>, path: "/bnr/softwareLicense", permission: "CAN_VIEW_SOFTWARE_LICENSE"},
+    // { name: "Institution Licenses", icon: <LocationCity color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
+    // { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
     { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/rolePermission", permission: "CAN_VIEW_ROLE_PERMISSION"},
+    { name: "System/Tool", icon: <ImportantDevices color={"primary"}/>, path: "/bnr/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
+    { name: "Departments", icon: <Ballot color={"primary"}/>, path: "/bnr/departments", permission: "CAN_VIEW_DEPARTMENT"},
     { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/user", permission: "CAN_VIEW_ROLE_USER"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/bnr/reports", permission: "CAN_VIEW_REPORT",
-        submenu:[
-            { name: "License Tracking", path: "/bnr/licenseTracking"},
-            { name: "Organization Licenses", path: "/bnr/licenseOrganization"}
-        ]
-    },
     ];
 
 const menus2 = [

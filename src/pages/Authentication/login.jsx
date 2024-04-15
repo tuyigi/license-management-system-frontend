@@ -77,14 +77,14 @@ function Login(props) {
     const data1 = localStorage.getItem("LMIS");
     if (data1 != null) {
       var data = JSON.parse(data1);
-      if (data?.user.organization_id.organization_type == "LICENSE_ISSUER") {
+      if (data?.user.organization_id.organization_type === "LICENSE_ISSUER") {
         if (data?.user.user_type === "SUPER_ADMIN") {
           history.push("/bnr");
           return;
-        }else if(data?.user.user_type =="LICENSE_MANAGER"){
+        }else if(data?.user.user_type ==="LICENSE_MANAGER" || data?.user.user_type ==="CONTRACT_MANAGER"){
           history.push("/licenseManager");
           return;
-        }else if(data?.user.user_type === "END_USER"){
+        }else if(data?.user.user_type === "END_USER" || data?.user.user_type === "LICENSE_OWNER"){
           history.push("/orgAdmin");
           return;
         }
@@ -203,6 +203,22 @@ function Login(props) {
             );
             history.push("/licenseManager");
             break;
+          case "CONTRACT_MANAGER":
+            localStorage.setItem(
+                "LMIS",
+                JSON.stringify(response.data.data)
+            );
+            history.push("/licenseManager");
+            break;
+
+          case "LICENSE_OWNER":
+            localStorage.setItem(
+                "LMIS",
+                JSON.stringify(response.data.data)
+            );
+            history.push("/orgAdmin");
+            break;
+
           case "END_USER":
             localStorage.setItem(
                 "LMIS",
@@ -211,7 +227,7 @@ function Login(props) {
             history.push("/orgAdmin");
             break;
           default:
-            enqueueSnackbar("Unimplemeted or unknown organization", {
+            enqueueSnackbar("Unimplemeted or unknown user type", {
               variant: "warning",
               action: (k) => (
                 <IconButton

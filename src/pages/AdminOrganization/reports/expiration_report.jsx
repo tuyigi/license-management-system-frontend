@@ -68,18 +68,19 @@ function ExpirationReport(props) {
         data: [],
     });
     const [accountData, setAccountData] = useState(null);
+    const [ year , setYear] = useState(new Date().getFullYear());
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        getLicenses(accData.access_token);
+        getLicenses(accData.access_token, new Date().getFullYear());
     }, [])
 
     const [status, setStatus] = useState("No licenses requests available....");
-    const getLicenses = (token) => {
+    const getLicenses = (token,yearValue) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setLicenses({...licenses, loading: true});
         licenseInstance
-            .get(new BackendService().EXPIRE_LICENSE_REPORT + new Date().getFullYear())
+            .get(new BackendService().EXPIRE_LICENSE_REPORT + yearValue)
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
@@ -373,6 +374,8 @@ function ExpirationReport(props) {
 
     }
 
+    const years= [ '2020','2021','2022','2023','2024', '2025', '2026', '2027', '2028', '2029', '2030' ];
+
     return (
         <div className={classes.root}>
             {/* Dialogs starts here */}
@@ -494,6 +497,27 @@ function ExpirationReport(props) {
                 <Typography variant="h5" className={classes.title}>
                     <b>License Expiration Report</b>
                 </Typography>
+                <Box style={{marginTop: 10}}>
+                    <Autocomplete
+                        style={{width: '150px'}}
+                        openOnFocus
+                        options={years}
+                        getOptionLabel={(option) => option}
+                        onChange={(ve, v)=>{
+                            setYear(v);
+                            getLicenses(accountData.access_token,v);
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                fullWidth
+                                label={"Year"}
+                                variant="outlined"
+                                size="small"
+                            />
+                        )}
+                    />
+                </Box>
             </Box>
             <Box style={{marginTop: 20}}/>
             {licenses.loading && <LinearProgress/>}

@@ -326,7 +326,6 @@ function ExpirationReport(props) {
         }
     }
 
-
     /*
     Request Renewal of license
      */
@@ -492,8 +491,9 @@ function ExpirationReport(props) {
                     <AccessTime color="primary" fontSize="large"/>
                 </Box>
                 <Typography variant="h5" className={classes.title}>
-                    <b>License Expiration Report</b>
+                    <b>License Expiration Reports</b>
                 </Typography>
+
             </Box>
             <Box style={{marginTop: 20}}/>
             {licenses.loading && <LinearProgress/>}

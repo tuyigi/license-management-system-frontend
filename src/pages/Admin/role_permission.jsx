@@ -154,42 +154,39 @@ function RolePermission(props){
     });
 
     const assignPrivilege = (role, privs) => {
-        // const privInstance = axios.create(
-        //   new AdminService().getHeaders(accountData.token)
-        // );
+        const privInstance = axios.create(
+          new BackendService().getHeaders(accountData.token)
+        );
     
-        // setLoadingPriv(true);
+        setLoadingPriv(true);
     
-        // console.log("Assigning privilege .....");
-        // setAnchorAssignPriv(null);
+        console.log("Assigning privilege .....");
+        setAnchorAssignPriv(null);
     
-        // const data = {
-        //   privilege_id: privs,
-        //   role_id: role,
-        // };
+        const data = privs;
     
-        // const url = new AdminService().ASSIGN_PRIVILEGE;
-        // privInstance
-        //   .post(url, data)
-        //   .then(function (response) {
-        //     setLoadingPriv(false);
-        //     const d = response.data;
+        const url = new BackendService().ASSIGN_PRIV_ROLE+selectedRole?.role?.id;
+        privInstance
+          .put(url, data)
+          .then(function (response) {
+            setLoadingPriv(false);
+            const d = response.data;
     
-        //     getPrivileges(accountData.token, role);
-        //     setItemOver("none");
-        //     notify("success", d.message);
-        //   })
-        //   .catch(function (error) {
-        //     setLoadingPriv(false);
+            getPrivileges(accountData.token, selectedRole?.role?.id);
+            setItemOver("none");
+            notify("success", d.message);
+          })
+          .catch(function (error) {
+            setLoadingPriv(false);
     
-        //     var e = error.message;
+            var e = error.message;
     
-        //     if (error.response) {
-        //       e = error.response.data.message;
-        //     }
+            if (error.response) {
+              e = error.response.data.message;
+            }
     
-        //     notify(error?.response?.status==404?"info":"error", e, error?.response?.status);
-        //   });
+            notify(error?.response?.status==404?"info":"error", e, error?.response?.status);
+          });
       };
 
       const onRoleSearchChange = (event) => {
@@ -716,7 +713,7 @@ function RolePermission(props){
   
                     if (e.target.checked) {
                       allPrivileges.forEach((p, i) => {
-                        d.push(p.privilege_id);
+                        d.push(p.id);
                       });
   
                       setTempAssign({
@@ -745,23 +742,23 @@ function RolePermission(props){
                   <ListItem
                     key={i}
                     dense
-                    selected={tempAssign.data.includes(priv.privilege_id)}
+                    selected={tempAssign.data.includes(priv.id)}
                   >
                     <ListItemIcon>
                       <Checkbox
                         color="primary"
-                        checked={tempAssign.data.includes(priv.privilege_id)}
+                        checked={tempAssign.data.includes(priv.id)}
                         onChange={(e) => {
                           var d = tempAssign.data;
   
                           if (e.target.checked) {
-                            d.push(priv.privilege_id);
+                            d.push(priv.id);
                             setTempAssign({
                               role: selectedRole.role.role_id,
                               data: d,
                             });
                           } else {
-                            const i2 = d.indexOf(priv.privilege_id);
+                            const i2 = d.indexOf(priv.id);
   
                             d.splice(i2, 1);
                             setTempAssign({
@@ -1141,7 +1138,7 @@ function RolePermission(props){
                 </Button> */}
   
                   <Box mt={2}>
-                    <Typography variant="h5">Priviledges assigned to this role</Typography>
+                    <Typography variant="h5">Privileges assigned to this role</Typography>
   
                     <Box mt={2} ml={2} mr={2}>
                       <TextField
@@ -1157,7 +1154,7 @@ function RolePermission(props){
                             </InputAdornment>
                           ),
                         }}
-                        onChange={onAssignedPrivSearchChange}
+                        // onChange={onAssignedPrivSearchChange}
                       />
                     </Box>
   
