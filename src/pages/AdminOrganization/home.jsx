@@ -45,7 +45,7 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer, ListAlt
+    Computer, ListAlt, LibraryBooks
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -58,6 +58,12 @@ import SoftwareLicenseRequest from "./software_license_requests";
 import ExpirationReport from "./reports/expiration_report";
 import RecordLicense from "./record_licenses";
 import Contracts from "./contracts";
+import Certificates from "./certificates";
+import SystemTool from "../Admin/system_tool";
+import {BackendService} from "../../utils/web_config";
+import ContractDetails from "./contract_details";
+
+import ToolsIcon from "../../assets/img/tools.png";
 
 
 
@@ -118,16 +124,36 @@ const routes = [
         main: () =>  <Contracts/>,
     },
     {
+        path: "/orgAdmin/contractDetails",
+        exact: true,
+        permission: "CAN_VIEW_CONTRACT_DETAILS",
+        main: () =>  <ContractDetails/>,
+    },
+    {
+        path: "/orgAdmin/certificates",
+        exact: true,
+        permission: "CAN_VIEW_CERTIFICATES",
+        main: () =>  <Certificates/>,
+    },
+    {
+        path: "/orgAdmin/systemTool",
+        exact: true,
+        permission: "CAN_VIEW_SYSTEM_TOOL",
+        main: () => <SystemTool/>
+    },
+    {
       main: () => <></>,
     },
   ];
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
+    { name: "System Tools", icon: <img src={ToolsIcon} width={25} />, path: "/orgAdmin/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
     { name: "License Contracts", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/contracts", permission: "CAN_VIEW_CONTRACT"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     { name: "License Status Renewal", icon: <Computer color={"primary"}/>, path: "/orgAdmin/recordedLicense", permission: "CAN_VIEW_RECORDED_LICENSE"},
+    { name: "Certificates", icon: <LibraryBooks color={"primary"}/>, path: "/orgAdmin/certificates", permission: "CAN_VIEW_CERTIFICATES"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: "Approved Licenses ", path: "/orgAdmin/reports"},
@@ -211,9 +237,10 @@ function OrgAdminHome(props) {
     const [logoutOpen, setLogoutOpen] = useState(false);
   
     const [openMenu, setOpenMenu] = useState("none");
-  
+    const [accountData, setAccountData] = useState(null);
     useEffect(() => {
-  
+        var accData = new BackendService().accountData;
+        setAccountData(accData);
     }, []);
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -379,7 +406,7 @@ function OrgAdminHome(props) {
               <IconButton
                 color="inherit"
                 onClick={() => {
-                  history.push("/bnr/");
+
                 }}
               >
                 <Badge
@@ -410,7 +437,7 @@ function OrgAdminHome(props) {
                   )
                 }
               >
-                {<Avatar>GT</Avatar>}
+                {<Avatar>{`${accountData?.user?.first_name?.substr(0,1)}${accountData?.user?.last_name?.substr(0,1)}`}</Avatar>}
               </Button>
               <Menu
                 id="menu-appbar"
@@ -427,14 +454,6 @@ function OrgAdminHome(props) {
                 open={menuOpen}
                 onClose={handleClose}
               >
-                <MenuItem
-                  onClick={() => {
-                    handleClose();
-                    history.push("/brn/users/system");
-                  }}
-                >
-                  System users
-                </MenuItem>
                 <MenuItem
                   onClick={() => {
                     handleClose();

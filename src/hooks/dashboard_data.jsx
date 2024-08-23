@@ -168,4 +168,47 @@ const allocatedLicenseChart= (data)  => {
 }
 
 
-export { organizationStats, licenseRequestStats, organizationLicenseRequestStats, licenseRequestStatusChart, allocatedLicenseChart }
+const vendorPaymentDeparmentsChart= (data)  => {
+    var config = {
+
+        series: [{
+            data: data?.data?.series == null ? [] : data?.data?.series,
+        }],
+        options: {
+            chart: {
+                height: 350,
+                type: 'bar',
+                events: {
+                    click: function (chart, w, e) {
+                        // console.log(chart, w, e)
+                    }
+                }
+            },
+            colors: [],
+            plotOptions: {
+                bar: {
+                    columnWidth: '45%',
+                    distributed: true,
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            legend: {
+                show: false
+            },
+            xaxis: {
+                categories:data?.data?.labels == null ? [] : data?.data?.labels,
+                labels: {
+                    style: {
+                        colors: [],
+                        fontSize: '12px'
+                    }
+                }
+            }
+        },
+    };
+    return config;
+}
+
+export { vendorPaymentDeparmentsChart, organizationStats, licenseRequestStats, organizationLicenseRequestStats, licenseRequestStatusChart, allocatedLicenseChart }

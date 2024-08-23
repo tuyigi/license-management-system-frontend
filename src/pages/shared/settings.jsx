@@ -43,73 +43,162 @@ import { makeStyles } from "@material-ui/styles";
 import { useSnackbar } from "notistack";
 import LanguageToggle from "../../utils/languagetoggle";
 import {BackendService} from "../../utils/web_config";
+import axios from "axios";
 
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-      flexGrow: 1,
-      [theme.breakpoints.up("sm")]: {
-        marginLeft: 250,
-      },
+  root: {
+    flexGrow: 1,
+    [theme.breakpoints.up("sm")]: {
+      marginLeft: 250,
     },
-    title: {
-      flexGrow: 1,
-    },
-    btn: {
-      textTransform: "capitalize",
-    },
-    btn2: {
-      textTransform: "capitalize",
-      border: "dashed grey 1px",
-    },
-    paper: {
-      padding: 15,
-    },
-    action: {
-      borderRadius: 15,
-    },
-  }));
+  },
+  title: {
+    flexGrow: 1,
+  },
+  btn: {
+    textTransform: "capitalize",
+  },
+  btn2: {
+    textTransform: "capitalize",
+    border: "dashed grey 1px",
+  },
+  paper: {
+    padding: 15,
+  },
+  action: {
+    borderRadius: 15,
+  },
+}));
 
 function Settings(props){
-    const classes = useStyles();
-    const [passwordData, setPasswordData] = useState({
-        open: false,
-        loading: false,
-        saving: false,
-      })
-    
-      const [languageData, setLanguageData] = useState({
-        open: false,
-        loading: false,
-        saving: false,
-      })
-    
-      const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-    
-      const [passwordOld, setOld] = useState({ value: "", error: "" })
-      const [passwordNew, setNew] = useState({ value: "", error: "" })
-      const [passwordConfirmNew, setConfirmNew] = useState({ value: "", error: "" })
-      const handleLanguageClose = (code) => {
+  const classes = useStyles();
+  const [passwordData, setPasswordData] = useState({
+    open: false,
+    loading: false,
+    saving: false,
+  })
 
-      };
+  const [languageData, setLanguageData] = useState({
+    open: false,
+    loading: false,
+    saving: false,
+  });
+  const history = useHistory();
 
-      const [accountData,setAccountData] = useState(null)
-      useEffect(()=>{
-        var accData = new BackendService().accountData;
-        setAccountData(accData);
-      },[])
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-    return(
-        <div className={classes.root}>
+  const [passwordOld, setOld] = useState({ value: "", error: "" })
+  const [passwordNew, setNew] = useState({ value: "", error: "" })
+  const [passwordConfirmNew, setConfirmNew] = useState({ value: "", error: "" });
+
+  const handleLanguageClose = (code) => {
+
+  };
+
+  const [accountData,setAccountData] = useState(null)
+  useEffect(()=>{
+    var accData = new BackendService().accountData;
+    setAccountData(accData);
+  },[]);
+
+  const onOldPasswordChange=(e)=>{
+    if(e.target.value==""){
+      setOld({ value: '',error: 'Invalid password'});
+    }else{
+      setOld({ value: e.target.value, error: ''});
+    }
+  }
+
+  const onNewPasswordChange=(e)=>{
+    if(e.target.value == ""){
+      setNew({ value: '', error: 'Invalid password'})
+    }else{
+      setNew(( { value: e.target.value, error: ''}));
+    }
+  }
+
+  const onPasswordConfirm=(e)=>{
+    if(e.target.value == ""){
+      setConfirmNew({ value: '' , error: 'Invalid password'});
+    }else{
+      setConfirmNew({value: e.target.value, error: ''});
+    }
+  }
+
+  const changePassword=()=>{
+
+    if(passwordNew.value === ""){
+      setOld({value: '',error: 'Invalid password'});
+    }else if(passwordOld.value === ""){
+      setNew({ value: '', error: 'Invalid password'})
+    }else if(passwordNew.value !== passwordConfirmNew.value){
+      setConfirmNew({ value: '', error: "Passwords don't match"});
+    }else{
+      const passwordInstance = axios.create(
+          new BackendService().getHeaders(accountData.token)
+      );
+      setPasswordData({...passwordData, saving: true});
+      const data = {
+        username: accountData.user.username,
+        old_password: passwordOld.value,
+        new_password: passwordNew.value
+      }
+
+      passwordInstance
+          .put(new BackendService().USERS+'/changePassword', data)
+          .then(function (response) {
+            setPasswordData({...passwordData, saving: false});
+            setPasswordData({...passwordData, open: false});
+            notify("success", response.data.message);
+            setConfirmNew({value: '',error:''});
+            setOld({value: '',error:''});
+            setNew({value: '', error: ''});
+          })
+          .catch(function (error) {
+            setPasswordData({...passwordData, saving: false});
+            var e = error.message;
+            if (error.response) {
+              e = error.response.data.message;
+            }
+            notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+          });
+    }
+
+  }
+
+  const notify = (variant, msg, status) => {
+    if (status == 401) {
+      history.push("/", { expired: true });
+    }
+    enqueueSnackbar(msg, {
+      variant: variant,
+      action: (k) => (
+          <IconButton
+              onClick={() => {
+                closeSnackbar(k);
+              }}
+              size="small"
+          >
+            <Close fontSize="small" />
+          </IconButton>
+      ),
+    });
+  };
+
+
+
+  return(
+      <div className={classes.root}>
         {/* Dialogs ends here */}
-  
+
         <Dialog
-          open={passwordData.open}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-          maxWidth="sm"
-          fullWidth
-          onClose={() => setPasswordData({ ...passwordData, open: false })}
+            open={passwordData.open}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+            maxWidth="sm"
+            fullWidth
+            onClose={() => setPasswordData({ ...passwordData, open: false })}
         >
           <DialogTitle id="alert-dialog-title">Change your password</DialogTitle>
           <DialogContent>
@@ -117,57 +206,57 @@ function Settings(props){
               <Box style={{marginTop: 10}}>
                 <Translate>
                   {({ translate }) => (
-                    <TextField
-                      size='small'
-                      variant='outlined'
-                      color='primary'
-                      type='password'
-                      value={passwordOld.value}
-                      placeholder={"Old Password"}
-                      label={"Old Password"}
-                      fullWidth
-                      onChange={()=>{}}
-                      helperText={passwordOld.error}
-                      error={passwordOld.error !== ""}
-                    />
+                      <TextField
+                          size='small'
+                          variant='outlined'
+                          color='primary'
+                          type='password'
+                          value={passwordOld.value}
+                          placeholder={"Old Password"}
+                          label={"Old Password"}
+                          fullWidth
+                          onChange={onOldPasswordChange}
+                          helperText={passwordOld.error}
+                          error={passwordOld.error !== ""}
+                      />
                   )}
                 </Translate>
               </Box>
               <Box style={{marginTop: 10}}>
                 <Translate>
                   {({ translate }) => (
-                    <TextField
-                      size='small'
-                      variant='outlined'
-                      color='primary'
-                      type='password'
-                      value={passwordNew.value}
-                      placeholder={"New Password"}
-                      label={"New Password"}
-                      fullWidth
-                      onChange={()=>{}}
-                      helperText={passwordNew.error}
-                      error={passwordNew.error !== ""}
-                    />
+                      <TextField
+                          size='small'
+                          variant='outlined'
+                          color='primary'
+                          type='password'
+                          value={passwordNew.value}
+                          placeholder={"New Password"}
+                          label={"New Password"}
+                          fullWidth
+                          onChange={onNewPasswordChange}
+                          helperText={passwordNew.error}
+                          error={passwordNew.error !== ""}
+                      />
                   )}
                 </Translate>
               </Box>
               <Box style={{marginTop: 10}}>
                 <Translate>
                   {({ translate }) => (
-                    <TextField
-                      size='small'
-                      variant='outlined'
-                      color='primary'
-                      type='password'
-                      value={passwordConfirmNew.value}
-                      placeholder={"Confirm Password"}
-                      label={"Confirm Password"}
-                      fullWidth
-                      onChange={()=>{}}
-                      helperText={passwordConfirmNew.error}
-                      error={passwordConfirmNew.error !== ""}
-                    />
+                      <TextField
+                          size='small'
+                          variant='outlined'
+                          color='primary'
+                          type='password'
+                          value={passwordConfirmNew.value}
+                          placeholder={"Confirm Password"}
+                          label={"Confirm Password"}
+                          fullWidth
+                          onChange={onPasswordConfirm}
+                          helperText={passwordConfirmNew.error}
+                          error={passwordConfirmNew.error !== ""}
+                      />
                   )}
                 </Translate>
               </Box>
@@ -175,55 +264,55 @@ function Settings(props){
           </DialogContent>
           <DialogActions>
             <Button
-              onClick={() => {
-                setPasswordData({ ...passwordData, open: false });
-              }}
-              variant="outlined"
-              color="primary"
+                onClick={() => {
+                  setPasswordData({ ...passwordData, open: false });
+                }}
+                variant="outlined"
+                color="primary"
             >
               Cancel
             </Button>
             <Button
-              disabled={passwordData.saving}
-              variant="contained"
-              color="primary"
-              onClick={()=>{}}
-              disableElevation
+                disabled={passwordData.saving}
+                variant="contained"
+                color="primary"
+                onClick={()=>changePassword()}
+                disableElevation
             >
               {passwordData.saving ? (
-                <CircularProgress size={23} />
+                  <CircularProgress size={23} />
               ) : "Change"}
             </Button>
           </DialogActions>
         </Dialog>
         {/* ///////////////////////////////////// */}
-  
+
         <Dialog
-          open={languageData.open}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-          maxWidth="sm"
-          fullWidth
-          onClose={() => setLanguageData({ ...languageData, open: false })}
+            open={languageData.open}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+            maxWidth="sm"
+            fullWidth
+            onClose={() => setLanguageData({ ...languageData, open: false })}
         >
           <DialogTitle id="alert-dialog-title">Choose preffered language</DialogTitle>
           <DialogContent>
-  
+
             <LanguageToggle close={handleLanguageClose} />
           </DialogContent>
           <DialogActions>
             <Button
-              onClick={() => {
-                setLanguageData({ ...languageData, open: false });
-              }}
-            
-              color="primary"
+                onClick={() => {
+                  setLanguageData({ ...languageData, open: false });
+                }}
+
+                color="primary"
             >
               Cancel
             </Button>
           </DialogActions>
         </Dialog>
-  
+
         {/* //////////////////////////////// */}
         <Box style={{display:"flex"}}>
           <Box mr={2}>
@@ -240,22 +329,22 @@ function Settings(props){
               <Typography>You can change system settings here</Typography>
             </Box>
           </Grid>
-         
+
           <Grid item xs={12} md={6}>
-            <Box  
-            style={{margin:10,display:'flex',width:"100%",justifyContent:'center',alignItems:'center',flexDirection:'column'}}>
+            <Box
+                style={{margin:10,display:'flex',width:"100%",justifyContent:'center',alignItems:'center',flexDirection:'column'}}>
               <Avatar  style={{height:120,width:120}}/>
               <Box mt={2}>
-            <Typography gutterBottom variant='h5' align='center'>{`${accountData?.user?.first_name} ${accountData?.user?.last_name}`}</Typography>
-              <Typography color='textSecondary' align='center' >{`${accountData?.user?.organization_id?.name} :: ${accountData?.user?.role_id?.name}`}</Typography>
+                <Typography gutterBottom variant='h5' align='center'>{`${accountData?.user?.first_name} ${accountData?.user?.last_name}`}</Typography>
+                <Typography color='textSecondary' align='center' >{`${accountData?.user?.organization_id?.name} :: ${accountData?.user?.role_id?.name}`}</Typography>
               </Box>
             </Box>
           </Grid>
           <Grid item xs={12} md={7}>
             <CardActionArea
-              onClick={() => {
-                setPasswordData({ ...passwordData, open: true })
-              }}
+                onClick={() => {
+                  setPasswordData({ ...passwordData, open: true })
+                }}
             >
               <Paper className={classes.paper} elevation={0}>
                 <Box style={{display:"flex", alignItems:"center"}} width={1}>
@@ -269,12 +358,12 @@ function Settings(props){
                 </Box>
               </Paper>
             </CardActionArea>
-          </Grid>    
+          </Grid>
           <Grid item xs={12} md={7}>
             <CardActionArea
-              onClick={() => {
-                setLanguageData({ ...languageData, open: true })
-              }}
+                onClick={() => {
+                  setLanguageData({ ...languageData, open: true })
+                }}
             >
               <Paper className={classes.paper} elevation={0}>
                 <Box style={{display:"flex", alignItems:"center"}}>
@@ -291,6 +380,6 @@ function Settings(props){
           </Grid>
         </Grid>
       </div>
-    );
+  );
 }
 export default withLocalize(Settings);

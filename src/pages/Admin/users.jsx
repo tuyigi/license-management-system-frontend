@@ -35,7 +35,7 @@ import {BackendService} from "../../utils/web_config";
 import axios from "axios";
 import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
-import {useOrganizations, useRoles} from "../../hooks/use_hooks";
+import {useDepartments, useOrganizations, useRoles} from "../../hooks/use_hooks";
 import {Autocomplete} from "@material-ui/lab";
 
 
@@ -55,6 +55,7 @@ function Users(props){
     const history = useHistory();
     const orgs = useOrganizations();
     const allRoles = useRoles();
+    const departments = useDepartments();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [users, setUsers] = useState({
       page: 0,
@@ -140,6 +141,7 @@ function Users(props){
     const [roleId, setRoleId] = useState({ value: "", error: "" });
     const [organizationId, setOrganizationId] = useState({ value: "", error: "" });
     const [userType, setUserType] = useState({ value: "", error: "" });
+    const [department, setDepartment] = useState({ value: '', error: ''});
 
 
     const onFirstNameChange = (event) => {
@@ -150,6 +152,16 @@ function Users(props){
           });
         } else {
           setFirstName({ value: event.target.value, error: "" });
+        }
+    };
+    const onDepartmentChange = (event,v) => {
+        if (v === null) {
+            setDepartment({
+                value: "",
+                error: "Please select department",
+            });
+        } else {
+            setDepartment({value: v.id, error: ""});
         }
     };
     const onLastNameChange = (event) => {
@@ -300,7 +312,8 @@ function Users(props){
             phone_number: phoneNumber.value,
             role_id: roleId.value,
             organization_id: organizationId.value,
-            user_type: userType.value
+            user_type: userType.value,
+            department_id: department.value
         };
 
         userInstance
@@ -342,6 +355,7 @@ function Users(props){
         setRoleId({ value: "", error: "" });
         setOrganizationId({ value: "", error: "" });
         setUserType({ value: "", error: "" });
+        setDepartment({ value: "", error: ""});
     }
 
 
@@ -636,6 +650,28 @@ function Users(props){
                           <FormHelperText>{userType.error}</FormHelperText>
                       </FormControl>
                   </Box>
+                  {userType.value ==='LICENSE_OWNER'&&
+                      <Box style={{marginTop: 10}}>
+                          <Autocomplete
+                              fullWidth
+                              openOnFocus
+                              options={departments}
+                              getOptionLabel={(option) => option.name}
+                              onChange={onDepartmentChange}
+                              renderInput={(params) => (
+                                  <TextField
+                                      {...params}
+                                      fullWidth
+                                      label={"Department"}
+                                      variant="outlined"
+                                      size="small"
+                                      helperText={department.error}
+                                      error={department.error !== ""}
+                                  />
+                              )}
+                          />
+                      </Box>
+                  }
 
                   <Box style={{marginTop: 10}}>
                       <Autocomplete

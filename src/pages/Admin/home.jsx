@@ -65,6 +65,7 @@ import SoftwareLicenses from "./sofwate_licenses";
 import Vendors from "../LicenseManager/vendors";
 import SystemTool from "./system_tool";
 import Departments from "./departments";
+import {BackendService} from "../../utils/web_config";
 
 const routes = [
     {
@@ -227,9 +228,10 @@ function BnrHome(props) {
     const [logoutOpen, setLogoutOpen] = useState(false);
   
     const [openMenu, setOpenMenu] = useState("none");
-  
+    const [accountData, setAccountData] = useState(null);
     useEffect(() => {
-  
+        var accData = new BackendService().accountData;
+        setAccountData(accData);
     }, []);
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -395,7 +397,7 @@ function BnrHome(props) {
               <IconButton
                 color="inherit"
                 onClick={() => {
-                  history.push("/bnr/");
+
                 }}
               >
                 <Badge
@@ -426,7 +428,7 @@ function BnrHome(props) {
                   )
                 }
               >
-                {<Avatar>GT</Avatar>}
+                  {<Avatar>{`${accountData?.user?.first_name?.substr(0,1)}${accountData?.user?.last_name?.substr(0,1)}`}</Avatar>}
               </Button>
               <Menu
                 id="menu-appbar"

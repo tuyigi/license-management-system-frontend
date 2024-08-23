@@ -35,6 +35,8 @@ class BackendService {
     this.CHECK_FUNCTION= this.BASE_URL + "/api/v1/systemFunction/check/functions";
     this.ASSIGN_FUNCTION= this.BASE_URL + "/api/v1/systemFunction/assign/";
     this.DEPARTMENT= this.BASE_URL + "/api/v1/department";
+    this.CERTIFICATES = this.BASE_URL + "/api/v1/certificate";
+    this.REPORT = this.BASE_URL + "/api/v1/reports";
 
   }
 

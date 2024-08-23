@@ -43,6 +43,7 @@ import { makeStyles } from "@material-ui/styles";
 import { useSnackbar } from "notistack";
 import LanguageToggle from "../../utils/languagetoggle";
 import {BackendService} from "../../utils/web_config";
+import axios from "axios";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -82,13 +83,15 @@ function Settings(props){
         open: false,
         loading: false,
         saving: false,
-      })
+      });
+      const history = useHistory();
     
       const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     
       const [passwordOld, setOld] = useState({ value: "", error: "" })
       const [passwordNew, setNew] = useState({ value: "", error: "" })
-      const [passwordConfirmNew, setConfirmNew] = useState({ value: "", error: "" })
+      const [passwordConfirmNew, setConfirmNew] = useState({ value: "", error: "" });
+
       const handleLanguageClose = (code) => {
 
       };
@@ -97,9 +100,95 @@ function Settings(props){
       useEffect(()=>{
         var accData = new BackendService().accountData;
         setAccountData(accData);
-      },[])
+      },[]);
 
-    return(
+      const onOldPasswordChange=(e)=>{
+        if(e.target.value==""){
+          setOld({ value: '',error: 'Invalid password'});
+        }else{
+          setOld({ value: e.target.value, error: ''});
+        }
+      }
+
+      const onNewPasswordChange=(e)=>{
+        if(e.target.value == ""){
+          setNew({ value: '', error: 'Invalid password'})
+        }else{
+          setNew(( { value: e.target.value, error: ''}));
+        }
+      }
+
+      const onPasswordConfirm=(e)=>{
+        if(e.target.value == ""){
+          setConfirmNew({ value: '' , error: 'Invalid password'});
+        }else{
+            setConfirmNew({value: e.target.value, error: ''});
+        }
+      }
+
+      const changePassword=()=>{
+
+        if(passwordNew.value === ""){
+          setOld({value: '',error: 'Invalid password'});
+        }else if(passwordOld.value === ""){
+          setNew({ value: '', error: 'Invalid password'})
+        }else if(passwordNew.value !== passwordConfirmNew.value){
+          setConfirmNew({ value: '', error: "Passwords don't match"});
+        }else{
+          const passwordInstance = axios.create(
+              new BackendService().getHeaders(accountData.token)
+          );
+          setPasswordData({...passwordData, saving: true});
+          const data = {
+            username: accountData.user.username,
+            old_password: passwordOld.value,
+            new_password: passwordNew.value
+          }
+
+          passwordInstance
+              .put(new BackendService().USERS+'/changePassword', data)
+              .then(function (response) {
+                setPasswordData({...passwordData, saving: false});
+                setPasswordData({...passwordData, open: false});
+                notify("success", response.data.message);
+                setConfirmNew({value: '',error:''});
+                setOld({value: '',error:''});
+                setNew({value: '', error: ''});
+              })
+              .catch(function (error) {
+                setPasswordData({...passwordData, saving: false});
+                var e = error.message;
+                if (error.response) {
+                  e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+              });
+        }
+
+      }
+
+  const notify = (variant, msg, status) => {
+    if (status == 401) {
+      history.push("/", { expired: true });
+    }
+    enqueueSnackbar(msg, {
+      variant: variant,
+      action: (k) => (
+          <IconButton
+              onClick={() => {
+                closeSnackbar(k);
+              }}
+              size="small"
+          >
+            <Close fontSize="small" />
+          </IconButton>
+      ),
+    });
+  };
+
+
+
+  return(
         <div className={classes.root}>
         {/* Dialogs ends here */}
   
@@ -126,7 +215,7 @@ function Settings(props){
                       placeholder={"Old Password"}
                       label={"Old Password"}
                       fullWidth
-                      onChange={()=>{}}
+                      onChange={onOldPasswordChange}
                       helperText={passwordOld.error}
                       error={passwordOld.error !== ""}
                     />
@@ -145,7 +234,7 @@ function Settings(props){
                       placeholder={"New Password"}
                       label={"New Password"}
                       fullWidth
-                      onChange={()=>{}}
+                      onChange={onNewPasswordChange}
                       helperText={passwordNew.error}
                       error={passwordNew.error !== ""}
                     />
@@ -164,7 +253,7 @@ function Settings(props){
                       placeholder={"Confirm Password"}
                       label={"Confirm Password"}
                       fullWidth
-                      onChange={()=>{}}
+                      onChange={onPasswordConfirm}
                       helperText={passwordConfirmNew.error}
                       error={passwordConfirmNew.error !== ""}
                     />
@@ -187,7 +276,7 @@ function Settings(props){
               disabled={passwordData.saving}
               variant="contained"
               color="primary"
-              onClick={()=>{}}
+              onClick={()=>changePassword()}
               disableElevation
             >
               {passwordData.saving ? (

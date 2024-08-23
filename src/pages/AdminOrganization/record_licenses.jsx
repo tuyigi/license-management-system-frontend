@@ -72,15 +72,15 @@ function RecordLicense(props) {
     useEffect(() => {
         const accData = new BackendService().accountData;
         setAccountData(accData);
-        getLicenses(accData.access_token,accData.user.id);
+        getLicenses(accData.access_token,accData.user.id,accData?.user?.department?.id);
     }, [])
 
     const [status, setStatus] = useState("No licenses requests available....");
-    const getLicenses = (token,id) => {
+    const getLicenses = (token,id,depId) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setLicenses({...licenses, loading: true});
         licenseInstance
-            .get(new BackendService().RECORD_LICENSE )
+            .get( `${new BackendService().RECORD_LICENSE}/department/${depId}` )
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
@@ -122,8 +122,8 @@ function RecordLicense(props) {
     const [description, setDescription] = useState({value: "", error: ""});
     const [paymentPeriods,setPaymentPeriods] = useState([]);
     const [paymentPeriodId,setPaymentPeriodId] = useState({value: "",error:""});
-    const [startDate,setStartDate] = useState({ value: "", error:""});
-    const [endDate, setEndDate]= useState({ value: "", error:""});
+    const [startDate,setStartDate] = useState({ value: format(new Date(),["yyyy-MM-dd"]) , error:""});
+    const [endDate, setEndDate]= useState({ value: format(new Date(),["yyyy-MM-dd"]) , error:""});
     const [isPaid, setIsPaid] = useState(false);
     const [paymentReference, setPaymentReference] = useState({ value: "", error: ""});
 
@@ -489,7 +489,12 @@ function RecordLicense(props) {
                                     // label="Start Date"
                                     value={startDate.value}
                                     onChange={(v)=>{
-                                        setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                        console.log('v',v);
+                                        if(v=="Invalid Date" || v==null){
+                                            setStartDate({value: '',error:v});
+                                        }else{
+                                            setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                        }
                                     }}
                                     KeyboardButtonProps={{
                                         'aria-label': 'change date',
@@ -508,7 +513,11 @@ function RecordLicense(props) {
                                     // label="End Date"
                                     value={endDate.value}
                                     onChange={(v)=>{
-                                        setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                        if(v=="Invalid Date" || v==null){
+                                            setEndDate({value: '',error:v});
+                                        }else{
+                                            setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                        }
                                     }}
                                     KeyboardButtonProps={{
                                         'aria-label': 'change date',

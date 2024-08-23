@@ -63,9 +63,12 @@ function SystemTool(props) {
         data: [],
     });
     const [accountData, setAccountData] = useState(null);
+    const [department, setDepartment] = useState({ value: '', error: ''});
     useEffect(() => {
         var accData = new BackendService().accountData;
+        console.log('accData',accData.user.department.id);
         setAccountData(accData);
+        setDepartment({ value: accData.user.department.id, error: ''});
         getSystemTools(accData.access_token);
     }, [])
 
@@ -105,7 +108,6 @@ function SystemTool(props) {
 
 
     const [name, setName] = useState({value: "", error: ""});
-    const [code, setCode] = useState({value: "", error: ""});
     const [description, setDescription] = useState({value: "", error: ""});
     const [functionIds, setFunctionIds] = useState({ value: [], error: ''});
     const onNameChange = (event) => {
@@ -118,16 +120,6 @@ function SystemTool(props) {
             setName({value: event.target.value, error: ""});
         }
     };
-    const onCodeChange = (event) => {
-        if (event.target.value === "") {
-            setCode({
-                value: "",
-                error: "Please enter valid license code",
-            });
-        } else {
-            setCode({value: event.target.value, error: ""});
-        }
-    };
     const onDescriptionChange = (event) => {
         if (event.target.value === "") {
             setDescription({
@@ -138,8 +130,6 @@ function SystemTool(props) {
             setDescription({value: event.target.value, error: ""});
         }
     };
-
-
     const onFunctionChange = (event,v) => {
         console.log(v);
         setFunctionIds([]);
@@ -150,8 +140,9 @@ function SystemTool(props) {
             });
         } else {
             const ids = v.map((o)=>o.id);
+            console.log('ids',ids);
             checkFunctions(ids);
-            setFunctionIds({value: v.id, error: ""});
+            setFunctionIds({value: ids, error: ""});
         }
     };
 
@@ -197,10 +188,10 @@ function SystemTool(props) {
             new BackendService().getHeaders(accountData.token)
         );
         assignFunctionInstance
-            .put(new BackendService().ASSIGN_FUNCTION,functionsId)
+            .put(new BackendService().ASSIGN_FUNCTION+system_id,functionsId)
             .then(function (response) {
                 const d = response.data.data;
-                setSimilarFunctions(d);
+                setSimilarFunctions([]);
                 setSystemTools({...systemTools, saving: false});
                 notify("success", message);
                 setAddNewOpen(false);
@@ -224,6 +215,7 @@ function SystemTool(props) {
         const data = {
             name: name.value,
             description: description.value,
+            department: department.value
         }
 
         systemInstance

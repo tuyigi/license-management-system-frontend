@@ -39,7 +39,16 @@ import {
     VisibilityOutlined,
     ListAlt,
     MoreHoriz,
-    MoreVert, Inbox, Drafts, Payment, Assessment, MonetizationOn, Done, HourglassEmpty
+    MoreVert,
+    Inbox,
+    Drafts,
+    Payment,
+    Assessment,
+    MonetizationOn,
+    Done,
+    HourglassEmpty,
+    AccountTree,
+    SettingsInputComponent, LibraryAdd
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import { Capitalize } from "../../helpers/capitalize";
@@ -89,16 +98,18 @@ function Contracts(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+        console.log('accData',accData.user.department.id);
         setAccountData(accData);
-        getContracts(accData.access_token);
+        setDepartment({ value: accData.user.department.id, error: ''});
+        getContracts(accData.access_token, accData.user.department.id);
     }, [])
 
     const [status, setStatus] = useState("No contracts requests available....");
-    const getContracts = (token) => {
+    const getContracts = (token,id) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setContracts({...contracts, loading: true});
         licenseInstance
-            .get(new BackendService().CONTRACT )
+            .get(`${new BackendService().CONTRACT}/department/${id}`  )
             .then(function (response) {
                 setContracts({...contracts, loading: false});
                 const d = response.data;
@@ -143,20 +154,11 @@ function Contracts(props) {
     const [currency, setCurrency] = useState({value:"",error:""});
     const [systemTool, setSystemTool] = useState( {value: "", error: ""});
     const [documentLink, setDocumentLink] = useState({value: "", error:""});
-    const [contractNumber, setContractNumber] = useState({ value: "", error: ""});
+    const [contractNumber, setContractNumber] = useState({ value: null, error: ""});
     const [systemUsers, setSystemUsers] = useState({ value: 0, error: ""});
     const [department, setDepartment] = useState({ value: '', error: ''});
 
-    const onLicenseIdChange = (event,v) => {
-        if (v === null) {
-            setLicenseId({
-                value: "",
-                error: "Please select license",
-            });
-        } else {
-            setLicenseId({value: v.id, error: ""});
-        }
-    };
+
     const onLicensePeriodChange = (event) => {
         if (event.target.value === "") {
             setPaymentFrequency({
@@ -182,17 +184,6 @@ function Contracts(props) {
 
 
 
-    const onLicensePeriodCountChange = (event) => {
-        if (event.target.value === "") {
-            setAnnualLicenseFees({
-                value: "",
-                error: "Please enter valid license period count",
-            });
-        } else {
-            setAnnualLicenseFees({value: event.target.value, error: ""});
-        }
-    };
-
     const onDepartmentChange = (event,v) => {
         if (v === null) {
             setDepartment({
@@ -200,7 +191,6 @@ function Contracts(props) {
                 error: "Please select department",
             });
         } else {
-            console.log(`department ID:: ${v.id}`);
             setDepartment({value: v.id, error: ""});
         }
     };
@@ -212,7 +202,6 @@ function Contracts(props) {
                 error: "Please select vendor",
             });
         } else {
-            console.log(`vendor ID:: ${v.id}`);
             setVendor({value: v.id, error: ""});
         }
     };
@@ -228,6 +217,7 @@ function Contracts(props) {
         }
     }
 
+
     const onSystemToolsChange = (event,v) => {
         if (v === null) {
             setSystemTool({
@@ -235,10 +225,11 @@ function Contracts(props) {
                 error: "Please select system tool",
             });
         } else {
-            console.log(`system tool ID:: ${v.id}`);
             setSystemTool({value: v.id, error: ""});
         }
     };
+
+
 
     const onAnnualLicenseFeeChange = (event) => {
         if (event.target.value === "") {
@@ -252,14 +243,7 @@ function Contracts(props) {
     };
 
     const onContractNumberChange = (event) => {
-        if (event.target.value === "") {
-            setContractNumber({
-                value: "",
-                error: "Please enter contract number",
-            });
-        } else {
             setContractNumber({value: event.target.value, error: ""});
-        }
     };
 
 
@@ -319,6 +303,9 @@ function Contracts(props) {
                 newLicense['start_date'] = `${format(new Date(newLicense['start_date']), 'yyyy/MM/dd')}`
                 newLicense['end_date']= `${format(new Date(newLicense['end_date']), 'yyyy/MM/dd')}`
                 newLicense['vendor']=newLicense.vendor.vendor_name;
+
+                newLicense['department_name']=`${newLicense['department']['name']}`
+                newLicense['annual_license_fees'] = `${newLicense['currency']} ${newLicense['annual_license_fees']}`
                 // newLicense['department_name']=`${newLicense['department']['name']}`
                 lcs.unshift(newLicense);
                 setContracts({
@@ -493,15 +480,15 @@ function Contracts(props) {
             options: {
                 filter: true,
                 sort: true,
-                customBodyRender: (value, tableMeta, updateValue) => {
-                    const obj=contracts.data.find((s)=>s.id==value);
+                customBodyRenderLite: function (dataI, rowI) {
                     return (
                         <Box>
                             <IconButton aria-label="delete"
                                         onClick={(e)=>{
+                                            const obj=contracts.data[dataI];
                                             const paymentBatches = obj['payments'];
                                             setPaymentPeriods(paymentBatches.filter((o)=> o.payment_status === 'PENDING'));
-                                            setContractId({ value, error: ''});
+                                            setContractId({ value: obj['id'], error: ''});
                                             setPaymentReports(paymentBatches.sort((n1,n2) => n1.order_number - n2.order_number));
                                             handleEditOpenStatus(e);
                                         }}>
@@ -527,22 +514,48 @@ function Contracts(props) {
                                 <Box p={2}>
                                     <List component="nav" aria-label="main mailbox folders">
                                         <ListItem button onClick={()=>{
-                                            setShowReport(true);
+                                            const obj = contracts.data.find((o)=>o['id']===contractId.value);
+                                            if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
+                                                console.log('check approval status',contracts.data[dataI]['approval_status'].toLowerCase())
+                                                setShowReport(true);
+                                            }else {
+                                                notify("info", 'Contract not yet approved', 400);
+                                            }
                                             handleEditCloseStatus();
-                                        }} disabled={obj['approval_status']==='APPROVED'}>
+                                        }}>
                                             <ListItemIcon>
                                                 <Assessment />
                                             </ListItemIcon>
                                             <ListItemText primary="View Report" />
                                         </ListItem>
                                         <ListItem button onClick={()=>{
-                                            setStatusRenewalOpen(true);
+                                            const obj = contracts.data.find((o)=>o['id']===contractId.value);
+                                            if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
+                                                setStatusRenewalOpen(true);
+                                            }else{
+                                                notify("info", 'Contract not yet approved', 400);
+                                            }
                                             handleEditCloseStatus();
-                                        }} disabled={obj['approval_status']==='APPROVED'}>
+                                        }} >
                                             <ListItemIcon>
                                                 <Payment />
                                             </ListItemIcon>
                                             <ListItemText primary="Status Renewal" />
+                                        </ListItem>
+                                        <ListItem button onClick={(e)=>{
+                                            const obj = contracts.data.find((o)=>o['id']===contractId.value);
+                                            if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
+                                                setShowContractComponents(true);
+                                                getContractComponents();
+                                            }else{
+                                                notify("info", 'Contract not yet approved', 400);
+                                            }
+                                            handleEditCloseStatus();
+                                        }} >
+                                            <ListItemIcon>
+                                                <AccountTree />
+                                            </ListItemIcon>
+                                            <ListItemText primary="Components" />
                                         </ListItem>
                                     </List>
                                 </Box>
@@ -559,9 +572,13 @@ function Contracts(props) {
         elevation: 0,
         selectableRows: false,
         searchPlaceholder: "Search user...",
-        selectableRowsOnClick: false,
+        selectableRowsOnClick: true,
         fixedHeader: true,
-
+        onCellClick: (cellData, cellMeta) => {
+            var contract = contracts.data[cellMeta.dataIndex];
+            history.push('contractDetails',contract)
+            console.log('contract',contract)
+        },
         searchProps: {
             variant: "outlined",
             margin: "dense",
@@ -582,7 +599,6 @@ function Contracts(props) {
     // end table config
 
     // renewal license status
-    const [statusRenewalReportOpen, setStatusRenewalReportOpen] = useState(false);
     const [statusRenewalOpen, setStatusRenewalOpen] = useState(false);
     const [cost, setCost] = useState({value: "", error: ""});
     const [paymentPeriods,setPaymentPeriods] = useState([]);
@@ -603,19 +619,7 @@ function Contracts(props) {
     const onPaymentReferenceChanged=(v)=>{
         setPaymentReference({ value: v.target.value, error: ""});
     }
-    const onContractIdChange = (event,v) => {
-        setPaymentPeriods([]);
-        if (v === null) {
-            setContractId({
-                value: "",
-                error: "Please select contract",
-            });
-        } else {
-            const paymentBatches = contracts.filter((o)=>o.id===v.id)[0]['payments'];
-            setPaymentPeriods(paymentBatches.filter((o)=> o.payment_status === 'PENDING'));
-            setContractId({value: v.id, error: ""});
-        }
-    };
+
 
     const onDescriptionChange = (event) => {
         if (event.target.value === "") {
@@ -645,9 +649,6 @@ function Contracts(props) {
         }
     };
 
-
-
-
     const addLicense = () => {
         if (contractId.value === "") {
             setContractId({
@@ -673,7 +674,6 @@ function Contracts(props) {
             requestLicense();
         }
     }
-
     const requestLicense = () => {
         const licenseInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
@@ -712,18 +712,103 @@ function Contracts(props) {
             });
 
     }
-
     // clear data
-
     const clearLicenseInfo = () => {
         setContractId({value: "", error: ""});
         setCost({value: "", error: ""});
         setDescription({value: "", error: ""});
+        setName({ value: "", error: ""});
     };
-
     const [showReport, setShowReport] = useState(false);
     const [ paymentReports, setPaymentReports] = useState([]);
+    const [showContractComponents, setShowContractComponents] = useState(false);
+    const [contractComponents, setContractComponents] = useState([]);
+    const getContractComponents=()=>{
+        const componentInstance = axios.create(new BackendService().getHeaders(accountData.access_token));
+        setContractComponents([]);
+        componentInstance
+            .get(`${new BackendService().CONTRACT }/component/${contractId.value}`)
+            .then(function (response) {
+                const d = response.data;
+                const comps = d.data;
+                setContractComponents(comps);
+            })
+            .catch(function (error) {
+                setContractComponents([]);
+                let e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                setStatus(e);
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    }
+    const [anchorElComponent, setAnchorElComponent] = useState(null);
+    const handleEditOpenComponent = (event) => {
+        setAnchorElComponent(event.currentTarget);
+    };
+    const handleEditCloseComponent = () => {
+        setAnchorElComponent(null);
+    };
+    const openEditComponent = Boolean(anchorElComponent);
+    const idComponent = openEditComponent ? 'simple-popover' : undefined;
+    const [name, setName]= useState({ value: '', error:''});
+    const [loadingComponent, setLoadingComponent]=useState(false);
+    const onNameChange = (event) => {
+        if (event.target.value === "") {
+            setName({
+                value: "",
+                error: "Please enter valid name",
+            });
+        } else {
+            setName({value: event.target.value, error: ""});
+        }
+    };
 
+    const addComponent=()=>{
+        if (name.value === "") {
+            setName({
+                value: "",
+                error: "Please enter valid email",
+            });
+        } else if (description.value === "") {
+            setDescription({
+                value: '',
+                error: 'Please fulfill description'
+            })
+        }else{
+            setLoadingComponent(true);
+            const componentInstance = axios.create(
+                new BackendService().getHeaders(accountData.token)
+            );
+            const data =
+                {
+                    "name": name.value,
+                    "contract_id":contractId.value,
+                    "description": description.value,
+                    "start_date": startDate.value,
+                    "expiry_date": endDate.value,
+                };
+            componentInstance
+                .post(`${new BackendService().CONTRACT}/component`, data)
+                .then(function (response) {
+                    const comps = contractComponents;
+                    comps.unshift(response?.data?.data);
+                    setContractComponents(comps);
+                    setLoadingComponent(false);
+                    handleEditCloseComponent();
+                    clearLicenseInfo();
+                    notify("success", response.data.message);
+                })
+                .catch(function (error) {
+                    var e = error.message;
+                    if (error.response) {
+                        e = error.response.data.message;
+                    }
+                    notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+                });
+        }
+    }
 
     return(
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -769,7 +854,6 @@ function Contracts(props) {
                         <Translate>
                             {({ translate }) => (
                                 <TextField
-                                    required
                                     size="small"
                                     variant="outlined"
                                     color="primary"
@@ -812,10 +896,10 @@ function Contracts(props) {
                             fullWidth
                             disabled={true}
                             openOnFocus
-                            defaultValue={departments[3]}
+                            defaultValue={departments[departments.findIndex((o)=>o.id==accountData.user.department.id)]}
                             options={departments}
                             getOptionLabel={(option) => option.name}
-                            onChange={onSystemToolsChange}
+                            onChange={onDepartmentChange}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
@@ -912,7 +996,7 @@ function Contracts(props) {
                             >
                                 <MenuItem value="USD">USD</MenuItem>
                                 <MenuItem value="RWF">RWF</MenuItem>
-                                <MenuItem value="RWF">EURO</MenuItem>
+                                <MenuItem value="EURO">EURO</MenuItem>
                             </Select>
                             <FormHelperText>{currency.error}</FormHelperText>
                         </FormControl>
@@ -927,7 +1011,7 @@ function Contracts(props) {
                             label="Start Date"
                             value={startDate.value}
                             onChange={(v)=>{
-                                if(v=="Invalid Date"){
+                                if(v=="Invalid Date" || v==null){
                                     setStartDate({value: '',error:v});
                                 }else{
                                     setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
@@ -950,7 +1034,7 @@ function Contracts(props) {
                             label="End Date"
                             value={endDate.value}
                             onChange={(v)=>{
-                                if(v=="Invalid Date"){
+                                if(v=="Invalid Date" || v==null){
                                     setEndDate({value: '',error:v});
                                 }else{
                                     setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
@@ -1099,7 +1183,7 @@ function Contracts(props) {
                                     // label="Start Date"
                                     value={startDate.value}
                                     onChange={(v)=>{
-                                        if(v=="Invalid Date"){
+                                        if(v=="Invalid Date" || v==null){
                                             setStartDate({value: '',error:v});
                                         }else{
                                             setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
@@ -1122,7 +1206,7 @@ function Contracts(props) {
                                     // label="End Date"
                                     value={endDate.value}
                                     onChange={(v)=>{
-                                        if(v=="Invalid Date"){
+                                        if(v=="Invalid Date" || v==null){
                                             setEndDate({value: '',error:v});
                                         }else{
                                             setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
@@ -1257,6 +1341,195 @@ function Contracts(props) {
                     <Button
                         onClick={() => {
                             setShowReport(false);
+                        }}
+                        variant="outlined"
+                        color="primary"
+                    >
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/*end show payment contract report*/}
+
+
+            {/*start show payment contract report*/}
+
+            <Dialog
+                open={showContractComponents}
+                maxWidth="sm"
+                fullWidth
+                onClose={() => {
+                    setShowContractComponents(false)
+                }}
+            >
+                <DialogTitle id="new-op">
+                    <Box style={{display: 'flex'}}><Typography variant={'h6'} style={{flexGrow: 1}}>Contract Components</Typography>
+                        <Button
+                            variant="contained"
+                            disableElevation
+                            style={{textTransform: 'capitalize'}}
+                            color="primary"
+                            startIcon={<LibraryAdd />}
+                            onClick={(e)=>{
+                                console.log('clicked');
+                                handleEditOpenComponent(e);
+                            }}
+                        >
+                            Add
+                        </Button>
+                        <Popover
+                            id={idComponent}
+                            open={openEditComponent}
+                            variant={'outlined'}
+                            anchorEl={anchorElComponent}
+                            onClose={handleEditCloseComponent}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'center',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'center',
+                            }}
+                            elevation={1}
+                        >
+                            <Box style={{padding: 5}}>
+                                <Box style={{marginTop:10}}>
+                                    <Typography>Add Contract Component</Typography>
+                                </Box>
+                                <Box style={{marginTop:10}}>
+                                    <Translate>
+                                        {({ translate }) => (
+                                            <TextField
+                                                required
+                                                size="small"
+                                                variant="outlined"
+                                                color="primary"
+                                                type={'text'}
+                                                value={name.value}
+                                                placeholder={"Name"}
+                                                label={"Name"}
+                                                fullWidth
+                                                onChange={onNameChange}
+                                                helperText={name.error}
+                                                error={name.error !== ""}
+                                            />
+                                        )}
+                                    </Translate>
+                                </Box>
+
+                                <Box style={{marginTop:10}}>
+                                    <Translate>
+                                        {({ translate }) => (
+                                            <TextField
+                                                required
+                                                size="small"
+                                                variant="outlined"
+                                                multiline={true}
+                                                rows={6}
+                                                color="primary"
+                                                type={'text'}
+                                                value={description.value}
+                                                placeholder={"Description"}
+                                                label={"Description"}
+                                                fullWidth
+                                                onChange={onDescriptionChange}
+                                                helperText={description.error}
+                                                error={description.error !== ""}
+                                            />
+                                        )}
+                                    </Translate>
+                                </Box>
+                                <Grid spacing={1} container>
+                                    <Grid item>
+                                        <Box style={{marginTop:10}}>
+                                            <KeyboardDatePicker
+                                                fullWidth
+                                                disableToolbar
+                                                variant="outlined"
+                                                format="MM/dd/yyyy"
+                                                margin="normal"
+                                                label="Start Date"
+                                                value={startDate.value}
+                                                onChange={(v)=>{
+                                                    if(v === "Invalid Date" || v === null){
+                                                        setStartDate({value: '',error:v});
+                                                    }else{
+                                                        setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                                    }
+
+                                                }}
+                                                KeyboardButtonProps={{
+                                                    'aria-label': 'change date',
+                                                }}
+                                            />
+                                        </Box>
+                                    </Grid>
+                                    <Grid item>
+                                        <Box style={{marginTop:10}}>
+                                            <KeyboardDatePicker
+                                                fullWidth
+                                                disableToolbar
+                                                variant="outlined"
+                                                format="MM/dd/yyyy"
+                                                margin="normal"
+                                                label="Expiry Date"
+                                                value={endDate.value}
+                                                onChange={(v)=>{
+                                                    if(v === "Invalid Date" || v === null){
+                                                        setEndDate({value: '',error:v});
+                                                    }else{
+                                                        setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                                    }
+
+                                                }}
+                                                KeyboardButtonProps={{
+                                                    'aria-label': 'change date',
+                                                }}
+                                            />
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+
+
+                                <Box style={{marginTop:10}}>
+                                    <Button
+                                        variant="contained"
+                                        disableElevation
+                                        style={{textTransform: 'capitalize'}}
+                                        color="primary"
+                                        onClick={(e)=>{
+                                            addComponent();
+                                        }}
+                                    >
+                                        {loadingComponent?<CircularProgress/>:'Save'}
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Popover>
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    <Box style={{marginTop:10}}>
+                        <List>
+                            {contractComponents.map((o)=>
+                                <ListItem>
+                                    <ListItemAvatar>
+                                        <SettingsInputComponent />
+                                    </ListItemAvatar>
+                                    <ListItemText primary={o['name']} secondary={format(new Date(o['start_date']), 'yyyy/MM/dd')+' To '+format(new Date(o['expiry_date']), 'yyyy/MM/dd')} />
+                                    <ListItemSecondaryAction>
+                                    </ListItemSecondaryAction>
+                                </ListItem>)}
+                            {contractComponents.length===0&&<Typography>No contract components available</Typography>}
+                        </List>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => {
+                            setShowContractComponents(false);
                         }}
                         variant="outlined"
                         color="primary"

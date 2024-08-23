@@ -3,12 +3,16 @@ import React, { useState, useEffect } from "react";
 
 import {BackendService} from "../utils/web_config";
 import Chart from "react-apexcharts";
+import {useHistory} from "react-router-dom";
 const axios = require("axios");
+
+
 
 
 /////////////////////////////////////////// admin dashboard /////////////////////////////////////////////
 
 export function useGeneralStats() {
+    const history = useHistory();
     const [generalStatsData, setData] = useState({ status: "loading" });
 
     useEffect(() => {
@@ -34,7 +38,9 @@ export function useGeneralStats() {
                 if (error.response) {
                     if (error?.response?.status == 404) {
                         setData({ data: {}, status: "empty" });
-                    } else {
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }else {
                         setData({ data: {}, status: "error" });
                     }
                 } else {
@@ -46,6 +52,7 @@ export function useGeneralStats() {
 }
 
 export function useOrganizationTypeStats() {
+    const history = useHistory();
     const [organizationTypeStats, setData] = useState({status: "loading" });
     useEffect(() => {
 
@@ -80,7 +87,10 @@ export function useOrganizationTypeStats() {
                 if (error.response) {
                     if (error?.response?.status == 404) {
                         setData({ data: { labels:[],series:[]}, status: "empty" });
-                    } else {
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+                    else {
                         setData({ data: { labels:[],series:[]}, status: "error" });
                     }
                 } else {
@@ -92,6 +102,7 @@ export function useOrganizationTypeStats() {
 }
 
 export function useLicenseRequestStatusStats() {
+    const history = useHistory();
     const [licenseRequestStatusStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
@@ -127,7 +138,10 @@ export function useLicenseRequestStatusStats() {
                 if (error.response) {
                     if (error?.response?.status == 404) {
                         setData({ data: { labels:[],series:[]}, status: "empty" });
-                    } else {
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+                    else {
                         setData({ data: { labels:[],series:[]}, status: "error" });
                     }
                 } else {
@@ -142,6 +156,7 @@ export function useLicenseRequestStatusStats() {
 
 
 export function useOrganizationLicenseRequestStatusStats() {
+    const history = useHistory();
     const [licenseRequestStatusStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
@@ -177,7 +192,10 @@ export function useOrganizationLicenseRequestStatusStats() {
                 if (error.response) {
                     if (error?.response?.status == 404) {
                         setData({ data: { labels:[],series:[]}, status: "empty" });
-                    } else {
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+                    else {
                         setData({ data: { labels:[],series:[]}, status: "error" });
                     }
                 } else {
@@ -189,9 +207,185 @@ export function useOrganizationLicenseRequestStatusStats() {
 }
 
 
+// get total certificate / department
+export function useTotalCertificateDepartmentStats() {
+    const history = useHistory();
+    const [certificateStats, setData] = useState({status: "loading" });
+    useEffect(() => {
+        var accountData = new BackendService().accountData;
+        if (certificateStats.data == null) {
+            getCertificateStats(accountData.token,accountData.user.department.id);
+        }
+    }, [certificateStats]);
+
+    const getCertificateStats = (token,id) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().REPORT}/certificatesDepartment/${id}`;
+        dInstance
+            .get(url)
+            .then(function (response) {
+                const data = response.data.data;
+                setData({
+                    data,
+                    status: "success",
+                });
+            })
+            .catch(function (error) {
+                if (error.response) {
+                    if (error?.response?.status == 404) {
+                        setData({ data: { labels:[],series:[]}, status: "empty" });
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+
+                    else {
+                        setData({ data: { labels:[],series:[]}, status: "error" });
+                    }
+                } else {
+                    setData({ data: { labels:[],series:[]}, status: "error" });
+                }
+            });
+    };
+    return [certificateStats, getCertificateStats];
+}
+
+// get total contracts / department
+
+export function useTotalContractDepartmentStats() {
+    const history = useHistory();
+    const [contractStats, setData] = useState({status: "loading" });
+    useEffect(() => {
+        var accountData = new BackendService().accountData;
+        if (contractStats.data == null) {
+            getContractStats(accountData.token,accountData.user.department.id);
+        }
+    }, [contractStats]);
+
+    const getContractStats = (token,id) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().REPORT}/totalContractDepartment/${id}`;
+        dInstance
+            .get(url)
+            .then(function (response) {
+                const data = response.data.data;
+                setData({
+                    data,
+                    status: "success",
+                });
+            })
+            .catch(function (error) {
+                if (error.response) {
+                    if (error?.response?.status == 404) {
+                        setData({ data: { labels:[],series:[]}, status: "empty" });
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+
+                    else {
+                        setData({ data: { labels:[],series:[]}, status: "error" });
+                    }
+                } else {
+                    setData({ data: { labels:[],series:[]}, status: "error" });
+                }
+            });
+    };
+    return [contractStats, getContractStats];
+}
+
+
+// get tools / system stats
+
+export function useSystemToolStats() {
+    const history = useHistory();
+    const [systemStats, setData] = useState({status: "loading" });
+    useEffect(() => {
+        var accountData = new BackendService().accountData;
+        if (systemStats.data == null) {
+            getSystemStats(accountData.token,accountData.user.department.id);
+        }
+    }, [systemStats]);
+
+    const getSystemStats = (token,id) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = new BackendService().SYSTME_TOOLS;
+        dInstance
+            .get(url)
+            .then(function (response) {
+                const data = response.data.data;
+                setData({
+                    data:{total: data.length},
+                    status: "success",
+                });
+            })
+            .catch(function (error) {
+                if (error.response) {
+                    if (error?.response?.status == 404) {
+                        setData({ data: { total: 0}, status: "empty" });
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+
+                    else {
+                        setData({ data: { total: 0}, status: "error" });
+                    }
+                } else {
+                    setData({ data: { total: 0}, status: "error" });
+                }
+            });
+    };
+    return [systemStats, getSystemStats];
+}
+
+
+// get payment status summary of all payment period of contracts in department
+
+export function usePaymentStatusContractDepartmentStats() {
+    const history = useHistory();
+    const [paymentStatusStats, setData] = useState({status: "loading" });
+    useEffect(() => {
+        var accountData = new BackendService().accountData;
+        if (paymentStatusStats.data == null) {
+            getPaymentStatusStats(accountData.token,accountData.user.department.id);
+        }
+    }, [paymentStatusStats]);
+
+    const getPaymentStatusStats = (token,id) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().REPORT}/contractPeriodPayments/${id}`;
+        dInstance
+            .get(url)
+            .then(function (response) {
+                const data = response.data.data;
+                setData({
+                    data,
+                    status: "success",
+                });
+            })
+            .catch(function (error) {
+                if (error.response) {
+                    if (error?.response?.status == 404) {
+                        setData({ data: { labels:[],series:[]}, status: "empty" });
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+
+                    else {
+                        setData({ data: { labels:[],series:[]}, status: "error" });
+                    }
+                } else {
+                    setData({ data: { labels:[],series:[]}, status: "error" });
+                }
+            });
+    };
+    return [paymentStatusStats, getPaymentStatusStats];
+}
+
+
+
 // get approved license type stats
 
 export function useApprovedLicenseTypeStats() {
+    const history = useHistory();
     const [approvedLicenseRequestStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
@@ -227,7 +421,10 @@ export function useApprovedLicenseTypeStats() {
                 if (error.response) {
                     if (error?.response?.status == 404) {
                         setData({ data: { labels:[],series:[]}, status: "empty" });
-                    } else {
+                    } else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+                    else {
                         setData({ data: { labels:[],series:[]}, status: "error" });
                     }
                 } else {
@@ -236,5 +433,57 @@ export function useApprovedLicenseTypeStats() {
             });
     };
     return [approvedLicenseRequestStats, getApprovedLicenseTypeStats];
+}
+
+
+
+// get approved license type stats
+
+export function useVendorPaymentDeparmentsStats() {
+    const history = useHistory();
+    const [vendorPaymentDeparmentsStats, setData] = useState({status: "loading" });
+    useEffect(() => {
+        var accountData = new BackendService().accountData;
+        if (vendorPaymentDeparmentsStats.data == null) {
+            getVendorPaymentDeparmentsStats(accountData.token,accountData.user.department.id);
+        }
+    }, [vendorPaymentDeparmentsStats]);
+
+    const getVendorPaymentDeparmentsStats = (token,departmentId) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = new BackendService().REPORT + '/vendorPaymentsDepartment/'+departmentId;
+        dInstance
+            .get(url)
+            .then(function (response) {
+                const series =  response.data.data.map(item => (parseInt(item.count)));
+                const labels = response.data.data.map(item => item.vendor_name);
+                console.log(series,labels);
+                const data = {
+                    labels,
+                    series
+                };
+                setData({
+                    data,
+                    status: "success",
+                });
+            })
+            .catch(function (error) {
+                if (error.response) {
+                    if (error?.response?.status == 404) {
+                        setData({ data: { labels:[],series:[]}, status: "empty" });
+                    }
+                    else if(error?.response?.status == 401){
+                        history.push("/", { expired: true });
+                    }
+
+                    else {
+                        setData({ data: { labels:[],series:[]}, status: "error" });
+                    }
+                } else {
+                    setData({ data: { labels:[],series:[]}, status: "error" });
+                }
+            });
+    };
+    return [vendorPaymentDeparmentsStats, getVendorPaymentDeparmentsStats];
 }
 

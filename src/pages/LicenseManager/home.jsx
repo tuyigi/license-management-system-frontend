@@ -58,6 +58,8 @@ import Settings from "../shared/settings";
 import SoftwareLicenseRequest from "../LicenseManager/software_license_requests";
 import ExpirationReport from "./reports/expiration_report";
 import Vendors from "./vendors"
+import ContractsApproval from "./contracts_approval";
+import {BackendService} from "../../utils/web_config";
 // import Contracts from "./contracts";
 
 
@@ -100,12 +102,12 @@ const routes = [
         permission: "CAN_VIEW_REPORTS",
         main: () =>  <ExpirationReport/>,
     },
-    // {
-    //     path: "/licenseManager/contracts",
-    //     exact: true,
-    //     permission: "CAN_VIEW_CONTRACT",
-    //     main: () =>  <Contracts/>,
-    // },
+    {
+        path: "/licenseManager/contracts",
+        exact: true,
+        permission: "CAN_VIEW_CONTRACT",
+        main: () =>  <ContractsApproval/>,
+    },
     {
         path: "/licenseManager/vendors",
         exact: true,
@@ -120,8 +122,8 @@ const routes = [
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/licenseManager/home",permission: "CAN_VIEW_HOME", },
     { name: "Vendors", icon: <Business color={"primary"}/>, path: "/licenseManager/vendors", permission: "CAN_VIEW_VENDOR"},
-    // { name: "Contracts", icon: <ListAlt color={"primary"}/>, path: "/licenseManager/contracts", permission: "CAN_VIEW_CONTRACT"},
-    { name: "License Records", icon: <Note color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
+    { name: "Contracts", icon: <ListAlt color={"primary"}/>, path: "/licenseManager/contracts", permission: "CAN_VIEW_CONTRACT"},
+    {  name: "License Records", icon: <Note color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
@@ -206,9 +208,10 @@ function LicenseManagerHome(props) {
     const [logoutOpen, setLogoutOpen] = useState(false);
   
     const [openMenu, setOpenMenu] = useState("none");
-  
+    const [accountData, setAccountData] = useState(null);
     useEffect(() => {
-  
+        var accData = new BackendService().accountData;
+        setAccountData(accData);
     }, []);
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -373,7 +376,7 @@ function LicenseManagerHome(props) {
               <IconButton
                 color="inherit"
                 onClick={() => {
-                  history.push("/bnr/");
+
                 }}
               >
                 <Badge
@@ -404,7 +407,7 @@ function LicenseManagerHome(props) {
                   )
                 }
               >
-                {<Avatar>GT</Avatar>}
+                  {<Avatar>{`${accountData?.user?.first_name?.substr(0,1)}${accountData?.user?.last_name?.substr(0,1)}`}</Avatar>}
               </Button>
               <Menu
                 id="menu-appbar"

@@ -159,7 +159,7 @@ function Dashboard(){
                     <Grid item xs={12} md={8} lg={8} sm={8}>
                         <Paper style={{minHeight: 380,}} elevation={0}>
                             <Typography style={{marginLeft: 20}}><b>Licenses Allocated</b></Typography>
-                            <Chart options={allocatedLicenseChart(approvedLicenseRequestStats).options} series={allocatedLicenseChart(approvedLicenseRequestStats).series} type="bar" height={350} />
+                            <Chart options={allocatedLicenseChart(approvedLicenseRequestStats).options} series={allocatedLicenseChart(approvedLicenseRequestStats).series} type="area" height={350} />
                         </Paper>
                     </Grid>
 
