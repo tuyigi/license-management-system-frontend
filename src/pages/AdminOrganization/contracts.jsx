@@ -279,7 +279,8 @@ function Contracts(props) {
             new BackendService().getHeaders(accountData.token)
         );
         setContracts({...contracts, saving: true});
-
+        const arr = [];
+        arr.push(systemTool.value);
         const data = {
             "vendor": vendor.value,
             "contract_number": contractNumber.value,
@@ -289,7 +290,7 @@ function Contracts(props) {
             "description": description.value,
             "currency": currency.value,
             "payment_frequency": paymentFrequency.value,
-            "system":systemTool.value,
+            "system_tools":arr,
             "department": parseInt(department.value),
             "number_system_users": parseInt(systemUsers.value)
             }
