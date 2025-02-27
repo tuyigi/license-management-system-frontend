@@ -222,6 +222,30 @@ function useSystemTools() {
 }
 
 
+function useMetric() {
+  const [metrics, setMetrics] = useState([]);
+
+  useEffect(() => {
+    var accountData = new BackendService().accountData;
+    if (metrics.length === 0) {
+      getMetrics(accountData.token);
+    }
+  }, [metrics]);
+
+  const getMetrics = (token) => {
+    const systemToolsInstance = axios.create(new BackendService().getHeaders(token));
+    systemToolsInstance
+        .get(new BackendService().METRICS)
+        .then(function (response) {
+          const d = response.data.data;
+          setMetrics(d);
+        })
+        .catch(function (error) { });
+  };
+  return metrics;
+}
+
+
 function useContracts() {
   const [contracts, setContracts] = useState([]);
   useEffect(() => {
@@ -307,5 +331,6 @@ export {
   useSystemTools,
   useContracts,
   useFunctions,
-  useDepartments
+  useDepartments,
+  useMetric,
 };

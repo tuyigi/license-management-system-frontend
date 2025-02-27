@@ -125,12 +125,12 @@ const menus = [
     { name: "Contracts", icon: <ListAlt color={"primary"}/>, path: "/licenseManager/contracts", permission: "CAN_VIEW_CONTRACT"},
     {  name: "License Records", icon: <Note color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/reports", permission: "CAN_VIEW_REPORT",
-        submenu:[
-            { name: "License Expiration Report", path: "/licenseManager/expirationReport"},
-            // { name: "Audit Trail Report", path: "/licenseManager/licenseRequests"}
-        ]
-    }
+    // { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/reports", permission: "CAN_VIEW_REPORT",
+    //     submenu:[
+    //         { name: "License Expiration Report", path: "/licenseManager/expirationReport"},
+    //         // { name: "Audit Trail Report", path: "/licenseManager/licenseRequests"}
+    //     ]
+    // }
 ];
 
 const menus2 = [

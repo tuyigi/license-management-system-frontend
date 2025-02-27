@@ -167,7 +167,7 @@ export function useOrganizationLicenseRequestStatusStats() {
 
     const getLicenseRequestStatusStats = (token,id) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = new BackendService().LICENSE_REQUEST_TYPE_STATS+`/${id}`;
+        const url = new BackendService().ALL_METRICS;
         dInstance
             .get(url)
             .then(function (response) {
@@ -175,7 +175,7 @@ export function useOrganizationLicenseRequestStatusStats() {
                 const total = response.data.data.reduce((total, item) => parseInt(item.total) + total, 0)
                 console.log('total',total);
                 const series =  response.data.data.map(item => (parseInt(item.total)*100)/total);
-                const labels = response.data.data.map(item => item.request_status);
+                const labels = response.data.data.map(item => item.name);
                 console.log(series,labels);
 
                 const data = {
@@ -445,18 +445,18 @@ export function useVendorPaymentDeparmentsStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (vendorPaymentDeparmentsStats.data == null) {
-            getVendorPaymentDeparmentsStats(accountData.token,accountData.user.department.id);
+            getVendorPaymentDeparmentsStats(accountData.token,accountData.user.department.id, accountData.user.id);
         }
     }, [vendorPaymentDeparmentsStats]);
 
-    const getVendorPaymentDeparmentsStats = (token,departmentId) => {
+    const getVendorPaymentDeparmentsStats = (token,departmentId,userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = new BackendService().REPORT + '/vendorPaymentsDepartment/'+departmentId;
+        const url = new BackendService().REPORT + '/metrics/certificate?user_id=' + userId;
         dInstance
             .get(url)
             .then(function (response) {
-                const series =  response.data.data.map(item => (parseInt(item.count)));
-                const labels = response.data.data.map(item => item.vendor_name);
+                const series =  response.data.data.map(item => (parseInt(item.total)));
+                const labels = response.data.data.map(item => item.month);
                 console.log(series,labels);
                 const data = {
                     labels,

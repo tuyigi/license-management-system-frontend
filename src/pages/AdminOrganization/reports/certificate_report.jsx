@@ -5,10 +5,6 @@ import {
     Typography,
     TextField,
     Button,
-    Chip,
-    FormControlLabel,
-    Avatar,
-    Switch,
     Box, IconButton, FormControl, InputLabel, Select, MenuItem, FormHelperText
 } from "@material-ui/core";
 import {
@@ -20,42 +16,32 @@ import {
     LinearProgress,
 } from "@material-ui/core";
 import {
-    Add,
-    CheckCircle,
-    Block,
-    Edit,
-    Receipt,
     Close,
-    VisibilityOutlined,
-    RateReviewOutlined,
-    HelpOutline,
     AccessTime,
-    Autorenew
+    Autorenew, Book, LibraryBooks
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import axios from "axios";
 import {BackendService} from "../../../utils/web_config";
 import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
-import {useLicenses} from "../../../hooks/use_hooks";
 import { format } from 'date-fns';
 import {Autocomplete} from "@material-ui/lab";
 
 
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
-    title: {flexGrow: 1,},
+    title: {flexGrow: 1,marginLeft: '10px'},
     btn: {textTransform: "capitalize",},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
 }));
 
-function ExpirationReport(props) {
+function CertificateReport(props) {
     const classes = useStyles();
     const {enqueueSnackbar, closeSnackbar} = useSnackbar();
     const history = useHistory();
-    // const licensess = useLicenses();
     const [decisionOpen, setDescionOpen] = useState(false);
     const [licenses, setLicenses] = useState({
         page: 0,
@@ -71,31 +57,33 @@ function ExpirationReport(props) {
     const [ year , setYear] = useState(new Date().getFullYear());
     useEffect(() => {
         var accData = new BackendService().accountData;
+        console.log('accData',accData);
         setAccountData(accData);
-        getLicenses(accData.access_token, new Date().getFullYear());
+        getLicenses(accData.access_token, new Date().getFullYear(),accData.user.id);
     }, [])
 
-    const [status, setStatus] = useState("No licenses requests available....");
-    const getLicenses = (token,yearValue) => {
+    const [status, setStatus] = useState("No reports available....");
+    const getLicenses = (token,yearValue,id) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setLicenses({...licenses, loading: true});
         licenseInstance
-            .get(new BackendService().EXPIRE_LICENSE_REPORT + yearValue)
+            .get(`${new BackendService().CERTIFICATE_REPORT}?year=${yearValue}&user_id=${id}`)
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
                 if (d.data.length == 0) {
-                    setStatus("There are no license requests available.");
+                    setStatus("There are no reports available.");
+                    setLicenses({
+                        ...licenses,
+                        data: [],
+                    });
                 } else {
                     var lcs = d.data;
-                    lcs.map((d)=>{
-                        d['organization_licenses_expires_at'] = format(new Date(d['organization_licenses_expires_at']), 'yyyy/MM/dd')
-                    })
                     setLicenses({
                         ...licenses,
                         data: lcs,
                     });
-                    setStatus("Expire License Report Loaded")
+                    setStatus("Report Loaded");
                 }
             })
             .catch(function (error) {
@@ -193,15 +181,6 @@ function ExpirationReport(props) {
     // start table config
     const columns = [
         {
-            name: "organization_licenses_id",
-            label: "id",
-            options: {
-                filter: false,
-                sort: false,
-                display: 'excluded',
-            },
-        },
-        {
             name: "day_left",
             label: "Day(s) Left",
             options: {
@@ -210,47 +189,47 @@ function ExpirationReport(props) {
             },
         },
         {
-            name: "license_license_category",
-            label: "License Category",
+            name: "name",
+            label: "Certificate",
             options: {
                 filter: false,
                 sort: true,
             },
         },
         {
-            name: "license_name",
-            label: "License",
-            options: {
-                filter: false,
-                sort: false,
-            },
-        },
-        {
-            name: "organization_licenses_expires_at",
-            label: "Expires At",
+            name: "certificates_certificate_type",
+            label: "Certificate Type",
             options: {
                 filter: false,
                 sort: false,
             },
         },
         {
-            name: "organization_licenses_license_period",
-            label: "License Period Type",
+            name: "issue_date",
+            label: "Issue Date",
+            options: {
+                filter: false,
+                sort: true,
+            },
+        },
+        {
+            name: "expiry_date",
+            label: "Expiry Date",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "certificates_user_organization",
+            label: "Organization",
             options: {
                 filter: true,
                 sort: true,
             },
         },
         {
-            name: "organization_licenses_license_period_count",
-            label: "License Period Count",
-            options: {
-                filter: true,
-                sort: true,
-            },
-        },
-        {
-            name: "license_description",
+            name: "certificates_description",
             label: "Description",
             options: {
                 filter: true,
@@ -262,9 +241,9 @@ function ExpirationReport(props) {
     const options = {
         filterType: "multiselect",
         elevation: 0,
-        selectableRows: "single",
-        searchPlaceholder: "Search License Request...",
-        selectableRowsOnClick: true,
+        selectableRows: false,
+        searchPlaceholder: "Search Report...",
+        selectableRowsOnClick: false,
         fixedHeader: true,
 
         searchProps: {
@@ -492,10 +471,10 @@ function ExpirationReport(props) {
             <Box display="flex" style={{display: "flex"}}>
                 <Box mr={2}>
                     {" "}
-                    <AccessTime color="primary" fontSize="large"/>
+                    <LibraryBooks color="primary" fontSize="large"/>
                 </Box>
                 <Typography variant="h5" className={classes.title}>
-                    <b>License Expiration Report</b>
+                    <b>Certificate Report</b>
                 </Typography>
                 <Box style={{marginTop: 10}}>
                     <Autocomplete
@@ -505,7 +484,7 @@ function ExpirationReport(props) {
                         getOptionLabel={(option) => option}
                         onChange={(ve, v)=>{
                             setYear(v);
-                            getLicenses(accountData.access_token,v);
+                            getLicenses(accountData.access_token,v,accountData.user.id);
                         }}
                         renderInput={(params) => (
                             <TextField
@@ -522,7 +501,6 @@ function ExpirationReport(props) {
             <Box style={{marginTop: 20}}/>
             {licenses.loading && <LinearProgress/>}
             <MUIDataTable
-                title={"License Expiration Reports"}
                 data={licenses.data}
                 columns={columns}
                 options={options}
@@ -555,4 +533,4 @@ function CustomLicenseToolbar(props) {
     );
 }
 
-export default withLocalize(ExpirationReport);
+export default withLocalize(CertificateReport);

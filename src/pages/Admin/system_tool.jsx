@@ -66,9 +66,11 @@ function SystemTool(props) {
     const [department, setDepartment] = useState({ value: '', error: ''});
     useEffect(() => {
         var accData = new BackendService().accountData;
-        console.log('accData',accData.user.department.id);
+        console.log('accData',accData);
         setAccountData(accData);
-        setDepartment({ value: accData.user.department.id, error: ''});
+        if(accData['user']!=='SUPER_ADMIN'){
+            setDepartment({ value: accData?.user?.department?.id, error: ''});
+        }
         getSystemTools(accData.access_token);
     }, [])
 

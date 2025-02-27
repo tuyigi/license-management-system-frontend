@@ -89,7 +89,7 @@ import ContractIcon from "../../assets/img/contract.jpg";
 import { useSnackbar } from "notistack";
 import {BackendService} from "../../utils/web_config";
 import {format} from "date-fns/esm";
-import {useSystemTools} from "../../hooks/use_hooks";
+import {useMetric, useSystemTools} from "../../hooks/use_hooks";
 const axios = require("axios");
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -120,11 +120,19 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+const groupArrayOfObjects=(list, key)=> {
+    return list.reduce(function (rv, x) {
+        (rv[x[key]] = rv[x[key]] || []).push(x);
+        return rv;
+    }, {});
+}
+
 function ContractDetails(props) {
     const classes = useStyles();
     const history = useHistory();
     const Theme = useTheme();
     const systemTools = useSystemTools();
+    const metrics = useMetric();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
     const [accountData, setAccountData] = useState({});
@@ -196,7 +204,11 @@ function ContractDetails(props) {
         setAccountData(accData);
         getContractDetails(accData.access_token, history.location.state.id);
     }, []);
+
+
+
     const [contractDetails,setContractDetails]= useState({});
+    const  [groupTools, setGroupTools] = useState({});
     ///////////////////////
     const getContractDetails=(token,id) =>{
         const contractInstance = axios.create(new BackendService().getHeaders(token));
@@ -204,13 +216,65 @@ function ContractDetails(props) {
             .get(`${new BackendService().CONTRACT}/${id}`  )
             .then(function (response) {
                 let d = response.data;
-                const tools = [];
-                d.data.tools.map((o)=>{
-                    tools.push({...o,system_name:o?.system_tool?.system_tool_name})
-                })
-                d.data.tools = tools
-                setContractDetails(d.data);
+                // const tools = [];
+                const toolsMetric = [];
+                d.data.toolsMetrics.map((o)=>{
+                    toolsMetric.push({
+                        contract_system_tool_metric_id: o.contract_system_tool_metric_id,
+                        price: o.price,
+                        currency: o.currency,
+                        issue_date: o.issue_date,
+                        expire_date: o.expire_date,
+                        created_at: o.created_at,
+                        updated_at: o.updated_at,
+                        system_tool: o.system_tool,
+                        contract: o.contract,
+                        host_server: o.host_server || "No Host",
+                        entitlement: o.entitlement || "-",
+                        utilisation: o.utilisation || "-",
+                        license_gap: o.license_gap || "-",
+                        contract_system_tool: o.contract_system_tool,
+                        metric: o.metric || "-",
+                        comment: o.comment || "-",
+                        system_tool_name: o.system_tool_name,
+                        description: o.description,
+                        department: o.department,
+                        name: o.name || "No Metric"
+                    })
+                });
+                const componentMetric = [];
+                d.data.componentMetrics.map((o)=>{
+                    componentMetric.push({
+                        id: o.id,
+                        name: o.name,
+                        description: o.description,
+                        start_date: o.start_date,
+                        expiry_date: o.expiry_date,
+                        created_at: o.created_at,
+                        updated_at: o.updated_at,
+                        contract: o.contract,
+                        host_server: o.host_server || "No Host",
+                        entitlement: o.entitlement || "-",
+                        utilisation: o.utilisation || "-",
+                        license_gap: o.license_gap || "-",
+                        component: o.component || "-",
+                        comment: o.comment || "-",
+                        metric_id: o.metric_id || "-",
+                        metric_name: o.metric_name || "-",
+                        component_metric_id: o.component_metric_id || "-",
+                    })
+                });
+                d.data.tools = toolsMetric;
+                d.data.components = componentMetric;
+                const groupDataTools = groupArrayOfObjects(
+                    d.data.tools,
+                    "comment"
+                );
+                console.log('groupDataTools',groupDataTools?.keys);
+                setGroupTools(groupDataTools);
 
+                console.log(groupTools);
+                setContractDetails(d.data);
             })
             .catch(function (error) {
                 var e = error.message;
@@ -246,127 +310,10 @@ function ContractDetails(props) {
     ];
 
     //////////
-    const transactionsColums = [
-        {
-            name: "tx_type_name",
-            label: "Transaction type",
-            options: {
-                filter: true,
-                sort: false,
-            },
-        },
-        {
-            name: "channel_type",
-            label: "Channel",
-            options: {
-                filter: true,
-                sort: false,
-            },
-        },
-        {
-            name: "credited_account",
-            label: "Account",
-            options: {
-                filter: true,
-                sort: false,
-            },
-        },
-        {
-            name: "amount",
-            label: "Amount",
-            options: {
-                filter: false,
-                sort: false,
-                customBodyRender: (value) => (
-                    <span>{value}</span>
-                ),
-            },
-        },
-        {
-            name: "total_commission_amount",
-            label: "Commission",
-            options: {
-                filter: false,
-                sort: false,
-            },
-        },
-        {
-            name: "tx_date",
-            label: "Date",
-            options: {
-                filter: true,
-                sort: false,
-            },
-        },
-        {
-            name: "tx_time",
-            label: "Time",
-            options: {
-                filter: false,
-                sort: false,
-            },
-        },
-        {
-            name: "mine",
-            label: "Dr/Cr",
-            options: {
-                filter: true,
-                sort: false,
-                customBodyRenderLite: function (dataI, rowI) {
-                    return (
-                        <>
-                            {transactions.data[dataI].debited_account ===
-                            agentAccount.data.account_number ? (
-                                <CallMade color="inherit" />
-                            ) : (
-                                <CallReceived color="primary" />
-                            )}
-                        </>
-                    );
-                },
-            },
-        },
-        {
-            name: "status",
-            label: "Status",
-            options: {
-                filter: true,
-                sort: false,
-                customBodyRenderLite: function (dataI, rowI) {
-                    return (
-                        <Chip
-                            avatar={
-                                <Avatar>
-                                    {["completed", "confirmed"].includes(
-                                        transactions.data[dataI].status.toLowerCase()
-                                    ) ? (
-                                        <CheckCircle fontSize="small" />
-                                    ) : (
-                                        <Block fontSize="small" />
-                                    )}
-                                </Avatar>
-                            }
-                            variant="outlined"
-                            color={
-                                transactions.data[dataI].status.toLowerCase() == "completed"
-                                    ? "primary"
-                                    : "default"
-                            }
-                            size="small"
-                            label={capitalize(transactions.data[dataI].status)}
-                        />
-                    );
-                },
-            },
-        },
-    ];
-
-    //////
-
     const columns = [
         {
-            name: "id",
-            label: "Tool id",
+            name: "contract_system_tool_metric_id",
+            label: "Metric Id",
             options: {
                 filter: false,
                 sort: false,
@@ -374,8 +321,8 @@ function ContractDetails(props) {
             },
         },
         {
-            name: "system_name",
-            label: "System Tool Name",
+            name: "system_tool_name",
+            label: "Product",
             options: {
                 filter: true,
                 sort: true,
@@ -384,6 +331,52 @@ function ContractDetails(props) {
         {
             name: "price",
             label: "Price",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "name",
+            label: "Metric",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "entitlement",
+            label: "Entitlement",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "utilisation",
+            label: "Utilisation",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "license_gap",
+            label: "License Gap",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value) => {
+                    const color = value>=0?"#000000":"#BF0000";
+                    return <span style={{color:`${color}`}}>{value}</span>
+                }
+
+
+            },
+        },
+        {
+            name: "comment",
+            label: "Comment",
             options: {
                 filter: false,
                 sort: false,
@@ -417,8 +410,57 @@ function ContractDetails(props) {
 
     const componentColumns = [
         {
+            name: "component_metric_id",
+            label: "Metric ID",
+            options: {
+                filter: false,
+                sort: false,
+                display: false
+            },
+        },
+        {
             name: "name",
             label: "Component Name",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "metric_name",
+            label: "Metric",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "entitlement",
+            label: "Entitlement",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "utilisation",
+            label: "Utilisation",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "license_gap",
+            label: "License Gap",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "comment",
+            label: "Comment",
             options: {
                 filter: false,
                 sort: false,
@@ -458,27 +500,6 @@ function ContractDetails(props) {
 
     ///////////
 
-    const transactionsOptions = {
-        filterType: "multiselect",
-        elevation: 0,
-        selectableRows: "none",
-        searchPlaceholder: "Search transaction...",
-        selectableRowsOnClick: true,
-        fixedHeader: true,
-        onCellClick: (cellData, cellMeta) => {
-            var tr = transactions.data[cellMeta.dataIndex];
-            history.push("/", tr);
-        },
-        searchProps: {
-            variant: "outlined",
-            margin: "dense",
-        },
-        textLabels: {
-            body: {
-                noMatch: transactions.status,
-            },
-        },
-    };
 
     const remindersOptions = {
         filterType: "multiselect",
@@ -496,24 +517,14 @@ function ContractDetails(props) {
                 noMatch: agents.status,
             },
         },
-        customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
-            <CustomAgentsToolbar
-                selectedRows={selectedRows}
-                displayData={displayData}
-                setSelectedRows={setSelectedRows}
-                toggleAssistant={()=>{}}
-                openEdit={()=>{}}
-                toggling={agents.toggling}
-            />
-        ),
     };
 
     const options = {
         filterType: "multiselect",
         elevation: 0,
-        selectableRows: false,
+        selectableRows: "single",
         searchPlaceholder: "Search device...",
-        selectableRowsOnClick: false,
+        selectableRowsOnClick: true,
         fixedHeader: true,
         print: false,
         download: false,
@@ -534,6 +545,8 @@ function ContractDetails(props) {
                 displayData={displayData}
                 setSelectedRows={setSelectedRows}
                 toggleDevice={()=>{}}
+                setMetricType = {setMetricType}
+                openEdit={openToolMetric}
                 toggling={devices.toggling}
             />
         ),
@@ -542,7 +555,7 @@ function ContractDetails(props) {
     const componentOptions = {
         filterType: "multiselect",
         elevation: 0,
-        selectableRows: false,
+        selectableRows: "single",
         searchPlaceholder: "Search outlet...",
         selectableRowsOnClick: true,
         fixedHeader: true,
@@ -559,9 +572,15 @@ function ContractDetails(props) {
             },
         },
         customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
-            <>
-
-            </>
+            <CustomComponentToolbar
+                selectedRows={selectedRows}
+                displayData={displayData}
+                setSelectedRows={setSelectedRows}
+                toggleDevice={()=>{}}
+                setMetricType = {setMetricType}
+                openEdit={openComponentMetric}
+                toggling={devices.toggling}
+            />
         ),
     };
 
@@ -601,6 +620,7 @@ function ContractDetails(props) {
     const [systemTool, setSystemTool] = useState( {value: "", error: ""});
     const [currency, setCurrency] = useState({value:"",error:""});
     const [loading,setLoading]=useState(false);
+    const [metricsV, setMetricsV] = useState( {value: [], error: ""});
     const onSystemToolsChange = (event,v) => {
         if (v === null) {
             setSystemTool({
@@ -611,6 +631,20 @@ function ContractDetails(props) {
             setSystemTool({value: v.id, error: ""});
         }
     };
+
+
+    const onMetricChange = (event,v) => {
+        console.log('value',v);
+        if(v.length>0){
+            let ids = [];
+            for(const id of v)
+            {
+               ids.push(id.id);
+            }
+            setMetricsV({ value: ids, error: ""});
+        }
+    };
+
     const onCurrencyChange = (event) => {
         if (event.target.value === "") {
             setCurrency({
@@ -630,7 +664,6 @@ function ContractDetails(props) {
             })
         }else if(systemTool.value==""){
             setSystemTool({
-                value: '',
                 error: 'Please select tool/system'
             });
         }else{
@@ -642,7 +675,8 @@ function ContractDetails(props) {
                 "price" : parseInt(cost.value),
                 "currency" : currency.value,
                 "issue_date" : startDate.value,
-                "expire_date" : endDate.value
+                "expire_date" : endDate.value,
+                "metrics": metricsV.value,
             }
 
             contractInstance
@@ -703,6 +737,7 @@ function ContractDetails(props) {
                     "description": description.value,
                     "start_date": startDate.value,
                     "expiry_date": endDate.value,
+                    "metrics": metricsV.value,
                 };
             componentInstance
                 .post(`${new BackendService().CONTRACT}/component`, data)
@@ -785,6 +820,111 @@ function ContractDetails(props) {
     }
 
 
+    // set metric
+    const [metricType,setMetricType]=useState("");
+    const [metricDialog, setMetricDialog]=useState(false);
+    const [utilisation,setUtilisation] = useState({value: 0, error: ""});
+    const [entitlement,setEntitlement] = useState({value: 0, error: ""});
+    const [comment,setComment] = useState({value: "", error: ""});
+    const [metricId,setMetricId]=useState(0);
+    const openToolMetric = (id)=>{
+        setUtilisation({ value: 0, error: ""});
+        setEntitlement({ value: 0, error: ""});
+        setComment({ value: "", error: ""});
+        const metricObj = contractDetails.toolsMetrics.find((o)=>o.contract_system_tool_metric_id===id);
+        if(metricObj['contract_system_tool_metric_id']=== null){
+            return;
+        }
+        setMetricId(id);
+        setUtilisation({ value: metricObj['utilisation'], error: ""});
+        setEntitlement({ value: metricObj['entitlement'], error: ""});
+        setComment({ value: metricObj['comment'] || "", error: ""});
+        setMetricDialog(true);
+    }
+
+
+    const openComponentMetric = (id)=>{
+        setUtilisation({ value: 0, error: ""});
+        setEntitlement({ value: 0, error: ""});
+        setComment({ value: "", error: ""});
+        console.log('components',contractDetails.componentMetrics);
+        const metricObj = contractDetails.componentMetrics.find((o)=>o.component_metric_id===id);
+        console.log('component',metricObj);
+        if(metricObj['component_metric_id']=== null){
+            return;
+        }
+        setMetricId(id);
+        setUtilisation({ value: metricObj['utilisation'], error: ""});
+        setEntitlement({ value: metricObj['entitlement'], error: ""});
+        setComment({ value: metricObj['comment'] || "", error: ""});
+        setMetricDialog(true);
+    }
+
+    const [metricLoad,setMetricLoad]=useState(false);
+    const saveToolMetric=()=>{
+        if(entitlement.value === undefined || entitlement.value === null){
+            setEntitlement({value: 0, error: "Invalid value"});
+            return;
+        }else{
+            setMetricLoad(true);
+            const data = {
+                entitlement: entitlement.value,
+                utilisation: utilisation.value,
+                comment: comment.value
+            };
+            const metricInstance = axios.create(
+                new BackendService().getHeaders(accountData.token)
+            );
+            metricInstance
+                .put(`${new BackendService().TOOL_METRIC}${metricId}`, data)
+                .then(function (response) {
+                    getContractDetails(accountData.token, contractDetails.id);
+                    setMetricLoad(false);
+                    setMetricDialog(false);
+                    notify("success", response.data.message);
+                })
+                .catch(function (error) {
+                    setMetricLoad(false);
+                    var e = error.message;
+                    if (error.response) {
+                        e = error.response.data.message;
+                    }
+                    notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+                });
+        }
+    }
+    const saveComponentMetric=()=>{
+        if(entitlement.value===0){
+            setEntitlement({value: 0, error: "Invalid value"});
+            return;
+        }else{
+            setMetricLoad(true);
+            const data = {
+                entitlement: entitlement.value,
+                utilisation: utilisation.value,
+                comment: comment.value
+            };
+            const metricInstance = axios.create(
+                new BackendService().getHeaders(accountData.token)
+            );
+            metricInstance
+                .put(`${new BackendService().COMPONENT_METRIC}${metricId}`, data)
+                .then(function (response) {
+                    getContractDetails(accountData.token, contractDetails.id);
+                    setMetricLoad(false);
+                    setMetricDialog(false);
+                    notify("success", response.data.message);
+                })
+                .catch(function (error) {
+                    setMetricLoad(false);
+                    var e = error.message;
+                    if (error.response) {
+                        e = error.response.data.message;
+                    }
+                    notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+                });
+        }
+    }
     return (
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <div className={classes.root}>
@@ -798,7 +938,7 @@ function ContractDetails(props) {
                     }}
                 >
                     <DialogTitle id="new-op">
-                        Add Tool/System
+                        Add Product
                     </DialogTitle>
                     <DialogContent>
 
@@ -822,6 +962,8 @@ function ContractDetails(props) {
                                 )}
                             />
                         </Box>
+
+
 
                         <Box style={{marginTop:10}}>
                             <Translate>
@@ -872,6 +1014,30 @@ function ContractDetails(props) {
                                 <FormHelperText>{currency.error}</FormHelperText>
                             </FormControl>
                         </Box>
+
+
+                        <Box style={{marginTop: 10}}>
+                            <Autocomplete
+                                multiple={true}
+                                fullWidth
+                                openOnFocus
+                                options={metrics}
+                                getOptionLabel={(option) => option.name}
+                                onChange={onMetricChange}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        fullWidth
+                                        label={"Metric"}
+                                        variant="outlined"
+                                        size="small"
+                                        helperText={metricsV.error}
+                                        error={metricsV.error !== ""}
+                                    />
+                                )}
+                            />
+                        </Box>
+
                         <Grid container spacing={2}>
                             <Grid item lg={6} sm={6} xs={6}>
                                 <Box style={{marginTop:10}}>
@@ -981,6 +1147,28 @@ function ContractDetails(props) {
                                         />
                                     )}
                                 </Translate>
+                            </Box>
+
+                            <Box style={{marginTop: 10}}>
+                                <Autocomplete
+                                    multiple={true}
+                                    fullWidth
+                                    openOnFocus
+                                    options={metrics}
+                                    getOptionLabel={(option) => option.name}
+                                    onChange={onMetricChange}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            fullWidth
+                                            label={"Metric"}
+                                            variant="outlined"
+                                            size="small"
+                                            helperText={metricsV.error}
+                                            error={metricsV.error !== ""}
+                                        />
+                                    )}
+                                />
                             </Box>
 
                             <Box style={{marginTop:10}}>
@@ -1165,6 +1353,135 @@ function ContractDetails(props) {
                     </DialogActions>
                 </Dialog>
 
+
+                <Dialog
+                    open={metricDialog}
+                    maxWidth="sm"
+                    fullWidth
+                    onClose={() => {
+                        setMetricDialog(false);
+                    }}
+                >
+                    <DialogTitle id="new-op">
+                        Set Metric
+                    </DialogTitle>
+                    <DialogContent>
+                        <Box style={{marginTop:10}}>
+                            <Translate>
+                                {({ translate }) => (
+                                    <TextField
+                                        required
+                                        size="small"
+                                        variant="outlined"
+                                        color="primary"
+                                        type={'number'}
+                                        value={entitlement.value}
+                                        placeholder={"Entitlement"}
+                                        label={"Entitlement"}
+                                        fullWidth
+                                        onChange={(e)=>{
+                                            if(e.target.value === undefined || e.target.value === null){
+                                                setEntitlement({value: 0,error: 'Please enter valid number'});
+                                            }else{
+                                                setEntitlement({value: e.target.value, error: ''});
+                                            }
+                                        }}
+                                        helperText={entitlement.error}
+                                        error={entitlement.error !== ""}
+                                    />
+                                )}
+                            </Translate>
+                        </Box>
+                        <Box style={{marginTop:10}}>
+                            <Translate>
+                                {({ translate }) => (
+                                    <TextField
+                                        required
+                                        size="small"
+                                        variant="outlined"
+                                        color="primary"
+                                        type={'number'}
+                                        value={utilisation.value}
+                                        placeholder={"Utilisation"}
+                                        label={"Utilisation"}
+                                        fullWidth
+                                        onChange={(e)=>{
+                                            if(e.target.value === 0){
+                                                setUtilisation({value: 0,error: 'Please enter valid number'});
+                                            }else{
+                                                setUtilisation({value: e.target.value, error: ''});
+                                                if((entitlement.value-e.target.value)<0){
+                                                    setComment({value: "Over utilised",error:""});
+                                                }else if((entitlement.value-e.target.value)>0){
+                                                    setComment({value: "Under utilised",error:""});
+                                                }else if((entitlement.value-e.target.value)===0){
+                                                    setComment({value: "Optimised",error:""});
+                                                }
+                                            }
+                                        }}
+                                        helperText={utilisation.error}
+                                        error={utilisation.error !== ""}
+                                    />
+                                )}
+                            </Translate>
+                        </Box>
+                        <Box style={{marginTop:10}}>
+                            <Translate>
+                                {({ translate }) => (
+                                    <TextField
+                                        size="small"
+                                        variant="outlined"
+                                        multiline={true}
+                                        rows={6}
+                                        color="primary"
+                                        type={'text'}
+                                        value={comment.value}
+                                        placeholder={"Comment"}
+                                        label={"Comment"}
+                                        fullWidth
+                                        onChange={(e)=>{
+                                            setComment({value: e.target.value, error: ''});
+                                        }}
+                                        helperText={comment.error}
+                                        error={comment.error !== ""}
+                                    />
+                                )}
+                            </Translate>
+                        </Box>
+                    </DialogContent>
+
+                    <DialogActions>
+                        <Button
+                            onClick={() => {
+                                setMetricDialog(false);
+                            }}
+                            variant="outlined"
+                            color="primary"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            disabled={loading}
+                            variant="contained"
+                            color="primary"
+                            onClick={()=>{
+                                if(metricType === "TOOL") {
+                                    saveToolMetric();
+                                }else if(metricType === "COMPONENT"){
+                                    saveComponentMetric();
+                                }
+                            }}
+                            disableElevation
+                        >
+                            {metricLoad? (
+                                <CircularProgress size={23} />
+                            ) : (
+                                "Save"
+                            )}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
                 {/* Dialogs ends here*/}
 
                 {/* //////////////////////////////////// */}
@@ -1172,7 +1489,7 @@ function ContractDetails(props) {
                 {/* /////////////////////////////////////// */}
                 
                 <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                         <Box p={3}>
                             <Box style={{display: 'flex'}}><img src={ContractIcon} className={classes.avatar}/>
                                 <Box style={{flexGrow:1}}/>
@@ -1200,7 +1517,7 @@ function ContractDetails(props) {
                                             disableElevation
                                             onClick={() => setToolDialog(true)}
                                         >
-                                            Add Tool/System
+                                            Add Product
                                         </Button>{" "}
                                         <Box pt={2} />
                                         <Button
@@ -1250,7 +1567,7 @@ function ContractDetails(props) {
                                         <ListItemIcon>
                                             <Attachment />
                                         </ListItemIcon>
-                                        <ListItemText primary="Contract Number:" />
+                                        <ListItemText primary="No:" />
                                         <ListItemSecondaryAction>
                                             <Typography variant="subtitle1" color="textSecondary">
                                                 {contractDetails?.contract_number}
@@ -1342,12 +1659,10 @@ function ContractDetails(props) {
                                         </>
                                 </>
                             )}
-
                         </List>
-
                     </Grid>
 
-                    <Grid item xs={12} md={8}>
+                    <Grid item xs={12} md={9}>
                         <Box style={{paddingTop:10,display:'flex',justifyContent:'center'}}>
                             <ButtonGroup color="primary">
                                 <Button
@@ -1384,8 +1699,40 @@ function ContractDetails(props) {
 
                         {choice == 0 ? (
                             <Box style={{marginTop: '20px'}}>
+
+                                <Grid container spacing={1} style={{marginBottom: '10px'}}>
+
+                                    {Object.keys(groupTools)?.map((tr) => (
+                                        <Grid item xs={12} sm={6} lg={6}>
+                                            <Paper elevation={0} className={classes.paper}>
+                                                <Box width={1}>
+                                                    <Box display="flex" width={1}>
+                                                        <Box flexGrow={1}>
+                                                            <Typography color="textSecondary">{tr}</Typography>
+                                                        </Box>
+                                                    </Box>
+                                                    <Box
+                                                        mt={1}
+                                                        mb="4px"
+                                                        display="flex"
+                                                        alignItems="flex-end"
+                                                        justifyContent="space-between"
+                                                        width={1}
+                                                    >
+                                                        <Typography color="primary" align="right">
+                                                            <b>{groupTools[tr].length}</b>
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Paper>
+                                        </Grid>
+                                    ))}
+
+
+                                </Grid>
+
                                 <MUIDataTable
-                                    title={"List of Tools"}
+                                    title={"List of Tools/Product"}
                                     data={contractDetails?.tools}
                                     columns={columns}
                                     options={options}
@@ -1414,54 +1761,6 @@ function ContractDetails(props) {
                             </Box>
                         ) : (
                             <Box  style={{marginTop: '20px'}}>
-                                <Grid container spacing={2}>
-                                    {transactions?.keys?.map((tr, i) => (
-                                        <Grid item xs={12} sm={6} lg={6}>
-                                            <Paper elevation={0} className={classes.paper}>
-                                                <Box width={1}>
-                                                    <Box display="flex" width={1}>
-                                                        <Box flexGrow={1}>
-                                                            <Typography color="textSecondary">
-                                                                {tr}
-                                                            </Typography>
-                                                        </Box>
-                                                        {<AcUnit />}
-                                                    </Box>
-                                                    <Box
-                                                        mt={1}
-                                                        mb="4px"
-                                                        display="flex"
-                                                        alignItems="flex-end"
-                                                        justifyContent="space-between"
-                                                        width={1}
-                                                    >
-                                                        <Tooltip
-                                                            title={transactions?.groups[tr].length}
-                                                            arrow
-                                                            placement="top"
-                                                        >
-                                                            <Typography variant="h5">
-                                                              okkkkkkk
-                                                            </Typography>
-                                                        </Tooltip>
-
-                                                        <Typography color="primary" align="right">
-                                                           okkkkk
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </Paper>
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                                <Box mt={2} />
-                                {transactions.loading && <LinearProgress />}
-                                <MUIDataTable
-                                    title={"Agent transactions"}
-                                    data={transactions.data}
-                                    columns={transactionsColums}
-                                    options={transactionsOptions}
-                                />
                             </Box>
                         )}
                     </Grid>
@@ -1472,75 +1771,56 @@ function ContractDetails(props) {
         </MuiPickersUtilsProvider>
     );
 }
-
 function CustomDevicesToolbar(props) {
-    const { toggleDevice, displayData, selectedRows } = props;
+    const { toggleDevice, displayData, selectedRows, openEdit,setMetricType } = props;
 
-    var check = displayData[selectedRows?.data[0]?.index].data[4] == "ENABLED";
+    // var check = displayData[selectedRows?.data[0]?.index].data[4] == "ENABLED";
 
     return (
         <div>
-            <FormControlLabel
-                control={
-                    <Switch
-                        disabled={props.toggling}
-                        checked={check}
-                        onChange={() =>
-                            // alert(JSON.stringify(displayData[selectedRows?.data[0]?.index]))
-                            toggleDevice(
-                                displayData[selectedRows?.data[0]?.index]?.data[0],
-                                selectedRows?.data[0]?.dataIndex
-                            )
-                        }
-                        value="vertical"
-                        color="primary"
-                    />
-                }
-                label={check ? "Deactivate device" : "Activate device"}
-            />
-        </div>
-    );
-}
-
-function CustomAgentsToolbar(props) {
-    const { toggleAssistant, displayData, selectedRows, openEdit } = props;
-
-    var check = displayData[selectedRows?.data[0]?.index].data[4] == "ENABLED";
-
-    return (
-        <Box display="flex" alignItems="center">
-            <FormControlLabel
-                control={
-                    <Switch
-                        disabled={props.toggling}
-                        checked={check}
-                        onChange={() => {
-                            toggleAssistant(
-                                displayData[selectedRows?.data[0]?.index]?.data[0],
-                                selectedRows?.data[0]?.dataIndex
-                            );
-                        }}
-                        value="vertical"
-                        color="primary"
-                    />
-                }
-                label={check ? "Deactivate agent" : "Activate agent"}
-            />
-
-            <Box mr={2} ml={2}>
+            <Box display="flex" alignItems="center">
                 <Button
                     color="primary"
                     variant="outlined"
                     size="small"
                     startIcon={<Edit />}
-                    onClick={() =>
+                    onClick={() =>{
                         openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
+                        setMetricType("TOOL");
+                    }
+
                     }
                 >
-                    Edit
+                    Set Metric
                 </Button>
             </Box>
-        </Box>
+        </div>
+    );
+}
+function CustomComponentToolbar(props) {
+    const { toggleDevice, displayData, selectedRows, openEdit,setMetricType } = props;
+
+    // var check = displayData[selectedRows?.data[0]?.index].data[4] == "ENABLED";
+
+    return (
+        <div>
+            <Box display="flex" alignItems="center">
+                <Button
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() =>{
+                        openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
+                        setMetricType("COMPONENT");
+                    }
+
+                    }
+                >
+                    Set Metric
+                </Button>
+            </Box>
+        </div>
     );
 }
 export default withLocalize(ContractDetails);

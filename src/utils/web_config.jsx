@@ -37,7 +37,14 @@ class BackendService {
     this.DEPARTMENT= this.BASE_URL + "/api/v1/department";
     this.CERTIFICATES = this.BASE_URL + "/api/v1/certificate";
     this.REPORT = this.BASE_URL + "/api/v1/reports";
+    this.CERTIFICATE_REPORT= this.BASE_URL + "/api/v1/reports/certificate";
+    this.COMPONENT_REPORT= this.BASE_URL + "/api/v1/reports/components";
+    this.SYSTEM_TOOL_REPORT= this.BASE_URL + "/api/v1/reports/systemTool";
 
+    this.ALL_METRICS = this.BASE_URL + "/api/v1/reports/metrics/all";
+    this.TOOL_METRIC= this.BASE_URL + "/api/v1/contract/metric/tool/audit/";
+    this.COMPONENT_METRIC= this.BASE_URL + "/api/v1/contract/metric/component/audit/";
+    this.METRICS= this.BASE_URL + "/api/v1/metric";
   }
 
   getHeaders = (token) => {

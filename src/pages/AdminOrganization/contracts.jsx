@@ -475,97 +475,97 @@ function Contracts(props) {
                 sort: true,
             },
         },
-        {
-            name: "id",
-            label: "Actions",
-            options: {
-                filter: true,
-                sort: true,
-                customBodyRenderLite: function (dataI, rowI) {
-                    return (
-                        <Box>
-                            <IconButton aria-label="delete"
-                                        onClick={(e)=>{
-                                            const obj=contracts.data[dataI];
-                                            const paymentBatches = obj['payments'];
-                                            setPaymentPeriods(paymentBatches.filter((o)=> o.payment_status === 'PENDING'));
-                                            setContractId({ value: obj['id'], error: ''});
-                                            setPaymentReports(paymentBatches.sort((n1,n2) => n1.order_number - n2.order_number));
-                                            handleEditOpenStatus(e);
-                                        }}>
-                                <MoreVert />
-                            </IconButton>
-                            <Popover
-                                id={idStatus}
-                                open={openEditStatus}
-                                variant={'outlined'}
-                                anchorEl={anchorElStatus}
-                                onClose={handleEditCloseStatus}
-                                anchorOrigin={{
-                                    vertical: 'bottom',
-                                    horizontal: 'center',
-                                }}
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'center',
-                                }}
-                                elevation={1}
-                            >
-
-                                <Box p={2}>
-                                    <List component="nav" aria-label="main mailbox folders">
-                                        <ListItem button onClick={()=>{
-                                            const obj = contracts.data.find((o)=>o['id']===contractId.value);
-                                            if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
-                                                console.log('check approval status',contracts.data[dataI]['approval_status'].toLowerCase())
-                                                setShowReport(true);
-                                            }else {
-                                                notify("info", 'Contract not yet approved', 400);
-                                            }
-                                            handleEditCloseStatus();
-                                        }}>
-                                            <ListItemIcon>
-                                                <Assessment />
-                                            </ListItemIcon>
-                                            <ListItemText primary="View Report" />
-                                        </ListItem>
-                                        <ListItem button onClick={()=>{
-                                            const obj = contracts.data.find((o)=>o['id']===contractId.value);
-                                            if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
-                                                setStatusRenewalOpen(true);
-                                            }else{
-                                                notify("info", 'Contract not yet approved', 400);
-                                            }
-                                            handleEditCloseStatus();
-                                        }} >
-                                            <ListItemIcon>
-                                                <Payment />
-                                            </ListItemIcon>
-                                            <ListItemText primary="Status Renewal" />
-                                        </ListItem>
-                                        <ListItem button onClick={(e)=>{
-                                            const obj = contracts.data.find((o)=>o['id']===contractId.value);
-                                            if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
-                                                setShowContractComponents(true);
-                                                getContractComponents();
-                                            }else{
-                                                notify("info", 'Contract not yet approved', 400);
-                                            }
-                                            handleEditCloseStatus();
-                                        }} >
-                                            <ListItemIcon>
-                                                <AccountTree />
-                                            </ListItemIcon>
-                                            <ListItemText primary="Components" />
-                                        </ListItem>
-                                    </List>
-                                </Box>
-                            </Popover>
-                        </Box>
-                    );
-                }
-            },
-        },
+        // {
+        //     name: "id",
+        //     label: "Actions",
+        //     options: {
+        //         filter: true,
+        //         sort: true,
+        //         customBodyRenderLite: function (dataI, rowI) {
+        //             return (
+        //                 <Box>
+        //                     <IconButton aria-label="delete"
+        //                                 onClick={(e)=>{
+        //                                     const obj=contracts.data[dataI];
+        //                                     const paymentBatches = obj['payments'];
+        //                                     setPaymentPeriods(paymentBatches.filter((o)=> o.payment_status === 'PENDING'));
+        //                                     setContractId({ value: obj['id'], error: ''});
+        //                                     setPaymentReports(paymentBatches.sort((n1,n2) => n1.order_number - n2.order_number));
+        //                                     handleEditOpenStatus(e);
+        //                                 }}>
+        //                         <MoreVert />
+        //                     </IconButton>
+        //                     <Popover
+        //                         id={idStatus}
+        //                         open={openEditStatus}
+        //                         variant={'outlined'}
+        //                         anchorEl={anchorElStatus}
+        //                         onClose={handleEditCloseStatus}
+        //                         anchorOrigin={{
+        //                             vertical: 'bottom',
+        //                             horizontal: 'center',
+        //                         }}
+        //                         transformOrigin={{
+        //                             vertical: 'top',
+        //                             horizontal: 'center',
+        //                         }}
+        //                         elevation={1}
+        //                     >
+        //
+        //                         <Box p={2}>
+        //                             <List component="nav" aria-label="main mailbox folders">
+        //                                 <ListItem button onClick={()=>{
+        //                                     const obj = contracts.data.find((o)=>o['id']===contractId.value);
+        //                                     if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
+        //                                         console.log('check approval status',contracts.data[dataI]['approval_status'].toLowerCase())
+        //                                         setShowReport(true);
+        //                                     }else {
+        //                                         notify("info", 'Contract not yet approved', 400);
+        //                                     }
+        //                                     handleEditCloseStatus();
+        //                                 }}>
+        //                                     <ListItemIcon>
+        //                                         <Assessment />
+        //                                     </ListItemIcon>
+        //                                     <ListItemText primary="View Report" />
+        //                                 </ListItem>
+        //                                 <ListItem button onClick={()=>{
+        //                                     const obj = contracts.data.find((o)=>o['id']===contractId.value);
+        //                                     if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
+        //                                         setStatusRenewalOpen(true);
+        //                                     }else{
+        //                                         notify("info", 'Contract not yet approved', 400);
+        //                                     }
+        //                                     handleEditCloseStatus();
+        //                                 }} >
+        //                                     <ListItemIcon>
+        //                                         <Payment />
+        //                                     </ListItemIcon>
+        //                                     <ListItemText primary="Status Renewal" />
+        //                                 </ListItem>
+        //                                 <ListItem button onClick={(e)=>{
+        //                                     const obj = contracts.data.find((o)=>o['id']===contractId.value);
+        //                                     if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
+        //                                         setShowContractComponents(true);
+        //                                         getContractComponents();
+        //                                     }else{
+        //                                         notify("info", 'Contract not yet approved', 400);
+        //                                     }
+        //                                     handleEditCloseStatus();
+        //                                 }} >
+        //                                     <ListItemIcon>
+        //                                         <AccountTree />
+        //                                     </ListItemIcon>
+        //                                     <ListItemText primary="Components" />
+        //                                 </ListItem>
+        //                             </List>
+        //                         </Box>
+        //                     </Popover>
+        //                 </Box>
+        //             );
+        //         }
+        //     },
+        // },
     ];
 
     const options = {
@@ -577,8 +577,14 @@ function Contracts(props) {
         fixedHeader: true,
         onCellClick: (cellData, cellMeta) => {
             var contract = contracts.data[cellMeta.dataIndex];
-            history.push('contractDetails',contract)
-            console.log('contract',contract)
+            // check if contract is pending or not
+            console.log('Contract',contract);
+            if(contract['approval_status']!=="PENDING"){
+                history.push('contractDetails',contract)
+            }else{
+                notify("info", 'Contract still pending...', 400);
+            }
+
         },
         searchProps: {
             variant: "outlined",

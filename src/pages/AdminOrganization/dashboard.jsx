@@ -150,7 +150,7 @@ function Dashboard(){
 
                     <Grid item xs={12} md={3} lg={3} sm={3} >
                         <Paper className={classes.paper3} elevation={0} onClick={()=>{
-                            history.push("orgAdmin/contracts");
+                            history.push("/orgAdmin/contracts");
                         }}>
                             <Grid container>
                                 <Grid item xs={8} md={8}>
@@ -174,10 +174,9 @@ function Dashboard(){
                         </Paper>
                     </Grid>
 
-
                     <Grid item xs={12} md={8} lg={8} sm={8}>
                         <Paper style={{minHeight: 300,display:"flex",flexDirection:"column"}} elevation={0}>
-                            <Typography style={{marginLeft:10,marginTop:10}}><b>Contract Period Payment Summary</b></Typography>
+                            <Typography style={{marginLeft:10,marginTop:10}}><b>Certificate Expiration Summary</b></Typography>
                             <Box>
                                 <Chart options={vendorPaymentDeparmentsChart(vendorPaymentDeparmentsStats).options} series={vendorPaymentDeparmentsChart(vendorPaymentDeparmentsStats).series} type="area" height={350} />
                                 {/*<List>*/}

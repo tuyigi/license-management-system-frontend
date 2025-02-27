@@ -45,7 +45,7 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer, ListAlt, LibraryBooks
+    Computer, ListAlt, LibraryBooks, Equalizer
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -64,6 +64,10 @@ import {BackendService} from "../../utils/web_config";
 import ContractDetails from "./contract_details";
 
 import ToolsIcon from "../../assets/img/tools.png";
+import CertificateReport from "./reports/certificate_report";
+import ComponentReport from "./reports/component_report";
+import SystemToolReport from "./reports/system_tool_report";
+import Metric from "./metric";
 
 
 
@@ -98,6 +102,24 @@ const routes = [
         exact: true,
         permission: "CAN_VIEW_REPORT",
         main: () => <LicenseRequestReport/>,
+    },
+    {
+        path: "/orgAdmin/reports/certificate",
+        exact: true,
+        permission: "CAN_VIEW_REPORT",
+        main: () => <CertificateReport/>,
+    },
+    {
+        path: "/orgAdmin/reports/component",
+        exact: true,
+        permission: "CAN_VIEW_REPORT",
+        main: () => <ComponentReport/>,
+    },
+    {
+        path: "/orgAdmin/reports/systemTool",
+        exact: true,
+        permission: "CAN_VIEW_REPORT",
+        main: () => <SystemToolReport/>,
     },
     {
         path: "/orgAdmin/settings",
@@ -142,13 +164,20 @@ const routes = [
         main: () => <SystemTool/>
     },
     {
+        path: "/orgAdmin/metric",
+        exact: true,
+        permission: "CAN_VIEW_METRIC",
+        main: () => <Metric/>
+    },
+    {
       main: () => <></>,
     },
   ];
 
 const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
-    { name: "System Tools", icon: <img src={ToolsIcon} width={25} />, path: "/orgAdmin/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
+    { name: "System Tools/Products", icon: <img src={ToolsIcon} width={25} />, path: "/orgAdmin/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
+    { name: "Metrics", icon: <Equalizer color={"primary"} />, path: "/orgAdmin/metric", permission: "CAN_VIEW_METRIC"},
     { name: "License Contracts", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/contracts", permission: "CAN_VIEW_CONTRACT"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
@@ -156,8 +185,12 @@ const menus = [
     { name: "Certificates", icon: <LibraryBooks color={"primary"}/>, path: "/orgAdmin/certificates", permission: "CAN_VIEW_CERTIFICATES"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
-            { name: "Approved Licenses ", path: "/orgAdmin/reports"},
-            { name: "Expiration Report", path: "/orgAdmin/expirationReport"}
+            { name: 'Certificate', path: '/orgAdmin/reports/certificate'},
+            { name: 'Component', path: '/orgAdmin/reports/component'},
+            { name: 'System Tool', path: '/orgAdmin/reports/systemTool'},
+
+            // { name: "Approved Licenses ", path: "/orgAdmin/reports"},
+            // { name: "Expiration Report", path: "/orgAdmin/expirationReport"}
         ]
     }
 ];

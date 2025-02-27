@@ -149,7 +149,7 @@ const menus = [
     // { name: "Institution Licenses", icon: <LocationCity color={"primary"}/>, path: "/bnr/license", permission: "CAN_VIEW_LICENSE"},
     // { name: "Organizations", icon: <Business color={"primary"}/>, path: "/bnr/organization", permission: "CAN_VIEW_ORGANIZATION"},
     { name: "Roles & Permissions", icon: <AccountTree color={"primary"}/>, path: "/bnr/rolePermission", permission: "CAN_VIEW_ROLE_PERMISSION"},
-    { name: "System/Tool", icon: <ImportantDevices color={"primary"}/>, path: "/bnr/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
+    // { name: "System/Tool", icon: <ImportantDevices color={"primary"}/>, path: "/bnr/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
     { name: "Departments", icon: <Ballot color={"primary"}/>, path: "/bnr/departments", permission: "CAN_VIEW_DEPARTMENT"},
     { name: "Users", icon: <PeopleAltOutlined color={"primary"}/>, path: "/bnr/user", permission: "CAN_VIEW_ROLE_USER"},
     ];
