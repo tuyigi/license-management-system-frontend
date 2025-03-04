@@ -1,10 +1,11 @@
 import { getOverlappingDaysInIntervals } from "date-fns/fp";
 import React, { useState, useEffect } from "react";
+import axios from 'axios';
 
 import {BackendService} from "../utils/web_config";
 import Chart from "react-apexcharts";
 import {useHistory} from "react-router-dom";
-const axios = require("axios");
+//const axios = require("axios");
 
 
 

@@ -25,6 +25,7 @@ import {
 import LanguageToggleMenu from "../../utils/languagetoggle_menu.jsx";
 import { withLocalize, Translate } from "react-localize-redux";
 import { useSnackbar } from "notistack";
+import axios from 'axios';
 
 import { useHistory } from "react-router-dom";
 
@@ -33,7 +34,7 @@ import HomeLicenseImage from "../../assets/svg/home_license.svg";
 
 import { BackendService} from "../../utils/web_config.jsx";
 
-const axios = require("axios");
+// const axios = require("axios");
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -59,7 +60,7 @@ function Login(props) {
   const history = useHistory();
   const [confirming, setConfirming] = useState(false);
   const [username, setUsername] = useState({ value: "", error: "" });
-  const [password, setPassword] = useState({ value: "", error: "" });
+  // const [password, setPassword] = useState({ value: "", error: "" });
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [logging, setLogging] = useState(false);
   const [passSecure, setPassSecure] = useState(true);
@@ -109,22 +110,24 @@ function Login(props) {
     }
   };
 
-  const onPasswordChange = (event) => {
-    if (event.target.value === "") {
-      setPassword({ value: "", error: "Enter your password" });
-    } else {
-      setPassword({ value: event.target.value, error: "" });
-    }
-  };
+  // const onPasswordChange = (event) => {
+  //   if (event.target.value === "") {
+  //     setPassword({ value: "", error: "Enter your password" });
+  //   } else {
+  //     setPassword({ value: event.target.value, error: "" });
+  //   }
+  // };
 
   const onLoginClick = (e) => {
     e.preventDefault();
 
     if (username.value === "") {
       setUsername({ value: "", error: "Enter your email or username here" });
-    } else if (password.value === "") {
-      setPassword({ value: "", error: "Enter your password here" });
-    } else {
+    }
+    // else if (password.value === "") {
+    //   setPassword({ value: "", error: "Enter your password here" });
+    // }
+    else {
       doLogin();
     }
   };
@@ -141,11 +144,13 @@ function Login(props) {
     setLogging(true);
     const data = {
       username: username.value,
-      password: password.value
+
     };
 
     loginInstance
-      .post(new BackendService().LOGIN, data)
+        .get(new BackendService().LOGIN, {
+          params: { sAMAccountName: data.username },
+        })
       .then(function (response) {
         setLogging(false);
         // check if user is disabled in system and prevent him/her to use system
@@ -373,7 +378,7 @@ function Login(props) {
                   )}
                 </Translate>
               </Box>
-              <Box style={{marginTop: 20}}>
+             {/* <Box style={{marginTop: 20}}>
                 <Translate>
                   {({ translate }) => (
                     <TextField
@@ -403,15 +408,15 @@ function Login(props) {
                     />
                   )}
                 </Translate>
-              </Box>
+              </Box>*/}
 
-              <Box style={{marginTop: 10,marginBottom: 10}}>
+             {/* <Box style={{marginTop: 10,marginBottom: 10}}>
                 {" "}
                 <FormControlLabel
                   control={<Checkbox name="remember" />}
                   label={<Translate id="login.forms.remember_me" />}
                 />
-              </Box>
+              </Box>*/}
 
               <Box style={{marginTop: 10,marginBottom: 10}}>
                 <Button
@@ -430,7 +435,7 @@ function Login(props) {
                   )}
                 </Button>
               </Box>
-              <Button fullWidth color='primary' onClick={()=>{
+             {/* <Button fullWidth color='primary' onClick={()=>{
 
              if(username.value==''){
                 notify("warning","Enter your username only to initiate password reset",403)
@@ -441,7 +446,7 @@ function Login(props) {
                     <CircularProgress size={25} />
                   ) : (
                     "Reset password?"
-                  )}</Button>
+                  )}</Button>*/}
             </Paper>
           </Grid>
         </Grid>
