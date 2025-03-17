@@ -81,23 +81,33 @@ function Users(props){
         usersInstance
             .get(new BackendService().USERS)
             .then(function (response) {
+                console.log('entering', response);
                 setUsers({...users, loading: false});
+
                 const d = response.data;
-                if (d.data.length == 0) {
+                console.log('GETTING USERS', d);
+                if (d.data.length === 0) {
                     setStatus("There are no users available.");
-                } else {
+                } else
+                {
+                    // var lcs = d.data;
+                    // lcs.map((d)=>{
+                    //     d['role'] = d.role_id?.name;
+                    //     d['organization'] = d.organization_id.name
+                    // })
                     var lcs = d.data;
-                    lcs.map((d)=>{
-                        d['role'] = d.role_id.name;
-                        d['organization'] = d.organization_id.name
-                    })
+                    lcs = lcs.map((d) => ({
+                        ...d,
+                        role: d.role_id?.name,
+                        organization: d.organization_id?.name,
+                    }));
 
                     setUsers({
                         ...users,
                         data: lcs,
                     });
                     //set status
-                    setStatus("Licenses loaded")
+                    setStatus("Licenses loaded");
                 }
             })
             .catch(function (error) {
@@ -108,12 +118,12 @@ function Users(props){
                     e = error.response.data.message;
                 }
                 setStatus(e);
-                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+                notify(error?.response?.status === 404 ? "info" : "error", e, error?.response?.status);
             });
     }
 
     const notify = (variant, msg, status) => {
-        if (status == 401) {
+        if (status === 401) {
             history.push("/", { expired: true });
         }
         enqueueSnackbar(msg, {
@@ -132,19 +142,19 @@ function Users(props){
     };
 
     const [status, setStatus] = useState("No users available....");
-    const [firstName, setFirstName] = useState({ value: "", error: "" });
+    /*const [firstName, setFirstName] = useState({ value: "", error: "" });
     const [lastName, setLastName] = useState({ value: "", error: "" });
     const [userName, setUserName] = useState({ value: "", error: "" });
-    const [password, setPassword] = useState({ value: "", error: "" });
+    const [password, setPassword] = useState({ value: "", error: "" });*/
     const [email, setEmail] = useState({ value: "", error: "" });
-    const [phoneNumber, setPhoneNumber] = useState({ value: "", error: "" });
+  /*  const [phoneNumber, setPhoneNumber] = useState({ value: "", error: "" });*/
     const [roleId, setRoleId] = useState({ value: "", error: "" });
     const [organizationId, setOrganizationId] = useState({ value: "", error: "" });
     const [userType, setUserType] = useState({ value: "", error: "" });
     const [department, setDepartment] = useState({ value: '', error: ''});
 
 
-    const onFirstNameChange = (event) => {
+/*    const onFirstNameChange = (event) => {
         if (event.target.value === "") {
           setFirstName({
             value: "",
@@ -153,7 +163,7 @@ function Users(props){
         } else {
           setFirstName({ value: event.target.value, error: "" });
         }
-    };
+    };*/
     const onDepartmentChange = (event,v) => {
         if (v === null) {
             setDepartment({
@@ -164,7 +174,7 @@ function Users(props){
             setDepartment({value: v.id, error: ""});
         }
     };
-    const onLastNameChange = (event) => {
+  /*  const onLastNameChange = (event) => {
         if (event.target.value === "") {
           setLastName({
             value: "",
@@ -183,8 +193,8 @@ function Users(props){
         } else {
             setUserName({ value: event.target.value, error: "" });
         }
-      };
-    const onPasswordChange = (event) => {
+      };*/
+    /*const onPasswordChange = (event) => {
         if (event.target.value === "") {
             setPassword({
                 value: "",
@@ -193,7 +203,7 @@ function Users(props){
         } else {
             setPassword({ value: event.target.value, error: "" });
         }
-    };
+    };*/
     const onEmailChange = (event) => {
         if (event.target.value === "") {
             setEmail({
@@ -204,7 +214,7 @@ function Users(props){
             setEmail({ value: event.target.value, error: "" });
         }
     };
-    const onPhoneChange = (event) => {
+/*    const onPhoneChange = (event) => {
         if (event.target.value === "") {
             setPhoneNumber({
                 value: "",
@@ -213,7 +223,7 @@ function Users(props){
         } else {
             setPhoneNumber({ value: event.target.value, error: "" });
         }
-    };
+    };*/
     const onRoleChange = (event, v) => {
         if (v == null) {
             setRoleId({
@@ -248,7 +258,7 @@ function Users(props){
     };
 
     const registerUser = () =>{
-        if (firstName.value === "") {
+ /*       if (firstName.value === "") {
             setFirstName({
                 value: "",
                 error: "Please enter first name",
@@ -268,17 +278,20 @@ function Users(props){
                 value: "",
                 error: "Please enter  password",
             });
-        } else  if (email.value === "") {
+        } */
+        if (email.value === "") {
             setEmail({
                 value: "",
                 error: "Please enter valid email",
             });
-        } else if (phoneNumber.value === "") {
+        }
+      /*  else if (phoneNumber.value === "") {
             setPhoneNumber({
                 value: "",
                 error: "Please enter valid phone number",
             });
-        } else if (roleId.value === "") {
+        } */
+        else if (roleId.value === "") {
             setRoleId({
                 value: "",
                 error: "Please Select Role",
@@ -304,21 +317,21 @@ function Users(props){
         );
         setUsers({...users, saving: true});
         const data = {
-            first_name: firstName.value,
+           /* first_name: firstName.value,
             last_name: lastName.value,
             username: userName.value,
-            password: password.value,
+            password: password.value,*/
             email: email.value,
-            phone_number: phoneNumber.value,
+           /* phone_number: phoneNumber.value,*/
             role_id: roleId.value,
             organization_id: organizationId.value,
             user_type: userType.value,
             department_id: department.value
         };
-
         userInstance
             .post(new BackendService().USERS, data)
             .then(function (response) {
+
                 setUsers({...users, saving: false});
                 var d = response.data;
                 var lcss = users.data;
@@ -332,6 +345,7 @@ function Users(props){
                 });
                 clearLicenseInfo()
                 notify("success", response.data.message);
+
                 setAddNewOpen(false);
             })
             .catch(function (error) {
@@ -340,18 +354,18 @@ function Users(props){
                 if (error.response) {
                     e = error.response.data.message;
                 }
-                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+                notify(error?.response?.status === 404 ? "info" : "error", e, error?.response?.status);
             });
 
     }
 
     const clearLicenseInfo = () =>{
-        setFirstName({ value: "", error: "" });
+ /*       setFirstName({ value: "", error: "" });
         setLastName({ value: "", error: "" });
         setUserName({ value: "", error: "" });
-        setPassword({ value: "", error: "" });
+        setPassword({ value: "", error: "" });*/
         setEmail({ value: "", error: "" });
-        setPhoneNumber({ value: "", error: "" });
+       /* setPhoneNumber({ value: "", error: "" });*/
         setRoleId({ value: "", error: "" });
         setOrganizationId({ value: "", error: "" });
         setUserType({ value: "", error: "" });
@@ -361,7 +375,7 @@ function Users(props){
 
     // start table config
     const columns = [
-                {
+               {
                   name: "id",
                   label: "id",
                   options: {
@@ -370,7 +384,7 @@ function Users(props){
                     display: 'excluded',
                   },
                 },
-                {
+/*                {
                   name: "first_name",
                   label: "First Name",
                   options: {
@@ -386,7 +400,10 @@ function Users(props){
                     sort: false,
                   },
                 },
+
+ */
                 {
+
                   name: "username",
                   label: "Username",
                   options: {
@@ -402,14 +419,14 @@ function Users(props){
                     sort: true,
                   },
                 },
-                {
+                /*{
                     name: "phone_number",
                     label: "Phone Number",
                     options: {
                       filter: true,
                       sort: true,
                     },
-                  },
+                  },*/
                   {
                     name: "role",
                     label: "Role",
@@ -445,7 +462,7 @@ function Users(props){
                         <Chip
                           avatar={
                             <Avatar>
-                              {users.data[dataI].status.toLowerCase() == "enabled" ? (
+                              {users.data[dataI].status.toLowerCase() === "enabled" ? (
                                 <CheckCircle fontSize="small" />
                               ) : (
                                   <Block fontSize="small" />
@@ -454,7 +471,7 @@ function Users(props){
                           }
                           variant="outlined"
                           color={
-                            users.data[dataI].status.toLowerCase() == "enabled"
+                            users.data[dataI].status.toLowerCase() === "enabled"
                               ? "primary"
                               : "default"
                           }
@@ -527,7 +544,7 @@ function Users(props){
           <DialogContent>
               <Box>
 
-                  <Box style={{marginTop:10}}>
+              {/*    <Box style={{marginTop:10}}>
                       <TextField
                           required
                           size="small"
@@ -557,7 +574,7 @@ function Users(props){
                           helperText={lastName.error}
                           error={lastName.error !== ""}
                       />
-                  </Box>
+                  </Box>*/}
 
                   <Box style={{marginTop:10}}>
                       <TextField
@@ -574,7 +591,7 @@ function Users(props){
                           error={email.error !== ""}
                       />
                   </Box>
-                  <Box style={{marginTop:10}}>
+           {/*       <Box style={{marginTop:10}}>
                       <TextField
                           required
                           size="small"
@@ -589,9 +606,9 @@ function Users(props){
                           helperText={phoneNumber.error}
                           error={phoneNumber.error !== ""}
                       />
-                  </Box>
+                  </Box>*/}
 
-                  <Box style={{marginTop:10}}>
+              {/*    <Box style={{marginTop:10}}>
                       <TextField
                           required
                           size="small"
@@ -605,9 +622,9 @@ function Users(props){
                           helperText={userName.error}
                           error={userName.error !== ""}
                       />
-                  </Box>
+                  </Box>*/}
 
-                  <Box style={{marginTop:10}}>
+                {/*  <Box style={{marginTop:10}}>
                       <TextField
                           required
                           size="small"
@@ -622,7 +639,7 @@ function Users(props){
                           helperText={password.error}
                           error={password.error !== ""}
                       />
-                  </Box>
+                  </Box>*/}
 
                   <Box style={{marginTop: 10}}>
                       <FormControl
@@ -787,7 +804,7 @@ function Users(props){
 function CustomUserToolbar(props) {
     const { toggleUser, displayData, selectedRows, openEdit } = props;
   
-    var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
+    var check = displayData[selectedRows?.data[0]?.index].data[5] === "ENABLED";
   
     return (
       <Box display="flex" alignItems="center">

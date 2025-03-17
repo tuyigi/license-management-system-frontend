@@ -1,10 +1,11 @@
 import { getOverlappingDaysInIntervals } from "date-fns/fp";
 import React, { useState, useEffect } from "react";
+import axios from 'axios';
 
 import {BackendService} from "../utils/web_config";
 import Chart from "react-apexcharts";
 import {useHistory} from "react-router-dom";
-const axios = require("axios");
+//const axios = require("axios");
 
 
 
@@ -136,9 +137,9 @@ export function useLicenseRequestStatusStats() {
             })
             .catch(function (error) {
                 if (error.response) {
-                    if (error?.response?.status == 404) {
+                    if (error?.response?.status === 404) {
                         setData({ data: { labels:[],series:[]}, status: "empty" });
-                    } else if(error?.response?.status == 401){
+                    } else if(error?.response?.status === 401){
                         history.push("/", { expired: true });
                     }
                     else {
@@ -160,9 +161,10 @@ export function useOrganizationLicenseRequestStatusStats() {
     const [licenseRequestStatusStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        if (licenseRequestStatusStats.data == null) {
+        console.log(accountData.user);
+       /* if (licenseRequestStatusStats.data == null) {
             getLicenseRequestStatusStats(accountData.token,accountData.user.organization_id.id);
-        }
+        }*/
     }, [licenseRequestStatusStats]);
 
     const getLicenseRequestStatusStats = (token,id) => {
@@ -182,7 +184,7 @@ export function useOrganizationLicenseRequestStatusStats() {
                     labels,
                     series
                 };
-                console.log(data)
+                console.log(data);
                 setData({
                     data,
                     status: "success",
@@ -190,9 +192,9 @@ export function useOrganizationLicenseRequestStatusStats() {
             })
             .catch(function (error) {
                 if (error.response) {
-                    if (error?.response?.status == 404) {
+                    if (error?.response?.status === 404) {
                         setData({ data: { labels:[],series:[]}, status: "empty" });
-                    } else if(error?.response?.status == 401){
+                    } else if(error?.response?.status === 401){
                         history.push("/", { expired: true });
                     }
                     else {

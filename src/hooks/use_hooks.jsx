@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import {BackendService} from "../utils/web_config";
-const axios = require("axios");
+import axios from 'axios';
+
+//const axios = require("axios");
 
 ////////////////////////////////////////////////////////////////////////
 function useOrganizations() {
