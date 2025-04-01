@@ -7,11 +7,11 @@
             "remember_me": "Remember me next time.",
             "login": "Login",
             "hints": {
-                "username": "Your email or username",
+                "username": "Your username",
                 "password": "Your password"
             },
             "labels": {
-                "username": "Email",
+                "username": "Username",
                 "password": "Password"
             },
             "errors": {

@@ -60,7 +60,7 @@ function Login(props) {
   const history = useHistory();
   const [confirming, setConfirming] = useState(false);
   const [username, setUsername] = useState({ value: "", error: "" });
-  // const [password, setPassword] = useState({ value: "", error: "" });
+  const [password, setPassword] = useState({ value: "", error: "" });
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [logging, setLogging] = useState(false);
   const [passSecure, setPassSecure] = useState(true);
@@ -105,29 +105,29 @@ function Login(props) {
 
   const onUsernameChange = (event) => {
     if (event.target.value === "") {
-      setUsername({ value: "", error: "Enter your email or username" });
+      setUsername({ value: "", error: "Enter your username" });
     } else {
       setUsername({ value: event.target.value, error: "" });
     }
   };
 
-  // const onPasswordChange = (event) => {
-  //   if (event.target.value === "") {
-  //     setPassword({ value: "", error: "Enter your password" });
-  //   } else {
-  //     setPassword({ value: event.target.value, error: "" });
-  //   }
-  // };
+  const onPasswordChange = (event) => {
+    if (event.target.value === "") {
+      setPassword({ value: "", error: "Enter your password" });
+    } else {
+      setPassword({ value: event.target.value, error: "" });
+    }
+  };
 
   const onLoginClick = (e) => {
     e.preventDefault();
 
     if (username.value === "") {
-      setUsername({ value: "", error: "Enter your email or username here" });
+      setUsername({ value: "", error: "Enter your username here" });
     }
-    // else if (password.value === "") {
-    //   setPassword({ value: "", error: "Enter your password here" });
-    // }
+     else if (password.value === "") {
+      setPassword({ value: "", error: "Enter your password here" });
+    }
     else {
       doLogin();
     }
@@ -379,7 +379,7 @@ function Login(props) {
                   )}
                 </Translate>
               </Box>
-             {/* <Box style={{marginTop: 20}}>
+              <Box style={{marginTop: 20}}>
                 <Translate>
                   {({ translate }) => (
                     <TextField
@@ -409,7 +409,7 @@ function Login(props) {
                     />
                   )}
                 </Translate>
-              </Box>*/}
+              </Box>
 
              {/* <Box style={{marginTop: 10,marginBottom: 10}}>
                 {" "}

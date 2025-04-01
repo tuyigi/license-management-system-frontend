@@ -90,7 +90,7 @@ import { useSnackbar } from "notistack";
 import {BackendService} from "../../utils/web_config";
 import {format} from "date-fns/esm";
 import {useMetric, useSystemTools} from "../../hooks/use_hooks";
-const axios = require("axios");
+import axios from "axios";
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
