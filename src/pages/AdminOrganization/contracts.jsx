@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from "react";
+import React,{useState,useEffect,useRef} from "react";
 import {withLocalize, Translate} from "react-localize-redux";
 import {makeStyles} from "@material-ui/styles";
 import {
@@ -19,7 +19,7 @@ import {
     Popover,
     ListItemText,
     ListItemIcon,
-    ListItem, List, Grid, ListItemAvatar, ListItemSecondaryAction
+    ListItem, List, Grid, ListItemAvatar, ListItemSecondaryAction,
 } from "@material-ui/core";
 import {
     CircularProgress,
@@ -48,7 +48,7 @@ import {
     Done,
     HourglassEmpty,
     AccountTree,
-    SettingsInputComponent, LibraryAdd
+    SettingsInputComponent, LibraryAdd,Publish
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import { Capitalize } from "../../helpers/capitalize";
@@ -71,7 +71,7 @@ import {
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",marginRight:'16px'},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
@@ -153,7 +153,8 @@ function Contracts(props) {
     const [endDate, setEndDate] = useState({ value: format(new Date(),["yyyy-MM-dd"]), error: ""});
     const [currency, setCurrency] = useState({value:"",error:""});
     const [systemTool, setSystemTool] = useState( {value: "", error: ""});
-    const [documentLink, setDocumentLink] = useState({value: "", error:""});
+    const [documentLink, setDocumentLink] = useState({value: __filename, error:""});
+    const [contractUpload, setContractUpload] = useState({value: __filename, error:""});
     const [contractNumber, setContractNumber] = useState({ value: null, error: ""});
     const [systemUsers, setSystemUsers] = useState({ value: 0, error: ""});
     const [department, setDepartment] = useState({ value: '', error: ''});
@@ -816,6 +817,30 @@ function Contracts(props) {
                 });
         }
     }
+    const inputRef = useRef(null);
+
+    const handleButtonClick = () => {
+        if (inputRef.current) {
+            inputRef.current.click();
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/vnd.ms-excel', // .xls
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            setContractUpload({ value: null, error: 'Only Excel files (.xlsx, .xls) are allowed.' });
+            return;
+        }
+
+        setContractUpload({ value: file, error: '' });
+        }
 
     return(
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -866,8 +891,8 @@ function Contracts(props) {
                                     color="primary"
                                     type={'text'}
                                     value={contractNumber.value}
-                                    placeholder={"Contract Number"}
-                                    label={"Contract Number"}
+                                    placeholder={"Contract Name"}
+                                    label={"Contract Name"}
                                     fullWidth
                                     onChange={onContractNumberChange}
                                     helperText={contractNumber.error}
@@ -1052,25 +1077,25 @@ function Contracts(props) {
                             }}
                         />
                     </Box>
-                    <Box style={{marginTop:10}}>
+                 {/* <Box style={{marginTop:10}}>
                         <Translate>
                             {({ translate }) => (
                                 <TextField
                                     size="small"
                                     variant="outlined"
                                     color="primary"
-                                    type={'text'}
-                                    value={documentLink.value}
-                                    placeholder={"Document Link"}
-                                    label={"Document Link"}
+                                    type="file"
                                     fullWidth
-                                    onChange={(v)=>{
-                                        setDocumentLink({ value: v.target.value, error: ""});
+                                    InputLabelProps={{ shrink: true }}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        setDocumentLink({ value: file, error: "" });
                                     }}
+                                    label="Document Upload"
                                 />
                             )}
                         </Translate>
-                    </Box>
+                    </Box>*/}
 
                     <Box style={{marginTop:10}}>
                         <Translate>
@@ -1557,6 +1582,25 @@ function Contracts(props) {
                 <Typography variant="h5" className={classes.title}>
                     <b>License Contracts</b>
                 </Typography>
+
+                <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    ref={inputRef}
+                    style={{display: 'none'}}
+                    onChange={handleFileChange}
+                />
+                <Button
+                    className={classes.btn}
+                    variant="contained"
+                    color="primary"
+                    size="medium"
+                    startIcon={<Publish/>}
+
+                    onClick={handleButtonClick}
+                >
+                    Upload Document
+                </Button>
                 <Button
                     className={classes.btn}
                     color="primary"

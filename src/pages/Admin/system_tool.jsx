@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import {withLocalize, Translate} from "react-localize-redux";
 import {makeStyles} from "@material-ui/styles";
 import {
@@ -24,8 +24,8 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt, Close, LocationCity, ImportantDevices
-  } from "@material-ui/icons";
+    Receipt, Close, LocationCity, ImportantDevices, Publish
+} from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
   import axios from "axios";
@@ -34,13 +34,16 @@ import {
   import {useHistory} from "react-router-dom";
 import {useFunctions} from "../../hooks/use_hooks";
 import {Autocomplete} from "@material-ui/lab";
+import SystemToolUploadButton from "../../utils/SystemToolUploadButton";
+import * as XLSX from "xlsx";
+import {da} from "date-fns/locale";
 
 
 
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",marginRight: '16px'},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
@@ -50,6 +53,7 @@ function SystemTool(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
+    const [systemToolUpload, setSystemToolUpload] = useState({value: __filename, error:""});
     const functions = useFunctions();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [systemTools, setSystemTools] = useState({
@@ -312,7 +316,7 @@ function SystemTool(props) {
           },
         }
       ];
-    
+
       const options = {
         filterType: "multiselect",
         elevation: 0,
@@ -329,10 +333,10 @@ function SystemTool(props) {
           margin: "dense",
         },
         customSearch: (searchQuery, currentRow, columns) => {
-    
+
           console.log(searchQuery)
           console.log(JSON.stringify(currentRow))
-    
+
         },
         textLabels: {
           body: {
@@ -351,6 +355,208 @@ function SystemTool(props) {
         ),
       };
 
+/*    const inputRef = useRef(null);
+
+    const handleButtonClick = () => {
+        if (inputRef.current) {
+            inputRef.current.click();
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/vnd.ms-excel', // .xls
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            setSystemToolUpload({ value: null, error: 'Only Excel files (.xlsx, .xls) are allowed.' });
+            return;
+        }
+
+        setSystemToolUpload({ value: file, error: '' });
+    }*/
+
+
+        // if (event.target.files && event.target.files[0]) {
+        //     setFile(event.target.files[0]);
+        // }
+
+
+    const [loading, setLoading] = useState(false);
+    const [fileName, setFileName] = useState('');
+
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setFileName(file.name);
+
+        try {
+            // Read the file in the browser
+            const data = await readExcelFile(file);
+
+            // Send the data directly to the API
+            await uploadDataToApi(data);
+
+            // Reset state
+            setFileName('');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setLoading(false);
+        }
+    };
+
+    const readExcelFile = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    resolve(jsonData);
+                } catch (error) {
+                    reject(new Error('Failed to parse Excel file'));
+                }
+            };
+
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsArrayBuffer(file);
+        });
+    };
+
+    /*const uploadDataToApi = async (data) => {
+
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        uploadInstance
+            .post(new BackendService().TOOL_UPLOADS, data)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+                setAddNewOpen(false); // Assuming you're closing a modal or form after upload
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+
+                console.error('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            });
+    }*/
+
+    const uploadDataToApi = async (data) => {
+        // Set loading state to true when starting the upload
+        setLoading(true);
+
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+
+        // Reset the file input to allow subsequent uploads
+        const fileInput = document.getElementById('upload-system-tool-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        uploadInstance
+            .post(new BackendService().TOOL_UPLOADS , data)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+
+                // Refresh the page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+                console.log('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            })
+            .finally(() => {
+                // Ensure loading state is set back to false whether success or failure
+                setLoading(false);
+            });
+    }
+
+
+    /*const handleUpload = () => {
+        if (!file.value) {
+            alert(file.error || 'Please select a file first.');
+            return;
+        }
+
+        console.log('+++++', file);
+
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+
+        const formData = new FormData();
+        formData.append('file', file.value); // Make sure 'file' matches what your backend expects
+
+        uploadInstance
+            .post(new BackendService().TOOL_UPLOADS, formData)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+                setAddNewOpen(false); // Assuming you're closing a modal or form after upload
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+
+                console.error('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            });
+    };*/
+
+
+
+
+    /*    const handleUpload = async () => {
+            if (!file.value) {
+                alert('Please select a file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file.value); // 👈 this must match the interceptor
+
+            // Debug
+            for (const pair of formData.entries()) {
+                console.log('FORMDATA:', pair[0], pair[1]);
+            }
+
+            try {
+                const response = await axios.post(
+                    'http://127.0.0.1:8000/api/v1/systemTool/upload',
+                    formData
+                );
+                console.log('Upload successful:', response.data);
+                alert('Upload successful!');
+            } catch (err: any) {
+                console.error('Upload failed:', err.response?.data || err.message);
+                alert('Upload failed!');
+            }
+        };*/
       // end table config
 
     return(
@@ -358,7 +564,7 @@ function SystemTool(props) {
         {/* Dialogs starts here */}
 
         {/* ////////////////////////// */}
-  
+
         <Dialog
           open={addNewOpen}
           maxWidth="sm"
@@ -461,53 +667,100 @@ function SystemTool(props) {
             </Button>
           </DialogActions>
         </Dialog>
-  
+
         {/* Dialogs ends here */}
-        <Box display="flex" style={{display: "flex"}}>
-          <Box mr={2}>
-            {" "}
-            <ImportantDevices color="primary" fontSize="large" />
-          </Box>
-          <Typography variant="h5" className={classes.title}>
-            <b> Systems / Tools</b>
-          </Typography>
-          <Button
-            className={classes.btn}
-            color="primary"
-            variant="contained"
-            size="medium"
-            startIcon={<Add />}
-            disableElevation
-            onClick={() => {
-             setAddNewOpen(true);
-            }}
-          >
-            New System/Tool
-          </Button>
-        </Box>
-        <Box style={{marginTop: 20}} />
-  
-        {systemTools.loading && <LinearProgress />}
-        <MUIDataTable
-          title={"List of Systems/Tools"}
-          data={systemTools.data}
-          columns={columns}
-          options={options}
-        />
-      </div>
+            <Box display="flex" style={{display: "flex"}}>
+                <Box mr={2}>
+                    {" "}
+                    <ImportantDevices color="primary" fontSize="large"/>
+                </Box>
+                <Typography variant="h5" className={classes.title}>
+                    <b> Systems / Tools</b>
+                </Typography>
+{/*
+                upload
+*/}
+                <Box sx={{ textAlign: 'center', my: 2, position: 'relative' }}>
+                    <input
+                        accept=".xlsx,.xls"
+                        style={{ display: 'none' }}
+                        id="upload-system-tool-file"
+                        type="file"
+                        onChange={handleFileChange}
+                        disabled={loading}
+                    />
+                    <label htmlFor="upload-system-tool-file">
+                        <Button
+                            color="primary"
+                            size={"medium"}
+                            className={classes.btn}
+                            variant="contained"
+                            component="span"
+                            disabled={loading}
+                            startIcon={<Publish />}
+
+                        >
+
+                            {loading ? 'Uploading...' : 'Upload System Tools'}
+                        </Button>
+                    </label>
+
+                    {/*{loading && (*/}
+                    {/*    <CircularProgress*/}
+                    {/*        size={100}*/}
+                    {/*        sx={{*/}
+                    {/*            position: 'absolute',*/}
+                    {/*            top: '50%',*/}
+                    {/*            left: '50%',*/}
+                    {/*            marginTop: '-20px',*/}
+                    {/*            marginLeft: '-12px',*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*)}*/}
+
+                    {/*{fileName && (*/}
+                    {/*    <Typography variant="body2" color="textSecondary">*/}
+                    {/*        Selected file: {fileName}*/}
+                    {/*    </Typography>*/}
+                    {/*)}*/}
+                </Box>
+                <Button
+                    className={classes.btn}
+                    color="primary"
+                    variant="contained"
+                    size="medium"
+                    startIcon={<Add/>}
+                    disableElevation
+                    onClick={() => {
+                        setAddNewOpen(true);
+                    }}
+                >
+                    New System/Tool
+                </Button>
+            </Box>
+            <Box style={{marginTop: 20}}/>
+
+            {systemTools.loading && <LinearProgress/>}
+            <MUIDataTable
+                title={"List of Systems/Tools"}
+                data={systemTools.data}
+                columns={columns}
+                options={options}
+            />
+        </div>
     );
 }
 
 
 function CustomLicenseToolbar(props) {
-    const { toggleUser, displayData, selectedRows, openEdit } = props;
-  
+    const {toggleUser, displayData, selectedRows, openEdit} = props;
+
     var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
-  
+
     return (
-      <Box display="flex" alignItems="center">
-        <Button
-          color="primary"
+        <Box display="flex" alignItems="center">
+            <Button
+                color="primary"
           variant="outlined"
           size="small"
           startIcon={<Edit />}
