@@ -34,7 +34,6 @@ import {
   import {useHistory} from "react-router-dom";
 import {useFunctions} from "../../hooks/use_hooks";
 import {Autocomplete} from "@material-ui/lab";
-import SystemToolUploadButton from "../../utils/SystemToolUploadButton";
 import * as XLSX from "xlsx";
 import {da} from "date-fns/locale";
 
@@ -355,36 +354,6 @@ function SystemTool(props) {
         ),
       };
 
-/*    const inputRef = useRef(null);
-
-    const handleButtonClick = () => {
-        if (inputRef.current) {
-            inputRef.current.click();
-        }
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-
-        const allowedTypes = [
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-            'application/vnd.ms-excel', // .xls
-        ];
-
-        if (!allowedTypes.includes(file.type)) {
-            setSystemToolUpload({ value: null, error: 'Only Excel files (.xlsx, .xls) are allowed.' });
-            return;
-        }
-
-        setSystemToolUpload({ value: file, error: '' });
-    }*/
-
-
-        // if (event.target.files && event.target.files[0]) {
-        //     setFile(event.target.files[0]);
-        // }
-
 
     const [loading, setLoading] = useState(false);
     const [fileName, setFileName] = useState('');
@@ -432,29 +401,6 @@ function SystemTool(props) {
         });
     };
 
-    /*const uploadDataToApi = async (data) => {
-
-        const uploadInstance = axios.create(
-            new BackendService().getHeaders(accountData.token)
-        );
-        uploadInstance
-            .post(new BackendService().TOOL_UPLOADS, data)
-            .then((response) => {
-                console.log('Upload successful:', response.data);
-                notify("success", response.data.message || "Upload successful");
-                setAddNewOpen(false); // Assuming you're closing a modal or form after upload
-            })
-            .catch((error) => {
-                let errorMessage = error.message;
-                if (error.response) {
-                    errorMessage = error.response.data.message;
-                }
-
-                console.error('Upload failed:', errorMessage);
-                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
-            });
-    }*/
-
     const uploadDataToApi = async (data) => {
         // Set loading state to true when starting the upload
         setLoading(true);
@@ -494,69 +440,6 @@ function SystemTool(props) {
             });
     }
 
-
-    /*const handleUpload = () => {
-        if (!file.value) {
-            alert(file.error || 'Please select a file first.');
-            return;
-        }
-
-        console.log('+++++', file);
-
-        const uploadInstance = axios.create(
-            new BackendService().getHeaders(accountData.token)
-        );
-
-        const formData = new FormData();
-        formData.append('file', file.value); // Make sure 'file' matches what your backend expects
-
-        uploadInstance
-            .post(new BackendService().TOOL_UPLOADS, formData)
-            .then((response) => {
-                console.log('Upload successful:', response.data);
-                notify("success", response.data.message || "Upload successful");
-                setAddNewOpen(false); // Assuming you're closing a modal or form after upload
-            })
-            .catch((error) => {
-                let errorMessage = error.message;
-                if (error.response) {
-                    errorMessage = error.response.data.message;
-                }
-
-                console.error('Upload failed:', errorMessage);
-                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
-            });
-    };*/
-
-
-
-
-    /*    const handleUpload = async () => {
-            if (!file.value) {
-                alert('Please select a file first.');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file.value); // 👈 this must match the interceptor
-
-            // Debug
-            for (const pair of formData.entries()) {
-                console.log('FORMDATA:', pair[0], pair[1]);
-            }
-
-            try {
-                const response = await axios.post(
-                    'http://127.0.0.1:8000/api/v1/systemTool/upload',
-                    formData
-                );
-                console.log('Upload successful:', response.data);
-                alert('Upload successful!');
-            } catch (err: any) {
-                console.error('Upload failed:', err.response?.data || err.message);
-                alert('Upload failed!');
-            }
-        };*/
       // end table config
 
     return(

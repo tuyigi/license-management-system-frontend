@@ -24,21 +24,22 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt, Close, LocationCity, WorkOutlineOutlined,Business
-} from "@material-ui/icons";
+    Receipt, Close, LocationCity, WorkOutlineOutlined, Business, Publish
+  } from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
   import axios from "axios";
   import {BackendService} from "../../utils/web_config";
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
+import * as XLSX from "xlsx";
 
 
 
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",marginRight:'16px'},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
@@ -316,6 +317,72 @@ function Vendors(props) {
 
       // end table config
 
+    const [loading, setLoading] = useState(false);
+    const [fileName, setFileName] = useState('');
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setFileName(file.name);
+        try {
+            const data = await readExcelFile(file);
+            await uploadDataToApi(data);
+            setFileName('');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setLoading(false);
+        }
+    };
+
+    const readExcelFile = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    resolve(jsonData);
+                } catch (error) {
+                    reject(new Error('Failed to parse Excel file'));
+                }
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsArrayBuffer(file);
+        });
+    };
+
+    const uploadDataToApi = async (data) => {
+        setLoading(true);
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        const fileInput = document.getElementById('upload-vendor-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        uploadInstance
+            .post(new BackendService().VENDOR_UPLOADS , data)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+                console.log('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }
     return(
         <div className={classes.root}>
         {/* Dialogs starts here */}
@@ -424,59 +491,84 @@ function Vendors(props) {
         </Dialog>
   
         {/* Dialogs ends here */}
-        <Box display="flex" style={{display: "flex"}}>
-          <Box mr={2}>
-            {" "}
-            <Business color="primary" fontSize="large" />
-          </Box>
-          <Typography variant="h5" className={classes.title}>
-            <b>Vendors</b>
-          </Typography>
-          <Button
-            className={classes.btn}
-            color="primary"
-            variant="contained"
-            size="medium"
-            startIcon={<Add />}
-            disableElevation
-            onClick={() => {
-             setAddNewOpen(true);
-            }}
-          >
-            New Vendor
-          </Button>
-        </Box>
-        <Box style={{marginTop: 20}} />
-  
-        {vendors.loading && <LinearProgress />}
-        <MUIDataTable
-          title={"List of vendors"}
-          data={vendors.data}
-          columns={columns}
-          options={options}
-        />
-      </div>
+            <Box display="flex" style={{display: "flex"}}>
+                <Box mr={2}>
+                    {" "}
+                    <Business color="primary" fontSize="large"/>
+                </Box>
+                <Typography variant="h5" className={classes.title}>
+                    <b>Vendors</b>
+                </Typography>
+                <Box sx={{ textAlign: 'center', my: 2, position: 'relative' }}>
+                <input
+                    accept=".xlsx,.xls"
+                    style={{display: 'none'}}
+                    id="upload-vendor-file"
+                    type="file"
+                    onChange={handleFileChange}
+                    disabled={loading}
+                />
+                <label htmlFor="upload-vendor-file">
+                    <Button
+                        color="primary"
+                        size={"medium"}
+                        className={classes.btn}
+                        variant="contained"
+                        component="span"
+                        disabled={loading}
+                        startIcon={<Publish/>}
+
+                    >
+
+                        {loading ? 'Uploading...' : 'Upload Vendors'}
+                    </Button>
+                </label>
+                <Button
+                    className={classes.btn}
+                    color="primary"
+                    variant="contained"
+                    size="medium"
+                    startIcon={<Add/>}
+                    disableElevation
+                    onClick={() => {
+                        setAddNewOpen(true);
+                    }}
+                >
+                    New Vendor
+                </Button>
+                </Box>
+            </Box>
+            <Box style={{marginTop: 20}}/>
+
+            {vendors.loading && <LinearProgress/>}
+            <MUIDataTable
+                title={"List of vendors"}
+                data={vendors.data}
+                columns={columns}
+                options={options}
+            />
+        </div>
     );
 }
 
 
 function CustomLicenseToolbar(props) {
-    const {displayData, selectedRows, openEdit } = props;
+    const {displayData, selectedRows, openEdit} = props;
     return (
-      <Box display="flex" alignItems="center">
-          <Button
-          color="primary"
-          variant="outlined"
-          size="small"
-          startIcon={<Edit />}
-          onClick={() =>
-            openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
-          }
-        >
-          Edit
-        </Button>
-      </Box>
+        <Box display="flex" alignItems="center">
+            <Button
+                color="primary"
+                variant="outlined"
+                size="small"
+                startIcon={<Edit/>}
+                onClick={() =>
+                    openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
+                }
+            >
+                Edit
+            </Button>
+        </Box>
     );
-  }
+}
 
 export default withLocalize(Vendors);
