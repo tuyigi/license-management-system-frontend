@@ -352,7 +352,6 @@ function Vendors(props) {
             reader.readAsArrayBuffer(file);
         });
     };
-
     const uploadDataToApi = async (data) => {
         setLoading(true);
         const uploadInstance = axios.create(

@@ -354,6 +354,7 @@ function SystemTool(props) {
         ),
       };
 
+    // end table config
 
     const [loading, setLoading] = useState(false);
     const [fileName, setFileName] = useState('');
@@ -361,17 +362,10 @@ function SystemTool(props) {
     const handleFileChange = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
         setFileName(file.name);
-
         try {
-            // Read the file in the browser
             const data = await readExcelFile(file);
-
-            // Send the data directly to the API
             await uploadDataToApi(data);
-
-            // Reset state
             setFileName('');
         } catch (error) {
             console.error('Upload failed:', error);
@@ -382,7 +376,6 @@ function SystemTool(props) {
     const readExcelFile = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
@@ -395,33 +388,25 @@ function SystemTool(props) {
                     reject(new Error('Failed to parse Excel file'));
                 }
             };
-
             reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsArrayBuffer(file);
         });
     };
 
     const uploadDataToApi = async (data) => {
-        // Set loading state to true when starting the upload
         setLoading(true);
-
         const uploadInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
         );
-
-        // Reset the file input to allow subsequent uploads
         const fileInput = document.getElementById('upload-system-tool-file');
         if (fileInput) {
             fileInput.value = '';
         }
-
         uploadInstance
             .post(new BackendService().TOOL_UPLOADS , data)
             .then((response) => {
                 console.log('Upload successful:', response.data);
                 notify("success", response.data.message || "Upload successful");
-
-                // Refresh the page after a short delay
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
@@ -435,12 +420,11 @@ function SystemTool(props) {
                 notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
             })
             .finally(() => {
-                // Ensure loading state is set back to false whether success or failure
                 setLoading(false);
             });
     }
 
-      // end table config
+
 
     return(
         <div className={classes.root}>
