@@ -30,6 +30,7 @@ class BackendService {
     this.EXPIRE_LICENSE_REPORT= this.BASE_URL + "/api/v1/reports/expires/";
     this.ASSIGN_PRIV_ROLE= this.BASE_URL + "/api/v1/privilege/assign/";
     this.CONTRACT= this.BASE_URL + "/api/v1/contract";
+    this.CONTRACT_UPLOAD = this.BASE_URL + "/api/v1/contract/upload";
     this.SYSTME_TOOLS= this.BASE_URL + "/api/v1/systemTool";
     this.TOOL_UPLOADS = this.BASE_URL + "/api/v1/systemTool/upload";
     this.RECORD_LICENSE= this.BASE_URL + "/api/v1/reportLicense";

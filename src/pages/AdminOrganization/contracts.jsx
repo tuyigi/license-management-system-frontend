@@ -65,6 +65,7 @@ import {
     KeyboardTimePicker,
     KeyboardDatePicker,
 } from '@material-ui/pickers';
+import * as XLSX from "xlsx";
 
 
 
@@ -817,7 +818,104 @@ function Contracts(props) {
                 });
         }
     }
-    const inputRef = useRef(null);
+    /*
+    UPLOAD CONTRACT
+     */
+    const [loading, setLoading] = useState(false);
+    const [fileName, setFileName] = useState('');
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setFileName(file.name);
+
+        try {
+            const data = await readExcelFile(file);
+            await uploadDataToApi(data);
+            setFileName('');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setLoading(false);
+
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                'An unexpected error occurred';
+
+            notify(
+                error?.response?.status === 404 ? 'info' : 'error',
+                errorMessage,
+                error?.response?.status
+            );
+        }
+    };
+
+
+    const readExcelFile = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    const excelDateToJSDate = (serial) => {
+                        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+                        const resultDate = new Date(excelEpoch.getTime() + serial * 24 * 60 * 60 * 1000);
+                        return resultDate.toISOString().split('T')[0];
+                    };
+
+
+                    const parsedData = jsonData.map((item) => ({
+                        ...item,
+                        start_date: excelDateToJSDate(item.start_date),
+                        end_date: excelDateToJSDate(item.end_date),
+                    }));
+
+                    resolve(parsedData);
+                } catch (error) {
+                    reject(new Error('Failed to parse Excel file'));
+                }
+            };
+
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsArrayBuffer(file);
+        });
+    };
+
+    const uploadDataToApi = async (data) => {
+        setLoading(true);
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        const fileInput = document.getElementById('upload-contract-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        uploadInstance
+            .post(new BackendService().CONTRACT_UPLOAD , data)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+                console.log('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }
+/*    const inputRef = useRef(null);
 
     const handleButtonClick = () => {
         if (inputRef.current) {
@@ -840,7 +938,7 @@ function Contracts(props) {
         }
 
         setContractUpload({ value: file, error: '' });
-        }
+        }*/
 
     return(
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -1582,8 +1680,53 @@ function Contracts(props) {
                 <Typography variant="h5" className={classes.title}>
                     <b>License Contracts</b>
                 </Typography>
+                <Box sx={{ textAlign: 'center', my: 2, position: 'relative' }}>
+                    <input
+                        accept=".xlsx,.xls"
+                        style={{ display: 'none' }}
+                        id="upload-contract-file"
+                        type="file"
+                        onChange={handleFileChange}
+                        disabled={loading}
+                    />
+                    <label htmlFor="upload-contract-file">
+                        <Button
+                            color="primary"
+                            size={"medium"}
+                            className={classes.btn}
+                            variant="contained"
+                            component="span"
+                            disabled={loading}
+                            startIcon={<Publish />}
 
-                <input
+                        >
+
+                            {loading ? 'Uploading...' : 'Upload License Contracts'}
+                        </Button>
+                    </label>
+
+                    {/*{loading && (*/}
+                    {/*    <CircularProgress*/}
+                    {/*        size={100}*/}
+                    {/*        sx={{*/}
+                    {/*            position: 'absolute',*/}
+                    {/*            top: '50%',*/}
+                    {/*            left: '50%',*/}
+                    {/*            marginTop: '-20px',*/}
+                    {/*            marginLeft: '-12px',*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*)}*/}
+
+                    {/*{fileName && (*/}
+                    {/*    <Typography variant="body2" color="textSecondary">*/}
+                    {/*        Selected file: {fileName}*/}
+                    {/*    </Typography>*/}
+                    {/*)}*/}
+                </Box>
+
+
+                {/*                <input
                     type="file"
                     accept=".xlsx, .xls"
                     ref={inputRef}
@@ -1599,8 +1742,8 @@ function Contracts(props) {
 
                     onClick={handleButtonClick}
                 >
-                    Upload Document
-                </Button>
+                    Upload License Contracts
+                </Button>*/}
                 <Button
                     className={classes.btn}
                     color="primary"

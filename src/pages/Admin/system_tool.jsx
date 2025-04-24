@@ -355,7 +355,9 @@ function SystemTool(props) {
       };
 
     // end table config
-
+/*
+    UPLOAD SYSTEM TOOL
+ */
     const [loading, setLoading] = useState(false);
     const [fileName, setFileName] = useState('');
 
