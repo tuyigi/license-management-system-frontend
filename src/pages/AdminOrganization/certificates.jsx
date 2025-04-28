@@ -295,13 +295,73 @@ function Certificates(props) {
             },
         },
         {
-            name: "created_at",
-            label: "Created At",
+            name: "issue_date",
+            label: "Issued on",
             options: {
                 filter: false,
                 sort: false,
+                customBodyRender: (value) => {
+                    if (!value) return "";
+                    const date = new Date(value);
+                    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                }
             },
         },
+        {
+            name: "expiry_date",
+            label: "Expiring on",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value) => {
+                    if (!value) return "";
+
+                    const date = new Date(value);
+                    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                }
+            },
+        },
+        {
+            name: "expiry_date",
+            label: "Status",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value, tableMeta) => {
+                    if (!value) return "";
+                    const expiryDate = new Date(value);
+                    if (isNaN(expiryDate.getTime())) return "";
+                    const Today = new Date();
+
+                    const diffTime = expiryDate.getTime() - Today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    let status, color;
+                    if (diffDays > 15) {
+                        status = "Updated";
+                        color = "#4CAF50";
+                    } else if (diffDays >= 1 && diffDays <= 15) {
+                        status = "Expiring Soon";
+                        color = "#FFA726";
+                    } else {
+                        status = "Expired";
+                        color = "#FF5252";
+                    }
+                    return (
+                        <div style={{
+                            backgroundColor: color,
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            display: 'inline-block',
+                            fontWeight: 'bold'
+                        }}>
+                            {status}
+                        </div>
+                    );
+                }
+            }
+        }
+,
         {
             name: "id",
             label: "Actions",
