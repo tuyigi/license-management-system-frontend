@@ -477,6 +477,46 @@ function Contracts(props) {
                 sort: true,
             },
         },
+        {
+            name: "end_date",
+            label: "Status",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value, tableMeta) => {
+                    if (!value) return "";
+                    const endDate = new Date(value);
+                    if (isNaN(endDate.getTime())) return "";
+                    const Today = new Date();
+
+                    const diffTime = endDate.getTime() - Today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    let status, color;
+                    if (diffDays > 15) {
+                        status = "Updated";
+                        color = "#4CAF50";
+                    } else if (diffDays >= 1 && diffDays <= 15) {
+                        status = "Expiring Soon";
+                        color = "#FFA726";
+                    } else {
+                        status = "Expired";
+                        color = "#FF5252";
+                    }
+                    return (
+                        <div style={{
+                            backgroundColor: color,
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            display: 'inline-block',
+                            fontWeight: 'bold'
+                        }}>
+                            {status}
+                        </div>
+                    );
+                }
+            }
+        },
         // {
         //     name: "id",
         //     label: "Actions",
@@ -989,8 +1029,8 @@ function Contracts(props) {
                                     color="primary"
                                     type={'text'}
                                     value={contractNumber.value}
-                                    placeholder={"Contract Name"}
-                                    label={"Contract Name"}
+                                    placeholder={"Contract Number"}
+                                    label={"Contract Number"}
                                     fullWidth
                                     onChange={onContractNumberChange}
                                     helperText={contractNumber.error}

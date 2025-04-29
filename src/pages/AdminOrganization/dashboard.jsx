@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from "react";
+import React,{useState,useEffect,useMemo} from "react";
 import { withLocalize, Translate } from 'react-localize-redux';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import {Button,Paper,Grid, Typography,Box,Chip,List,ListItem,ListItemText,LinearProgress,ListItemIcon,ListItemSecondaryAction,Avatar,ListItemAvatar,IconButton,Divider,CircularProgress } from '@material-ui/core';
@@ -25,11 +25,19 @@ import {
 import {
     useApprovedLicenseTypeStats,
     useOrganizationLicenseRequestStatusStats,
-    usePaymentStatusContractDepartmentStats, useSystemToolStats,
-    useTotalCertificateDepartmentStats, useTotalContractDepartmentStats, useVendorPaymentDeparmentsStats
+    usePaymentStatusContractDepartmentStats,
+    useSystemToolStats,
+    useTotalCertificateDepartmentStats,
+    useTotalContractDepartmentStats,
+    useVendorPaymentDeparmentsStats,
+    useLicenseContractsData,
+    useCertificatesData
 } from "../../hooks/use_dashboard";
 import ReviewIcon from "../../assets/img/review.png";
 import {Link, useHistory} from "react-router-dom";
+import {
+    BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer
+} from 'recharts';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -81,10 +89,64 @@ function Dashboard(){
     const [paymentStatusStats, getPaymentStatusStats] = usePaymentStatusContractDepartmentStats();
     const [contractStats, getContractStats] = useTotalContractDepartmentStats();
     const [systemStats, getSystemStats] = useSystemToolStats();
-    const [vendorPaymentDeparmentsStats, getVendorPaymentDeparmentsStats] = useVendorPaymentDeparmentsStats()
+    const [vendorPaymentDeparmentsStats, getVendorPaymentDeparmentsStats] = useVendorPaymentDeparmentsStats();
+
+
     useEffect(()=>{
         var accountData = new BackendService().accountData;
     },[]);
+
+    // Call all hooks at the top level
+    const [licenseContractsStats] = useLicenseContractsData();
+    const [certificates] = useCertificatesData();
+    const chartData = useMemo(() => {
+        if (licenseContractsStats.status !== 'success') return [];
+        const currentYear = new Date().getFullYear();
+        const months = Array.from({ length: 12 }, (_, i) => ({
+            month: new Date(0, i).toLocaleString('default', { month: 'short' }),
+            count: 0,
+        }));
+        licenseContractsStats.data.forEach(license => {
+            const endDate = new Date(license.end_date);
+            if (endDate.getFullYear() === currentYear) {
+                const monthIndex = endDate.getMonth();
+                months[monthIndex].count += 1;
+            }
+        });
+        return months;
+    }, [licenseContractsStats]);
+
+    const chartDataCertificates = useMemo(() => {
+        if (certificates.status !== 'success') return [];
+        const currentYear = new Date().getFullYear();
+
+        const months = Array.from({ length: 12 }, (_, i) => ({
+            month: new Date(0, i).toLocaleString('default', { month: 'short' }),
+            count: 0,
+        }));
+
+        certificates.data.forEach(cert => {
+            const expiryDate = new Date(cert.expiry_date); // <-- FIXED
+            if (expiryDate.getFullYear() === currentYear) {
+                const monthIndex = expiryDate.getMonth();
+                months[monthIndex].count += 1;
+            }
+        });
+
+        return months;
+    }, [certificates]);
+
+
+// Then handle early return after hooks
+   if (licenseContractsStats.status === 'loading' || certificates.status === 'loading') {
+        return <p>Loading chart...</p>;
+    }
+    if (licenseContractsStats.status === 'error' || certificates.status === 'error') {
+        return <p>Error loading data.</p>;
+    }
+    if (licenseContractsStats.status === 'empty' || certificates.status === 'empty') {
+        return <p>No licenses or certificates found.</p>;
+    }
 
 
     return(
@@ -166,46 +228,89 @@ function Dashboard(){
                         </Paper>
                     </Grid>
 
-                    <Grid item xs={12} md={4} lg={4} sm={4}>
+{/*                    <Grid item xs={12} md={4} lg={4} sm={4}>
                         <Paper style={{minHeight: 400,display:"flex",flexDirection:"column"}} elevation={0}>
                             <Typography style={{marginLeft:10,marginTop:10}}><b>License Requests Summary</b></Typography>
                             <Chart style={{marginTop:50}} type="donut" options={organizationLicenseRequestStats(licenseRequestStatusStats).options}
                                    series={organizationLicenseRequestStats(licenseRequestStatusStats).series}  width={380}/>
                         </Paper>
-                    </Grid>
+                    </Grid>*/}
 
-                    <Grid item xs={12} md={8} lg={8} sm={8}>
+                   {/* <Grid item xs={12} md={8} lg={8} sm={8}>
                         <Paper style={{minHeight: 300,display:"flex",flexDirection:"column"}} elevation={0}>
                             <Typography style={{marginLeft:10,marginTop:10}}><b>Certificate Expiration Summary</b></Typography>
                             <Box>
                                 <Chart options={vendorPaymentDeparmentsChart(vendorPaymentDeparmentsStats).options} series={vendorPaymentDeparmentsChart(vendorPaymentDeparmentsStats).series} type="area" height={350} />
-                                {/*<List>*/}
-                                {/*    {myLicense?.map((data,i)=>{*/}
-                                {/*        console.log(data);*/}
-                                {/*        console.log(i);*/}
-                                {/*        return (<ListItem*/}
-                                {/*            key={i}*/}
-                                {/*            dense*/}
-                                {/*        >*/}
-                                {/*            <ListItemText*/}
-                                {/*                primary={`${data.license_id.name} | ${data.license_period_count} ${data.license_period} `}*/}
-                                {/*                secondary={data.license_id.description}*/}
-                                {/*            />*/}
-                                {/*            <ListItemSecondaryAction>*/}
-                                {/*                {data.license_id.license_category!='SOFTWARE_LICENSE'&&<IconButton*/}
-                                {/*                    onClick={()=>{*/}
-                                {/*                        window.open("http://localhost:8000/api/v1/licenseRequest/download/"+data.id, "_blank");*/}
-                                {/*                    }}*/}
-                                {/*                >*/}
-                                {/*                    <VisibilityOutlined fontSize="small" />*/}
-                                {/*                </IconButton>*/}
-                                {/*                }*/}
-                                {/*            </ListItemSecondaryAction>*/}
-                                {/*        </ListItem>);*/}
-                                {/*    })}*/}
-                                {/*</List>*/}
+                                <List>
+                                    {myLicense?.map((data,i)=>{
+                                        console.log(data);
+                                        console.log(i);
+                                        return (<ListItem
+                                            key={i}
+                                            dense
+                                        >
+                                            <ListItemText
+                                                primary={`${data.license_id.name} | ${data.license_period_count} ${data.license_period} `}
+                                                secondary={data.license_id.description}
+                                            />
+                                            <ListItemSecondaryAction>
+                                                {data.license_id.license_category!='SOFTWARE_LICENSE'&&<IconButton
+                                                    onClick={()=>{
+                                                        window.open("http://localhost:8000/api/v1/licenseRequest/download/"+data.id, "_blank");
+                                                    }}
+                                                >
+                                                    <VisibilityOutlined fontSize="small" />
+                                                </IconButton>
+                                                }
+                                            </ListItemSecondaryAction>
+                                        </ListItem>);
+                                    })}
+                                </List>
                             </Box>
                         </Paper>
+                    </Grid>*/}
+
+{/*
+                    Summaries
+*/}
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} sm={6} md={6} lg={6}>
+                            <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
+                                <Typography style={{ marginLeft: 10, marginTop: 10 }}>
+                                    <b>License Expiration Summary</b>
+                                </Typography>
+                                <div style={{ width: '100%', height: 300 }}>
+                                    <ResponsiveContainer>
+                                        <BarChart data={chartData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="month" />
+                                            <YAxis allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#a47d2f" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6} md={6} lg={6}>
+                            <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
+                                <Typography style={{ marginLeft: 10, marginTop: 10 }}>
+                                    <b>Certificates Expiration Summary</b>
+                                </Typography>
+                                <div style={{ width: '100%', height: 300 }}>
+                                    <ResponsiveContainer>
+                                        <BarChart data={chartDataCertificates}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="month" />
+                                            <YAxis allowDecimals={false} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#a47d2f" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Paper>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Box>
