@@ -338,13 +338,13 @@ function Certificates(props) {
                     let status, color;
                     if (diffDays > 15) {
                         status = "Updated";
-                        color = "#4CAF50";
+                        color = "#DBA628";
                     } else if (diffDays >= 1 && diffDays <= 15) {
                         status = "Expiring Soon";
-                        color = "#FFA726";
+                        color = "#81632d";
                     } else {
                         status = "Expired";
-                        color = "#FF5252";
+                        color = "#763a18";
                     }
                     return (
                         <div style={{

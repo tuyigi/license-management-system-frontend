@@ -31,12 +31,12 @@ import {
     useTotalContractDepartmentStats,
     useVendorPaymentDeparmentsStats,
     useLicenseContractsData,
-    useCertificatesData
+    useCertificatesData, useContractToolsOptimizationData
 } from "../../hooks/use_dashboard";
 import ReviewIcon from "../../assets/img/review.png";
 import {Link, useHistory} from "react-router-dom";
 import {
-    BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer
+    BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend, Cell
 } from 'recharts';
 
 
@@ -99,6 +99,7 @@ function Dashboard(){
     // Call all hooks at the top level
     const [licenseContractsStats] = useLicenseContractsData();
     const [certificates] = useCertificatesData();
+    const [toolsOptimization] = useContractToolsOptimizationData();
     const chartData = useMemo(() => {
         if (licenseContractsStats.status !== 'success') return [];
         const currentYear = new Date().getFullYear();
@@ -135,6 +136,28 @@ function Dashboard(){
 
         return months;
     }, [certificates]);
+
+    //Chart for optimization
+    const chartDataToolsOptimization = useMemo(() => {
+        if (toolsOptimization.status !== "success") return [];
+
+        const tools = toolsOptimization.data?.toolsMetrics || [];
+/* return tools.map(tool => ({
+                    name: tool.system_tool_name,
+                    entitlement: tool.entitlement,
+                    utilisation: tool.utilisation,
+                    license_gap: tool.license_gap,
+                }));*/
+        return tools.map(tool => ({
+            name: tool.system_tool_name,
+            shortName: tool.system_tool_name.length > 10
+                ? `${tool.system_tool_name.slice(0, 10)}...`
+                : tool.system_tool_name,
+            entitlement: tool.entitlement,
+            utilisation: tool.utilisation,
+            license_gap: tool.license_gap,
+        }));
+            }, [toolsOptimization]);
 
 
 // Then handle early return after hooks
@@ -312,6 +335,75 @@ function Dashboard(){
                             </Paper>
                         </Grid>
                     </Grid>
+                </Grid>
+                <br></br>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={6} lg={6}>
+                        <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
+                            <Typography style={{ marginLeft: 10, marginTop: 10 }}>
+                                <b>Tools/Product Optimization</b>
+                            </Typography>
+                           <ResponsiveContainer width="100%" height={400}>
+                                <BarChart data={chartDataToolsOptimization} margin={{ right: 120 ,bottom: 50 }} >
+                                    <XAxis
+                                        dataKey="name"
+                                        angle={-25}
+                                        textAnchor="end"
+                                        interval={0}
+                                        dy={10}
+                                        tickFormatter={(name) =>
+                                            name.length > 10 ? `${name.slice(0, 10)}...` : name
+                                        }
+                                    />
+
+                                    <YAxis allowDecimals={false} />
+                                    <Tooltip
+                                        formatter={(value, name, props) => [value, name]}
+                                        labelFormatter={(label) => `Tool: ${label}`}
+                                    />
+
+                                    <Legend layout="vertical" align="right" verticalAlign="middle" />
+                                    <Bar dataKey="entitlement" stackId="a" fill="#DBA628" name="Entitlement" />
+                                    <Bar dataKey="utilisation" stackId="a" fill="#763a18" name="Utilisation" />
+                                    <Bar dataKey="license_gap" stackId="a" fill="#81632d" name="License Gap" />
+
+                                </BarChart>
+                            </ResponsiveContainer>
+
+  {/*                          <ResponsiveContainer width="100%" height={400}>
+                                <BarChart
+                                    data={chartDataToolsOptimization}
+                                    layout="vertical"
+                                    margin={{ left: 5, right: 120 }}
+                                >
+                                    <XAxis type="number" allowDecimals={false} />
+                                    <YAxis type="category" dataKey="name" width={150} />
+                                    <Tooltip />
+                                    <Legend layout="vertical" align="right" verticalAlign="middle" />
+
+                                    <Bar dataKey="entitlement" stackId="a" fill="#DBA628" name="Entitlement" />
+                                    <Bar dataKey="utilisation" stackId="a" fill="#763a18" name="Utilisation" />
+                                    <Bar dataKey="license_gap" stackId="a" fill="#81632d" name="License Gap" />
+
+                                </BarChart>
+                            </ResponsiveContainer>*/}
+
+
+
+
+
+                        </Paper>
+                    </Grid>
+
+               {/*     <Grid item xs={12} sm={6} md={6} lg={6}>
+                        <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
+                            <Typography style={{ marginLeft: 10, marginTop: 10 }}>
+                                <b>Certificates Expiration Summary</b>
+                            </Typography>
+
+
+                        </Paper>
+                    </Grid>*/}
                 </Grid>
             </Box>
         </div>

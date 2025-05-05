@@ -563,7 +563,6 @@ export function useCertificatesData() {
         dInstance.get(url)
             .then(response => {
                 const rawData = response.data?.data || [];
-                console.log("+++++ Raw Data", rawData);
                 const formatted = rawData.map(da => ({
                     ...da,
                     issue_date: format(new Date(da.issue_date), 'yyyy/MM/dd'),
@@ -593,3 +592,44 @@ export function useCertificatesData() {
     return [certificates, getCertificatesData];
 }
 
+
+// CONTRACT TOOLS Optimization
+
+export function useContractToolsOptimizationData() {
+    const history = useHistory();
+    const [toolsOptimization, setToolsOptimization] = useState({ status: "loading", data: [] });
+
+    useEffect(() => {
+        const accountData = new BackendService().accountData;
+        getToolsOptimizationData(accountData.token, accountData.user.department.id, accountData.user.id);
+    }, []);
+
+    const getToolsOptimizationData = (token, departmentId, userId) => {
+        const toolsInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().CONTRACT}/tool/metric/department/${departmentId}`;
+
+        toolsInstance.get(url)
+            .then(response => {
+                const rawData = response.data?.data || [];
+                setToolsOptimization({
+                    data: rawData,
+                    status: rawData.length === 0 ? "empty" : "success",
+                });
+            })
+            .catch(error => {
+                if (error.response) {
+                    if (error.response.status === 404) {
+                        setToolsOptimization({ data: [], status: "empty" });
+                    } else if (error.response.status === 401) {
+                        history.push("/", { expired: true });
+                    } else {
+                        setToolsOptimization({ data: [], status: "error" });
+                    }
+                } else {
+                    setToolsOptimization({ data: [], status: "error" });
+                }
+            });
+    };
+
+    return [toolsOptimization, getToolsOptimizationData];
+}

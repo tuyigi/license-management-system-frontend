@@ -113,6 +113,7 @@ function Contracts(props) {
             .get(`${new BackendService().CONTRACT}/department/${id}`  )
             .then(function (response) {
                 setContracts({...contracts, loading: false});
+                console.log('*********', response);
                 const d = response.data;
                 if (d.data.length == 0) {
                     setStatus("There are no license requests available.");
@@ -494,14 +495,15 @@ function Contracts(props) {
                     let status, color;
                     if (diffDays > 15) {
                         status = "Updated";
-                        color = "#4CAF50";
+                        color = "#DBA628";
                     } else if (diffDays >= 1 && diffDays <= 15) {
                         status = "Expiring Soon";
-                        color = "#FFA726";
+                        color = "#81632d";
                     } else {
                         status = "Expired";
-                        color = "#FF5252";
+                        color = "#763a18";
                     }
+
                     return (
                         <div style={{
                             backgroundColor: color,
