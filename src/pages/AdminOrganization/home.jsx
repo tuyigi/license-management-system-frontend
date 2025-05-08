@@ -2,33 +2,33 @@ import React, { useState, useEffect } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import BnrIcon from "../../assets/img/bnr_logo.png";
 import {
-  Button,
-  Drawer,
-  ListItemText,
-  IconButton,
-  ListItemIcon,
-  ListItem,
-  Divider,
-  List,
-  Grid,
-  Paper,
-  Typography,
-  Toolbar,
-  AppBar,
-  Container,
-  Box,
-  Hidden,
-  Menu,
-  MenuItem,
-  Avatar,
-  useMediaQuery,
-  Badge,
-  Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+    Button,
+    Drawer,
+    ListItemText,
+    IconButton,
+    ListItemIcon,
+    ListItem,
+    Divider,
+    List,
+    Grid,
+    Paper,
+    Typography,
+    Toolbar,
+    AppBar,
+    Container,
+    Box,
+    Hidden,
+    Menu,
+    MenuItem,
+    Avatar,
+    useMediaQuery,
+    Badge,
+    Collapse,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle, Popover,
 } from "@material-ui/core";
 
 import {
@@ -45,7 +45,7 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer, ListAlt, LibraryBooks, Equalizer
+    Computer, ListAlt, LibraryBooks, Equalizer, Notifications
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -62,12 +62,13 @@ import Certificates from "./certificates";
 import SystemTool from "../Admin/system_tool";
 import {BackendService} from "../../utils/web_config";
 import ContractDetails from "./contract_details";
-
+import dayjs from 'dayjs';
 import ToolsIcon from "../../assets/img/tools.png";
 import CertificateReport from "./reports/certificate_report";
 import ComponentReport from "./reports/component_report";
 import SystemToolReport from "./reports/system_tool_report";
 import Metric from "./metric";
+import axios from "axios";
 
 
 
@@ -256,6 +257,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+
+
 function OrgAdminHome(props) {
     const { window } = props;
     const classes = useStyles();
@@ -266,14 +269,29 @@ function OrgAdminHome(props) {
   
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorElReminders, setAnchorElReminders] = useState(null);
     const menuOpen = Boolean(anchorEl);
     const [logoutOpen, setLogoutOpen] = useState(false);
   
     const [openMenu, setOpenMenu] = useState("none");
     const [accountData, setAccountData] = useState(null);
+    const [remindersCount, setRemindersCount] = useState(0);
+    const [reminders, setReminders] = useState([]);
+
+    const handleClickReminders = (event) => {
+        setAnchorElReminders(event.currentTarget);
+    };
+    const handleCloseReminders = (event) => {
+        setAnchorElReminders(null);
+    };
+
+    const open = Boolean(anchorElReminders);
+    const id = open ? 'reminders-popover' : undefined;
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
+        getCertificateReminders(accData.access_token,accData?.user?.department?.id);
+
     }, []);
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -286,7 +304,27 @@ function OrgAdminHome(props) {
     const handleDrawerToggle = () => {
       setMobileOpen(!mobileOpen);
     };
-  
+
+
+       const getCertificateReminders = (token,id)=>{
+           const reminderInstance = axios.create(new BackendService().getHeaders(token));
+           reminderInstance
+               .get(`${new BackendService().CERTIFICATES}/reminders/department/${id}`)
+               .then((res) => {
+                   const data = res.data;
+                   setRemindersCount(data.count ?? 0);
+                   setReminders(data.items ?? []);
+               })
+               .catch((err) => {
+                   console.error('Error loading reminders:', err);
+                   setRemindersCount(0);
+                   setReminders([]);
+               });
+       };
+
+
+
+
     const drawer = (
       <div>
         <div className={classes.toolbar} />
@@ -436,39 +474,66 @@ function OrgAdminHome(props) {
             </Box>
   
             <Box mr={matches && 2}>
-              <IconButton
-                color="inherit"
-                onClick={() => {
-
-                }}
-              >
-                <Badge
-                  badgeContent={0}
-                  showZero={false}
-                  variant="standard"
-                  color="secondary"
+                <IconButton
+                    color="inherit"
+                    onClick={
+                        handleClickReminders
+                    }
                 >
-                  <Email />
-                </Badge>
-              </IconButton>
+                    <Badge
+                        badgeContent={remindersCount}
+                        showZero={false}
+                        variant="standard"
+                        color="secondary"
+                    >
+                        <Notifications htmlColor="#763a18" />
+                    </Badge>
+                </IconButton>
+                <Popover
+                    id={id}
+                    open={open}
+                    anchorElReminders={anchorElReminders}
+                    onClose={handleCloseReminders}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center',
+                    }}
+                    sx={{ mt: 1 }}
+                >
+                    <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
+                        {reminders.length === 0 ? (
+                            <ListItem>
+                                <ListItemText primary="No upcoming certificate expirations." />
+                            </ListItem>
+                        ) : (
+                            reminders.map((item) => (
+                                <React.Fragment key={item.id}>
+                                    <ListItem alignItems="flex-start">
+                                        <ListItemText
+                                            primary={item.certificate}
+                                            secondary={`Expires on: ${dayjs(item.expiry_date).format('YYYY-MM-DD')}`}
+                                        />
+                                    </ListItem>
+                                    <Divider component="li" />
+                                </React.Fragment>
+                            ))
+                        )}
+                    </List>
+                </Popover>
+
             </Box>
   
             <div>
               <Button
                 onClick={handleMenu}
                 color="inherit"
-                variant={matches && "outlined"}
+                variant={matches}
                 size="small"
                 className={classes.btn}
-                startIcon={
-                  matches && (
-                    <img
-                      src={BnrIcon}
-                      className={classes.icon2}
-                      alt="Safaribus"
-                    />
-                  )
-                }
               >
                 {<Avatar>{`${accountData?.user?.first_name?.substr(0,1)}${accountData?.user?.last_name?.substr(0,1)}`}</Avatar>}
               </Button>
