@@ -277,6 +277,8 @@ function OrgAdminHome(props) {
     const [accountData, setAccountData] = useState(null);
     const [remindersCount, setRemindersCount] = useState(0);
     const [reminders, setReminders] = useState([]);
+    const [contractRemindersCount, setContractRemindersCount] = useState(0);
+    const [contractReminders, setContractReminders] = useState([]);
 
     const handleClickReminders = (event) => {
         setAnchorElReminders(event.currentTarget);
@@ -291,6 +293,7 @@ function OrgAdminHome(props) {
         var accData = new BackendService().accountData;
         setAccountData(accData);
         getCertificateReminders(accData.access_token,accData?.user?.department?.id);
+        getContractsReminders(accData.access_token,accData?.user?.department?.id);
 
     }, []);
     const handleMenu = (event) => {
@@ -305,7 +308,7 @@ function OrgAdminHome(props) {
       setMobileOpen(!mobileOpen);
     };
 
-
+    //CERTIFICATE REMINDERS
        const getCertificateReminders = (token,id)=>{
            const reminderInstance = axios.create(new BackendService().getHeaders(token));
            reminderInstance
@@ -321,7 +324,22 @@ function OrgAdminHome(props) {
                    setReminders([]);
                });
        };
-
+    //CERTIFICATE REMINDERS
+    const getContractsReminders = (token,id)=>{
+        const contractsReminderInstance = axios.create(new BackendService().getHeaders(token));
+        contractsReminderInstance
+            .get(`${new BackendService().CONTRACT}/reminders/department/${id}`)
+            .then((res) => {
+                const data = res.data;
+                setContractRemindersCount(data.count ?? 0);
+                setContractReminders(data.items ?? []);
+            })
+            .catch((err) => {
+                console.error('Error loading reminders:', err);
+                setContractRemindersCount(0);
+                setContractReminders([]);
+            });
+    };
 
 
 
@@ -481,7 +499,7 @@ function OrgAdminHome(props) {
                     }
                 >
                     <Badge
-                        badgeContent={remindersCount}
+                        badgeContent={remindersCount + contractRemindersCount}
                         showZero={false}
                         variant="standard"
                         color="secondary"
@@ -504,10 +522,10 @@ function OrgAdminHome(props) {
                     }}
                     sx={{ mt: 1 }}
                 >
-                    <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
-                        {reminders.length === 0 ? (
+{/*                    <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
+                        {reminders.length === 0 && contractReminders.length === 0? (
                             <ListItem>
-                                <ListItemText primary="No upcoming certificate expirations." />
+                                <ListItemText primary="No upcoming expirations." />
                             </ListItem>
                         ) : (
                             reminders.map((item) => (
@@ -522,7 +540,41 @@ function OrgAdminHome(props) {
                                 </React.Fragment>
                             ))
                         )}
+                    </List>*/}
+                    <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
+                        {(reminders.length === 0 && contractReminders.length === 0) ? (
+                            <ListItem>
+                                <ListItemText primary="No upcoming expirations." />
+                            </ListItem>
+                        ) : (
+                            <>
+                                {reminders.map((item) => (
+                                    <React.Fragment key={`cert-${item.id}`}>
+                                        <ListItem alignItems="flex-start">
+                                            <ListItemText
+                                                primary={item.certificate}
+                                                secondary={`Certificate expires on: ${dayjs(item.expiry_date).format('YYYY-MM-DD')}`}
+                                            />
+                                        </ListItem>
+                                        <Divider component="li" />
+                                    </React.Fragment>
+                                ))}
+
+                                {contractReminders.map((contract) => (
+                                    <React.Fragment key={`contract-${contract.id}`}>
+                                        <ListItem alignItems="flex-start">
+                                            <ListItemText
+                                                primary={`Contract Number ${contract.contract_number}`}
+                                                secondary={`Contract expires on: ${dayjs(contract.end_date).format('YYYY-MM-DD')}`}
+                                            />
+                                        </ListItem>
+                                        <Divider component="li" />
+                                    </React.Fragment>
+                                ))}
+                            </>
+                        )}
                     </List>
+
                 </Popover>
 
             </Box>
