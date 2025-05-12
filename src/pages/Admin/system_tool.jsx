@@ -342,7 +342,7 @@ function SystemTool(props) {
             noMatch: status,
           },
         },
-        customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
+/*        customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
           <CustomLicenseToolbar
             selectedRows={selectedRows}
             displayData={displayData}
@@ -351,7 +351,7 @@ function SystemTool(props) {
             openEdit={()=>{}}
             toggling={systemTools.toggling}
           />
-        ),
+        ),*/
       };
 
     // end table config

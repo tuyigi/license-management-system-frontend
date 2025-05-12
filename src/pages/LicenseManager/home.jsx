@@ -2,33 +2,33 @@ import React, { useState, useEffect } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import BnrIcon from "../../assets/img/bnr_logo.png";
 import {
-  Button,
-  Drawer,
-  ListItemText,
-  IconButton,
-  ListItemIcon,
-  ListItem,
-  Divider,
-  List,
-  Grid,
-  Paper,
-  Typography,
-  Toolbar,
-  AppBar,
-  Container,
-  Box,
-  Hidden,
-  Menu,
-  MenuItem,
-  Avatar,
-  useMediaQuery,
-  Badge,
-  Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+    Button,
+    Drawer,
+    ListItemText,
+    IconButton,
+    ListItemIcon,
+    ListItem,
+    Divider,
+    List,
+    Grid,
+    Paper,
+    Typography,
+    Toolbar,
+    AppBar,
+    Container,
+    Box,
+    Hidden,
+    Menu,
+    MenuItem,
+    Avatar,
+    useMediaQuery,
+    Badge,
+    Collapse,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle, Popover,
 } from "@material-ui/core";
 
 import {
@@ -47,7 +47,7 @@ import {
     AssessmentOutlined,
     Computer,
     Note,
-    ListAlt
+    ListAlt, Notifications
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -60,6 +60,7 @@ import ExpirationReport from "./reports/expiration_report";
 import Vendors from "./vendors"
 import ContractsApproval from "./contracts_approval";
 import {BackendService} from "../../utils/web_config";
+import dayjs from "dayjs";
 // import Contracts from "./contracts";
 
 
@@ -134,7 +135,9 @@ const menus = [
 ];
 
 const menus2 = [
+/*
     { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/licenseManager/settings" ,permission:"CAN_VIEW_SETTINGS",},
+*/
     { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/licenseManager/logout" },
   ];
 
@@ -371,25 +374,43 @@ function LicenseManagerHome(props) {
                 Licence MIS
               </Typography>
             </Box>
-  
-            <Box mr={matches && 2}>
-              <IconButton
-                color="inherit"
-                onClick={() => {
 
-                }}
-              >
-                <Badge
-                  badgeContent={0}
-                  showZero={false}
-                  variant="standard"
-                  color="secondary"
-                >
-                  <Email />
-                </Badge>
-              </IconButton>
-            </Box>
+              <Box mr={matches && 2}>
+                  <IconButton
+
+                      sx={{fontSize:'20pt'}}
+                      color="inherit"
+/*
+                      onClick={}
+*/
+                  >
+                      <Badge
+                          badgeContent={0}
+                          showZero={false}
+                          variant="standard"
+                          color="secondary"
+                      >
+                          <Notifications htmlColor="#f9f1db" />
+                      </Badge>
+                  </IconButton>
+  {/*                <Popover
+
+                      anchorOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right',
+                      }}
+                      transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'center',
+                      }}
+                      sx={{ mt: 1 }}
+                  >
+                  </Popover>*/}
+
+              </Box>
+
   
+{/*
             <div>
               <Button
                 onClick={handleMenu}
@@ -451,6 +472,7 @@ function LicenseManagerHome(props) {
                 
               </Menu>
             </div>
+*/}
           </Toolbar>
         </AppBar>
         <nav className={classes.drawer} aria-label="">

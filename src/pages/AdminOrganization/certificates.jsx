@@ -55,6 +55,10 @@ const useStyles = makeStyles((theme) => ({
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
+    tableHeader: {
+        fontWeight: 'bold !important',
+    },
+
 }));
 function Certificates(props) {
     const classes = useStyles();
@@ -329,33 +333,38 @@ function Certificates(props) {
                 sort: false,
                 customBodyRender: (value, tableMeta) => {
                     if (!value) return "";
-                    const expiryDate = new Date(value);
-                    if (isNaN(expiryDate.getTime())) return "";
+                    const endDate = new Date(value);
+                    if (isNaN(endDate.getTime())) return "";
                     const Today = new Date();
 
-                    const diffTime = expiryDate.getTime() - Today.getTime();
+                    const diffTime = endDate.getTime() - Today.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    let status, color;
+                    let status = "";
+                    let dotColor = "";
+
                     if (diffDays > 15) {
                         status = "Updated";
-                        color = "#DBA628";
+                        dotColor = "#55c266";
                     } else if (diffDays >= 1 && diffDays <= 15) {
                         status = "Expiring Soon";
-                        color = "#81632d";
+                        dotColor = "#F8BF00";
                     } else {
                         status = "Expired";
-                        color = "#763a18";
+                        dotColor = "#E53835";
                     }
+
                     return (
-                        <div style={{
-                            backgroundColor: color,
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            fontWeight: 'bold'
-                        }}>
-                            {status}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+                style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: dotColor,
+                    display: "inline-block"
+                }}
+            ></span>
+                            <span style={{ color: "#333", fontWeight: 600 }}>{status}</span>
                         </div>
                     );
                 }
@@ -436,7 +445,6 @@ function Certificates(props) {
         searchPlaceholder: "Search user...",
         selectableRowsOnClick: false,
         fixedHeader: true,
-
         searchProps: {
             variant: "outlined",
             margin: "dense",

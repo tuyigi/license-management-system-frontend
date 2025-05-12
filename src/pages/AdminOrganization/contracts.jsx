@@ -371,6 +371,9 @@ function Contracts(props) {
     const handleEditCloseStatus = () => {
         setAnchorElStatus(null);
     };
+    const [popoverAnchor, setPopoverAnchor] = useState(null);
+    const [rejectedComment, setRejectedComment] = useState("");
+
 
     // start table config
     const columns = [
@@ -389,6 +392,7 @@ function Contracts(props) {
             options: {
                 filter: false,
                 sort: true,
+                display: false,
             },
         },
         {
@@ -430,28 +434,32 @@ function Contracts(props) {
                 filter: true,
                 sort: false,
                 customBodyRenderLite: function (dataI, rowI) {
+                    const statusRaw = contracts.data[dataI]?.approval_status?.toLowerCase();
+                    const status = statusRaw === "rejected" ? "Rejected" : Capitalize(statusRaw);
+
+                    let avatarColor = "#ccc";
+                    if (statusRaw === "approved") avatarColor = "#55c266";
+                    else if (statusRaw === "pending") avatarColor = "#F8BF00";
+                    else if (statusRaw === "rejected") avatarColor = "#E53835";
+
                     return (
                         <Chip
                             avatar={
-                                <Avatar>
-                                    {contracts.data[dataI].approval_status.toLowerCase() === "approved" ? (
+                                <Avatar style={{ backgroundColor: avatarColor ,color: "white" }}>
+                                    {statusRaw === "approved" ? (
                                         <CheckCircle fontSize="small" />
                                     ) : (
                                         <Block fontSize="small" />
                                     )}
                                 </Avatar>
                             }
-                            variant="outlined"
-                            color={
-                                contracts.data[dataI].approval_status.toLowerCase() === "approved"
-                                    ? "primary"
-                                    : "default"
-                            }
+                            style={{backgroundColor:"white"}}
                             size="small"
-                            label={Capitalize(contracts.data[dataI]?.approval_status)}
+                            label={status}
                         />
                     );
-                },
+                }
+
             },
         },
         {
@@ -480,7 +488,7 @@ function Contracts(props) {
         },
         {
             name: "end_date",
-            label: "Status",
+            label: "Expiration Status",
             options: {
                 filter: false,
                 sort: false,
@@ -492,31 +500,36 @@ function Contracts(props) {
 
                     const diffTime = endDate.getTime() - Today.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    let status, color;
+                    let status = "";
+                    let dotColor = "";
+
                     if (diffDays > 15) {
                         status = "Updated";
-                        color = "#DBA628";
+                        dotColor = "#55c266"; // green
                     } else if (diffDays >= 1 && diffDays <= 15) {
                         status = "Expiring Soon";
-                        color = "#81632d";
+                        dotColor = "#F8BF00"; // yellow
                     } else {
                         status = "Expired";
-                        color = "#763a18";
+                        dotColor = "#E53835"; // red
                     }
 
                     return (
-                        <div style={{
-                            backgroundColor: color,
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            fontWeight: 'bold'
-                        }}>
-                            {status}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+                style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: dotColor,
+                    display: "inline-block"
+                }}
+            ></span>
+                            <span style={{ color: "#333", fontWeight: 600 }}>{status}</span>
                         </div>
                     );
                 }
+
             }
         },
         // {
@@ -619,17 +632,22 @@ function Contracts(props) {
         searchPlaceholder: "Search user...",
         selectableRowsOnClick: true,
         fixedHeader: true,
+
         onCellClick: (cellData, cellMeta) => {
             var contract = contracts.data[cellMeta.dataIndex];
-            // check if contract is pending or not
-            console.log('Contract',contract);
-            if(contract['approval_status']!=="PENDING"){
-                history.push('contractDetails',contract)
-            }else{
-                notify("info", 'Contract still pending...', 400);
+            if (contract['approval_status'] === "REJECTED") {
+                setPopoverAnchor(cellMeta.event.currentTarget);
+                setRejectedComment(contract.approval_comment || "No comment provided.");
+                return;
             }
-
+            if(contract['approval_status'] === "APPROVED") {
+                history.push('contractDetails', contract);
+            }
+             else {
+                notify("error", 'Contract is still pending...', 400);
+            }
         },
+
         searchProps: {
             variant: "outlined",
             margin: "dense",
@@ -957,32 +975,24 @@ function Contracts(props) {
                 setLoading(false);
             });
     }
-/*    const inputRef = useRef(null);
-
-    const handleButtonClick = () => {
-        if (inputRef.current) {
-            inputRef.current.click();
-        }
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-
-        const allowedTypes = [
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-            'application/vnd.ms-excel', // .xls
-        ];
-
-        if (!allowedTypes.includes(file.type)) {
-            setContractUpload({ value: null, error: 'Only Excel files (.xlsx, .xls) are allowed.' });
-            return;
-        }
-
-        setContractUpload({ value: file, error: '' });
-        }*/
-
     return(
+        <React.Fragment>
+            <Popover
+                open={Boolean(popoverAnchor)}
+                anchorEl={popoverAnchor}
+                onClose={() => setPopoverAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                PaperProps={{ style: { minWidth: 300, maxWidth: 500,padding: 3 } }}
+            >
+                <Box >
+                    <Typography style={{color:'#763a18',fontWeight:'bold'}}>
+                        Contract was rejected due to:
+                    </Typography>
+                    <Typography variant="body2">{rejectedComment}</Typography>
+                </Box>
+            </Popover>
+
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <div className={classes.root}>
             {/* Dialogs starts here */}
@@ -1810,6 +1820,9 @@ function Contracts(props) {
             />
         </div>
         </MuiPickersUtilsProvider>
+        </React.Fragment>
+
+
     );
 }
 

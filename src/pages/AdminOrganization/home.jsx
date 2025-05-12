@@ -197,7 +197,9 @@ const menus = [
 ];
 
 const menus2 = [
+/*
     { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/orgAdmin/settings" ,permission:"CAN_VIEW_SETTINGS",},
+*/
     { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/orgAdmin/logout" },
   ];
 
@@ -493,6 +495,8 @@ function OrgAdminHome(props) {
   
             <Box mr={matches && 2}>
                 <IconButton
+
+                    sx={{fontSize:'20pt'}}
                     color="inherit"
                     onClick={
                         handleClickReminders
@@ -504,7 +508,7 @@ function OrgAdminHome(props) {
                         variant="standard"
                         color="secondary"
                     >
-                        <Notifications htmlColor="#763a18" />
+                        <Notifications htmlColor="#f9f1db" />
                     </Badge>
                 </IconButton>
                 <Popover
@@ -579,7 +583,7 @@ function OrgAdminHome(props) {
 
             </Box>
   
-            <div>
+           {/* <div>
               <Button
                 onClick={handleMenu}
                 color="inherit"
@@ -622,7 +626,7 @@ function OrgAdminHome(props) {
                 </MenuItem>
                 
               </Menu>
-            </div>
+            </div>*/}
           </Toolbar>
         </AppBar>
         <nav className={classes.drawer} aria-label="">
