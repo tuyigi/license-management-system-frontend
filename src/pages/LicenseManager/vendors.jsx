@@ -33,6 +33,7 @@ import {
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
 import * as XLSX from "xlsx";
+import ToggleSwitch from "./toggle_switch";
 
 
 
@@ -201,6 +202,23 @@ function Vendors(props) {
     };
 
 
+    const handleToggleVendorStatus = (vendor) => {
+        const updatedStatus = vendor.status === "ENABLED" ? "DISABLED" : "ENABLED";
+        const vendorInstance = axios.create(new BackendService().getHeaders(accountData.token));
+        vendorInstance
+            .put(`${new BackendService().VENDOR}/status/${vendor.id}`, { status: updatedStatus })
+            .then((response) => {
+                notify("success", `Vendor ${updatedStatus}`);
+                const updatedData = vendors.data.map((v) =>
+                    v.id === vendor.id ? { ...v, status: updatedStatus } : v
+                );
+                setVendors({ ...vendors, data: updatedData });
+            })
+            .catch((error) => {
+                notify("error", "Failed to update vendor status");
+            });
+    };
+
     // start table config
       const columns = [
         {
@@ -236,15 +254,27 @@ function Vendors(props) {
             sort: false,
           },
         },
-        {
-          name: "created_at",
-          label: "Created At",
-          options: {
-            filter: true,
-            sort: true,
-          },
-        },
-        {
+          {
+              name: "created_at",
+              label: "Created At",
+              options: {
+                  filter: true,
+                  sort: true,
+                  customBodyRender: (value) => {
+                      if (!value) return "";
+                      const date = new Date(value);
+                      const day = date.getDate().toString().padStart(2, '0');
+                      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                      const year = date.getFullYear();
+                      const hours = date.getHours().toString().padStart(2, '0');
+                      const minutes = date.getMinutes().toString().padStart(2, '0');
+                      return `${day}-${month}-${year} ${hours}:${minutes}`;
+                  }
+              }
+          }
+          ,
+/*
+          {
           name: "status",
           label: "Status",
           options: {
@@ -275,13 +305,34 @@ function Vendors(props) {
             },
           },
         },
+*/
+          {
+              name: "status",
+              label: "Status",
+              options: {
+                  filter: true,
+                  sort: false,
+                  customBodyRenderLite: (dataI) => {
+                      const vendor = vendors.data[dataI];
+                      const isEnabled = vendor.status?.toLowerCase() === "enabled";
+
+                      return (
+                          <ToggleSwitch
+                              checked={isEnabled}
+                              onChange={() => handleToggleVendorStatus(vendor)}
+                          />
+                      );
+                  },
+              },
+          }
+
       ];
     
       const options = {
         filterType: "multiselect",
         elevation: 0,
         selectableRows: "single",
-        searchPlaceholder: "Search user...",
+        searchPlaceholder: "Search vendor...",
         selectableRowsOnClick: true,
         fixedHeader: true,
         onCellClick: (cellData, cellMeta) => {
@@ -303,7 +354,7 @@ function Vendors(props) {
             noMatch: status,
           },
         },
-        customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
+/*        customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
           <CustomLicenseToolbar
             selectedRows={selectedRows}
             displayData={displayData}
@@ -312,7 +363,7 @@ function Vendors(props) {
             openEdit={()=>{}}
             toggling={vendors.toggling}
           />
-        ),
+        ),*/
       };
 
       // end table config
