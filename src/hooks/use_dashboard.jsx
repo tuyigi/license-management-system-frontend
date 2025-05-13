@@ -123,15 +123,13 @@ export function useLicenseRequestStatusStats() {
                 // const data = response.data.data;
                 const total = response.data.data.reduce((total, item) => parseInt(item.total) + total, 0)
                 console.log('total',total);
-                const series =  response.data.data.map(item => (parseInt(item.total)*100)/total);
-                const labels = response.data.data.map(item => item.request_status);
-                console.log(series,labels);
-
+                const series =  response.data.data.map(item => (parseInt(item.total)));
+                const labels = response.data.data.map(item => item.approval_status);
                 const data = {
                     labels,
                     series
                 };
-                console.log(data)
+                console.log('^^^^^^^', data)
                 setData({
                     data,
                     status: "success",

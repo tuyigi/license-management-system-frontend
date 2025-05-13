@@ -274,7 +274,6 @@ function OrgAdminHome(props) {
     const [anchorElReminders, setAnchorElReminders] = useState(null);
     const menuOpen = Boolean(anchorEl);
     const [logoutOpen, setLogoutOpen] = useState(false);
-  
     const [openMenu, setOpenMenu] = useState("none");
     const [accountData, setAccountData] = useState(null);
     const [remindersCount, setRemindersCount] = useState(0);
@@ -326,7 +325,7 @@ function OrgAdminHome(props) {
                    setReminders([]);
                });
        };
-    //CERTIFICATE REMINDERS
+    //CONTRACT REMINDERS
     const getContractsReminders = (token,id)=>{
         const contractsReminderInstance = axios.create(new BackendService().getHeaders(token));
         contractsReminderInstance
@@ -495,7 +494,6 @@ function OrgAdminHome(props) {
   
             <Box mr={matches && 2}>
                 <IconButton
-
                     sx={{fontSize:'20pt'}}
                     color="inherit"
                     onClick={
@@ -526,25 +524,6 @@ function OrgAdminHome(props) {
                     }}
                     sx={{ mt: 1 }}
                 >
-{/*                    <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
-                        {reminders.length === 0 && contractReminders.length === 0? (
-                            <ListItem>
-                                <ListItemText primary="No upcoming expirations." />
-                            </ListItem>
-                        ) : (
-                            reminders.map((item) => (
-                                <React.Fragment key={item.id}>
-                                    <ListItem alignItems="flex-start">
-                                        <ListItemText
-                                            primary={item.certificate}
-                                            secondary={`Expires on: ${dayjs(item.expiry_date).format('YYYY-MM-DD')}`}
-                                        />
-                                    </ListItem>
-                                    <Divider component="li" />
-                                </React.Fragment>
-                            ))
-                        )}
-                    </List>*/}
                     <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
                         {(reminders.length === 0 && contractReminders.length === 0) ? (
                             <ListItem>
