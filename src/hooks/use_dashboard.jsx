@@ -5,6 +5,8 @@ import axios from 'axios';
 import {BackendService} from "../utils/web_config";
 import Chart from "react-apexcharts";
 import {useHistory} from "react-router-dom";
+import {format} from "date-fns/esm";
+import {da} from "date-fns/locale";
 //const axios = require("axios");
 
 
@@ -121,15 +123,13 @@ export function useLicenseRequestStatusStats() {
                 // const data = response.data.data;
                 const total = response.data.data.reduce((total, item) => parseInt(item.total) + total, 0)
                 console.log('total',total);
-                const series =  response.data.data.map(item => (parseInt(item.total)*100)/total);
-                const labels = response.data.data.map(item => item.request_status);
-                console.log(series,labels);
-
+                const series =  response.data.data.map(item => (parseInt(item.total)));
+                const labels = response.data.data.map(item => item.approval_status);
                 const data = {
                     labels,
                     series
                 };
-                console.log(data)
+                console.log('^^^^^^^', data)
                 setData({
                     data,
                     status: "success",
@@ -443,23 +443,23 @@ export function useApprovedLicenseTypeStats() {
 
 export function useVendorPaymentDeparmentsStats() {
     const history = useHistory();
-    const [vendorPaymentDeparmentsStats, setData] = useState({status: "loading" });
+    const [vendorPaymentDeparmentsStats, setData] = useState({status: "loading"});
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (vendorPaymentDeparmentsStats.data == null) {
-            getVendorPaymentDeparmentsStats(accountData.token,accountData.user.department.id, accountData.user.id);
+            getVendorPaymentDeparmentsStats(accountData.token, accountData.user.department.id, accountData.user.id);
         }
     }, [vendorPaymentDeparmentsStats]);
 
-    const getVendorPaymentDeparmentsStats = (token,departmentId,userId) => {
+    const getVendorPaymentDeparmentsStats = (token, departmentId, userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
         const url = new BackendService().REPORT + '/metrics/certificate?user_id=' + userId;
         dInstance
             .get(url)
             .then(function (response) {
-                const series =  response.data.data.map(item => (parseInt(item.total)));
+                const series = response.data.data.map(item => (parseInt(item.total)));
                 const labels = response.data.data.map(item => item.month);
-                console.log(series,labels);
+                console.log(series, labels);
                 const data = {
                     labels,
                     series
@@ -472,20 +472,162 @@ export function useVendorPaymentDeparmentsStats() {
             .catch(function (error) {
                 if (error.response) {
                     if (error?.response?.status == 404) {
-                        setData({ data: { labels:[],series:[]}, status: "empty" });
-                    }
-                    else if(error?.response?.status == 401){
-                        history.push("/", { expired: true });
-                    }
-
-                    else {
-                        setData({ data: { labels:[],series:[]}, status: "error" });
+                        setData({data: {labels: [], series: []}, status: "empty"});
+                    } else if (error?.response?.status == 401) {
+                        history.push("/", {expired: true});
+                    } else {
+                        setData({data: {labels: [], series: []}, status: "error"});
                     }
                 } else {
-                    setData({ data: { labels:[],series:[]}, status: "error" });
+                    setData({data: {labels: [], series: []}, status: "error"});
                 }
             });
     };
     return [vendorPaymentDeparmentsStats, getVendorPaymentDeparmentsStats];
+
 }
 
+
+    //get License Contracts
+
+export function useLicenseContractsData() {
+    const history = useHistory();
+    const [licenseContractsStats, setData] = useState({ status: "loading" });
+
+    useEffect(() => {
+        const accountData = new BackendService().accountData;
+        if (!licenseContractsStats.data) {
+            getLicenseContractsData(accountData.token, accountData.user.department.id, accountData.user.id);
+        }
+    }, [licenseContractsStats]);
+
+    const getLicenseContractsData = (token, departmentId, userId) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().CONTRACT}/department/${departmentId}`;
+
+        dInstance.get(url)
+            .then(response => {
+                const rawData = response.data?.data || [];
+                const approvedLicenses = rawData.filter(da => da.approval_status === "APPROVED");
+                const formatted = approvedLicenses.map(da => ({
+                    ...da,
+                    start_date: format(new Date(da.start_date), 'yyyy/MM/dd'),
+                    end_date: format(new Date(da.end_date), 'yyyy/MM/dd'),
+                    vendor: da.vendor.vendor_name,
+                    department_name: da.department.name,
+                    annual_license_fees: `${da.currency} ${da.annual_license_fees}`
+                }));
+
+                setData({
+                    data: formatted,
+                    status: formatted.length === 0 ? "empty" : "success"
+                });
+            })
+            .catch(error => {
+                if (error.response) {
+                    if (error.response.status === 404) {
+                        setData({ data: [], status: "empty" });
+                    } else if (error.response.status === 401) {
+                        history.push("/", { expired: true });
+                    } else {
+                        setData({ data: [], status: "error" });
+                    }
+                } else {
+                    setData({ data: [], status: "error" });
+                }
+            });
+    };
+
+    return [licenseContractsStats, getLicenseContractsData];
+}
+
+
+// get Certificates
+
+
+export function useCertificatesData() {
+    const history = useHistory();
+    const [certificates, setCertificates] = useState({ status: "loading", data: [] });
+
+    useEffect(() => {
+        const accountData = new BackendService().accountData;
+        getCertificatesData(accountData.token, accountData.user.department.id, accountData.user.id);
+    }, []);
+
+    const getCertificatesData = (token, departmentId, userId) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().CERTIFICATES}/department/${departmentId}`;
+
+        dInstance.get(url)
+            .then(response => {
+                const rawData = response.data?.data || [];
+                const formatted = rawData.map(da => ({
+                    ...da,
+                    issue_date: format(new Date(da.issue_date), 'yyyy/MM/dd'),
+                    expiry_date: format(new Date(da.expiry_date), 'yyyy/MM/dd'),
+                }));
+
+                setCertificates({
+                    data: formatted,
+                    status: formatted.length === 0 ? "empty" : "success",
+                });
+            })
+            .catch(error => {
+                if (error.response) {
+                    if (error.response.status === 404) {
+                        setCertificates({ data: [], status: "empty" });
+                    } else if (error.response.status === 401) {
+                        history.push("/", { expired: true });
+                    } else {
+                        setCertificates({ data: [], status: "error" });
+                    }
+                } else {
+                    setCertificates({ data: [], status: "error" });
+                }
+            });
+    };
+
+    return [certificates, getCertificatesData];
+}
+
+
+// CONTRACT TOOLS Optimization
+
+export function useContractToolsOptimizationData() {
+    const history = useHistory();
+    const [toolsOptimization, setToolsOptimization] = useState({ status: "loading", data: [] });
+
+    useEffect(() => {
+        const accountData = new BackendService().accountData;
+        getToolsOptimizationData(accountData.token, accountData.user.department.id, accountData.user.id);
+    }, []);
+
+    const getToolsOptimizationData = (token, departmentId, userId) => {
+        const toolsInstance = axios.create(new BackendService().getHeaders(token));
+        const url = `${new BackendService().CONTRACT}/tool/metric/department/${departmentId}`;
+
+        toolsInstance.get(url)
+            .then(response => {
+                const rawData = response.data?.data || [];
+                setToolsOptimization({
+                    data: rawData,
+                    status: rawData.length === 0 ? "empty" : "success",
+                });
+            })
+            .catch(error => {
+                if (error.response) {
+                    if (error.response.status === 404) {
+                        setToolsOptimization({ data: [], status: "empty" });
+                    } else if (error.response.status === 401) {
+                        history.push("/", { expired: true });
+                    } else {
+                        setToolsOptimization({ data: [], status: "error" });
+                    }
+                } else {
+                    setToolsOptimization({ data: [], status: "error" });
+                }
+            });
+    };
+
+    return [toolsOptimization, getToolsOptimizationData];
+}

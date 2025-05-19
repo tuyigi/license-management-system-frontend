@@ -145,12 +145,13 @@ function Login(props) {
     setLogging(true);
     const data = {
       username: username.value,
-
+      password: password.value,
     };
 
     loginInstance
-        .get(new BackendService().LOGIN, {
-          params: { sAMAccountName: data.username },
+        .post(new BackendService().LOGIN, {
+          username: data.username,
+          password: data.password,
         })
       .then(function (response) {
         setLogging(false);

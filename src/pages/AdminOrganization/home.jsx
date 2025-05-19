@@ -2,33 +2,33 @@ import React, { useState, useEffect } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import BnrIcon from "../../assets/img/bnr_logo.png";
 import {
-  Button,
-  Drawer,
-  ListItemText,
-  IconButton,
-  ListItemIcon,
-  ListItem,
-  Divider,
-  List,
-  Grid,
-  Paper,
-  Typography,
-  Toolbar,
-  AppBar,
-  Container,
-  Box,
-  Hidden,
-  Menu,
-  MenuItem,
-  Avatar,
-  useMediaQuery,
-  Badge,
-  Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+    Button,
+    Drawer,
+    ListItemText,
+    IconButton,
+    ListItemIcon,
+    ListItem,
+    Divider,
+    List,
+    Grid,
+    Paper,
+    Typography,
+    Toolbar,
+    AppBar,
+    Container,
+    Box,
+    Hidden,
+    Menu,
+    MenuItem,
+    Avatar,
+    useMediaQuery,
+    Badge,
+    Collapse,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle, Popover,
 } from "@material-ui/core";
 
 import {
@@ -45,7 +45,7 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer, ListAlt, LibraryBooks, Equalizer
+    Computer, ListAlt, LibraryBooks, Equalizer, Notifications
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -62,12 +62,13 @@ import Certificates from "./certificates";
 import SystemTool from "../Admin/system_tool";
 import {BackendService} from "../../utils/web_config";
 import ContractDetails from "./contract_details";
-
+import dayjs from 'dayjs';
 import ToolsIcon from "../../assets/img/tools.png";
 import CertificateReport from "./reports/certificate_report";
 import ComponentReport from "./reports/component_report";
 import SystemToolReport from "./reports/system_tool_report";
 import Metric from "./metric";
+import axios from "axios";
 
 
 
@@ -181,7 +182,7 @@ const menus = [
     { name: "License Contracts", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/contracts", permission: "CAN_VIEW_CONTRACT"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
-    { name: "License Status Renewal", icon: <Computer color={"primary"}/>, path: "/orgAdmin/recordedLicense", permission: "CAN_VIEW_RECORDED_LICENSE"},
+    // { name: "License Status Renewal", icon: <Computer color={"primary"}/>, path: "/orgAdmin/recordedLicense", permission: "CAN_VIEW_RECORDED_LICENSE"},
     { name: "Certificates", icon: <LibraryBooks color={"primary"}/>, path: "/orgAdmin/certificates", permission: "CAN_VIEW_CERTIFICATES"},
     { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
@@ -196,7 +197,9 @@ const menus = [
 ];
 
 const menus2 = [
+/*
     { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/orgAdmin/settings" ,permission:"CAN_VIEW_SETTINGS",},
+*/
     { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/orgAdmin/logout" },
   ];
 
@@ -256,6 +259,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+
+
 function OrgAdminHome(props) {
     const { window } = props;
     const classes = useStyles();
@@ -266,14 +271,31 @@ function OrgAdminHome(props) {
   
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorElReminders, setAnchorElReminders] = useState(null);
     const menuOpen = Boolean(anchorEl);
     const [logoutOpen, setLogoutOpen] = useState(false);
-  
     const [openMenu, setOpenMenu] = useState("none");
     const [accountData, setAccountData] = useState(null);
+    const [remindersCount, setRemindersCount] = useState(0);
+    const [reminders, setReminders] = useState([]);
+    const [contractRemindersCount, setContractRemindersCount] = useState(0);
+    const [contractReminders, setContractReminders] = useState([]);
+
+    const handleClickReminders = (event) => {
+        setAnchorElReminders(event.currentTarget);
+    };
+    const handleCloseReminders = (event) => {
+        setAnchorElReminders(null);
+    };
+
+    const open = Boolean(anchorElReminders);
+    const id = open ? 'reminders-popover' : undefined;
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
+        getCertificateReminders(accData.access_token,accData?.user?.department?.id);
+        getContractsReminders(accData.access_token,accData?.user?.department?.id);
+
     }, []);
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -286,7 +308,42 @@ function OrgAdminHome(props) {
     const handleDrawerToggle = () => {
       setMobileOpen(!mobileOpen);
     };
-  
+
+    //CERTIFICATE REMINDERS
+       const getCertificateReminders = (token,id)=>{
+           const reminderInstance = axios.create(new BackendService().getHeaders(token));
+           reminderInstance
+               .get(`${new BackendService().CERTIFICATES}/reminders/department/${id}`)
+               .then((res) => {
+                   const data = res.data;
+                   setRemindersCount(data.count ?? 0);
+                   setReminders(data.items ?? []);
+               })
+               .catch((err) => {
+                   console.error('Error loading reminders:', err);
+                   setRemindersCount(0);
+                   setReminders([]);
+               });
+       };
+    //CONTRACT REMINDERS
+    const getContractsReminders = (token,id)=>{
+        const contractsReminderInstance = axios.create(new BackendService().getHeaders(token));
+        contractsReminderInstance
+            .get(`${new BackendService().CONTRACT}/reminders/department/${id}`)
+            .then((res) => {
+                const data = res.data;
+                setContractRemindersCount(data.count ?? 0);
+                setContractReminders(data.items ?? []);
+            })
+            .catch((err) => {
+                console.error('Error loading reminders:', err);
+                setContractRemindersCount(0);
+                setContractReminders([]);
+            });
+    };
+
+
+
     const drawer = (
       <div>
         <div className={classes.toolbar} />
@@ -436,39 +493,82 @@ function OrgAdminHome(props) {
             </Box>
   
             <Box mr={matches && 2}>
-              <IconButton
-                color="inherit"
-                onClick={() => {
-
-                }}
-              >
-                <Badge
-                  badgeContent={0}
-                  showZero={false}
-                  variant="standard"
-                  color="secondary"
+                <IconButton
+                    sx={{fontSize:'20pt'}}
+                    color="inherit"
+                    onClick={
+                        handleClickReminders
+                    }
                 >
-                  <Email />
-                </Badge>
-              </IconButton>
+                    <Badge
+                        badgeContent={remindersCount + contractRemindersCount}
+                        showZero={false}
+                        variant="standard"
+                        color="secondary"
+                    >
+                        <Notifications htmlColor="#f9f1db" />
+                    </Badge>
+                </IconButton>
+                <Popover
+                    id={id}
+                    open={open}
+                    anchorElReminders={anchorElReminders}
+                    onClose={handleCloseReminders}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'center',
+                    }}
+                    sx={{ mt: 1 }}
+                >
+                    <List sx={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
+                        {(reminders.length === 0 && contractReminders.length === 0) ? (
+                            <ListItem>
+                                <ListItemText primary="No upcoming expirations." />
+                            </ListItem>
+                        ) : (
+                            <>
+                                {reminders.map((item) => (
+                                    <React.Fragment key={`cert-${item.id}`}>
+                                        <ListItem alignItems="flex-start">
+                                            <ListItemText
+                                                primary={item.certificate}
+                                                secondary={`Certificate expires on: ${dayjs(item.expiry_date).format('YYYY-MM-DD')}`}
+                                            />
+                                        </ListItem>
+                                        <Divider component="li" />
+                                    </React.Fragment>
+                                ))}
+
+                                {contractReminders.map((contract) => (
+                                    <React.Fragment key={`contract-${contract.id}`}>
+                                        <ListItem alignItems="flex-start">
+                                            <ListItemText
+                                                primary={`Contract Number ${contract.contract_number}`}
+                                                secondary={`Contract expires on: ${dayjs(contract.end_date).format('YYYY-MM-DD')}`}
+                                            />
+                                        </ListItem>
+                                        <Divider component="li" />
+                                    </React.Fragment>
+                                ))}
+                            </>
+                        )}
+                    </List>
+
+                </Popover>
+
             </Box>
   
-            <div>
+           {/* <div>
               <Button
                 onClick={handleMenu}
                 color="inherit"
-                variant={matches && "outlined"}
+                variant={matches}
                 size="small"
                 className={classes.btn}
-                startIcon={
-                  matches && (
-                    <img
-                      src={BnrIcon}
-                      className={classes.icon2}
-                      alt="Safaribus"
-                    />
-                  )
-                }
               >
                 {<Avatar>{`${accountData?.user?.first_name?.substr(0,1)}${accountData?.user?.last_name?.substr(0,1)}`}</Avatar>}
               </Button>
@@ -505,7 +605,7 @@ function OrgAdminHome(props) {
                 </MenuItem>
                 
               </Menu>
-            </div>
+            </div>*/}
           </Toolbar>
         </AppBar>
         <nav className={classes.drawer} aria-label="">

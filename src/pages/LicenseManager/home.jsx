@@ -2,33 +2,33 @@ import React, { useState, useEffect } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import BnrIcon from "../../assets/img/bnr_logo.png";
 import {
-  Button,
-  Drawer,
-  ListItemText,
-  IconButton,
-  ListItemIcon,
-  ListItem,
-  Divider,
-  List,
-  Grid,
-  Paper,
-  Typography,
-  Toolbar,
-  AppBar,
-  Container,
-  Box,
-  Hidden,
-  Menu,
-  MenuItem,
-  Avatar,
-  useMediaQuery,
-  Badge,
-  Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+    Button,
+    Drawer,
+    ListItemText,
+    IconButton,
+    ListItemIcon,
+    ListItem,
+    Divider,
+    List,
+    Grid,
+    Paper,
+    Typography,
+    Toolbar,
+    AppBar,
+    Container,
+    Box,
+    Hidden,
+    Menu,
+    MenuItem,
+    Avatar,
+    useMediaQuery,
+    Badge,
+    Collapse,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle, Popover,
 } from "@material-ui/core";
 
 import {
@@ -47,7 +47,7 @@ import {
     AssessmentOutlined,
     Computer,
     Note,
-    ListAlt
+    ListAlt, Notifications
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -60,6 +60,9 @@ import ExpirationReport from "./reports/expiration_report";
 import Vendors from "./vendors"
 import ContractsApproval from "./contracts_approval";
 import {BackendService} from "../../utils/web_config";
+import dayjs from "dayjs";
+import axios from "axios";
+import {useLicenseRequestStatusStats} from "../../hooks/use_dashboard";
 // import Contracts from "./contracts";
 
 
@@ -134,7 +137,9 @@ const menus = [
 ];
 
 const menus2 = [
+/*
     { name: "Settings", icon: <SettingsIcon color="primary" />, path: "/licenseManager/settings" ,permission:"CAN_VIEW_SETTINGS",},
+*/
     { name: "Logout", icon: <ExitToApp  color = "primary" />, path: "/licenseManager/logout" },
   ];
 
@@ -200,18 +205,19 @@ function LicenseManagerHome(props) {
     const Theme = useTheme();
     const history = useHistory();
     const { themer } = props;
-  
-  
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
-    const menuOpen = Boolean(anchorEl);
     const [logoutOpen, setLogoutOpen] = useState(false);
-  
+    const [incomingRequestsCount, setIncomingRequestsCount] = useState(0);
+    const [incomingRequests, setIncomingRequests] = useState([]);
+    const open = Boolean(anchorEl);
+    const id = open ? 'reminders-popover' : undefined;
     const [openMenu, setOpenMenu] = useState("none");
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
+        getIncomingLicenseContractRequests(accData);
     }, []);
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -220,7 +226,9 @@ function LicenseManagerHome(props) {
     const handleClose = () => {
       setAnchorEl(null);
     };
-  
+    const handleClickPendingPopover = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
     const handleDrawerToggle = () => {
       setMobileOpen(!mobileOpen);
     };
@@ -311,10 +319,31 @@ function LicenseManagerHome(props) {
         </List>
       </div>
     );
-  
+
+    //Get pending requests
+    const getIncomingLicenseContractRequests = (token) => {
+        const dInstance = axios.create(new BackendService().getHeaders(token));
+        const url = new BackendService().LICENSE_REQUEST_TYPE_STATS;
+        dInstance
+            .get(url)
+            .then(function (response) {
+                const data = response.data.data;
+                const pendingItem = data.find(item => item.approval_status === "PENDING");
+                const pendingTotal = pendingItem ? parseInt(pendingItem.total) : 0;
+                setIncomingRequestsCount(pendingTotal);
+                setIncomingRequests(pendingItem ?? []);
+            })
+            .catch((err) => {
+                console.error('Error loading reminders:', err);
+                setIncomingRequestsCount(0);
+                setIncomingRequests([]);
+            });
+    }
     const container =
       window !== undefined ? () => window().document.body : undefined;
     const matches = useMediaQuery(Theme.breakpoints.up("sm"));
+
+
   
     return (
       <div className={classes.root}>
@@ -351,7 +380,7 @@ function LicenseManagerHome(props) {
   
         <AppBar
           position="fixed"
-          color={themer == 0 ? "primary" : "default"}
+          color={themer === 0 ? "primary" : "default"}
           elevation={0}
           className={classes.appBar}
         >
@@ -371,25 +400,40 @@ function LicenseManagerHome(props) {
                 Licence MIS
               </Typography>
             </Box>
-  
-            <Box mr={matches && 2}>
-              <IconButton
-                color="inherit"
-                onClick={() => {
 
-                }}
-              >
-                <Badge
-                  badgeContent={0}
-                  showZero={false}
-                  variant="standard"
-                  color="secondary"
-                >
-                  <Email />
-                </Badge>
-              </IconButton>
-            </Box>
+              <Box mr={matches && 2}>
+                  <IconButton
+                      sx={{fontSize:'20pt'}}
+                      color="inherit"
+                      onClick={handleClickPendingPopover}
+                  >
+                      <Badge
+                          badgeContent={incomingRequestsCount}
+                          showZero={false}
+                          variant="standard"
+                          color="secondary"
+                      >
+                          <Notifications htmlColor="#f9f1db" />
+                      </Badge>
+                  </IconButton>
+  {/*                <Popover
+
+                      anchorOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right',
+                      }}
+                      transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'center',
+                      }}
+                      sx={{ mt: 1 }}
+                  >
+                  </Popover>*/}
+
+              </Box>
+
   
+{/*
             <div>
               <Button
                 onClick={handleMenu}
@@ -451,6 +495,7 @@ function LicenseManagerHome(props) {
                 
               </Menu>
             </div>
+*/}
           </Toolbar>
         </AppBar>
         <nav className={classes.drawer} aria-label="">

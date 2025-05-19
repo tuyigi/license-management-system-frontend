@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from "react";
+import React,{useState,useEffect,useRef} from "react";
 import {withLocalize, Translate} from "react-localize-redux";
 import {makeStyles} from "@material-ui/styles";
 import {
@@ -19,7 +19,7 @@ import {
     Popover,
     ListItemText,
     ListItemIcon,
-    ListItem, List, Grid, ListItemAvatar, ListItemSecondaryAction
+    ListItem, List, Grid, ListItemAvatar, ListItemSecondaryAction,
 } from "@material-ui/core";
 import {
     CircularProgress,
@@ -48,7 +48,7 @@ import {
     Done,
     HourglassEmpty,
     AccountTree,
-    SettingsInputComponent, LibraryAdd
+    SettingsInputComponent, LibraryAdd,Publish
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import { Capitalize } from "../../helpers/capitalize";
@@ -65,13 +65,14 @@ import {
     KeyboardTimePicker,
     KeyboardDatePicker,
 } from '@material-ui/pickers';
+import * as XLSX from "xlsx";
 
 
 
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",marginRight:'16px'},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
@@ -112,6 +113,7 @@ function Contracts(props) {
             .get(`${new BackendService().CONTRACT}/department/${id}`  )
             .then(function (response) {
                 setContracts({...contracts, loading: false});
+                console.log('*********', response);
                 const d = response.data;
                 if (d.data.length == 0) {
                     setStatus("There are no license requests available.");
@@ -153,7 +155,8 @@ function Contracts(props) {
     const [endDate, setEndDate] = useState({ value: format(new Date(),["yyyy-MM-dd"]), error: ""});
     const [currency, setCurrency] = useState({value:"",error:""});
     const [systemTool, setSystemTool] = useState( {value: "", error: ""});
-    const [documentLink, setDocumentLink] = useState({value: "", error:""});
+    const [documentLink, setDocumentLink] = useState({value: __filename, error:""});
+    const [contractUpload, setContractUpload] = useState({value: __filename, error:""});
     const [contractNumber, setContractNumber] = useState({ value: null, error: ""});
     const [systemUsers, setSystemUsers] = useState({ value: 0, error: ""});
     const [department, setDepartment] = useState({ value: '', error: ''});
@@ -368,6 +371,9 @@ function Contracts(props) {
     const handleEditCloseStatus = () => {
         setAnchorElStatus(null);
     };
+    const [popoverAnchor, setPopoverAnchor] = useState(null);
+    const [rejectedComment, setRejectedComment] = useState("");
+
 
     // start table config
     const columns = [
@@ -386,6 +392,7 @@ function Contracts(props) {
             options: {
                 filter: false,
                 sort: true,
+                display: false,
             },
         },
         {
@@ -427,28 +434,32 @@ function Contracts(props) {
                 filter: true,
                 sort: false,
                 customBodyRenderLite: function (dataI, rowI) {
+                    const statusRaw = contracts.data[dataI]?.approval_status?.toLowerCase();
+                    const status = statusRaw === "rejected" ? "Rejected" : Capitalize(statusRaw);
+
+                    let avatarColor = "#ccc";
+                    if (statusRaw === "approved") avatarColor = "#55c266";
+                    else if (statusRaw === "pending") avatarColor = "#F8BF00";
+                    else if (statusRaw === "rejected") avatarColor = "#E53835";
+
                     return (
                         <Chip
                             avatar={
-                                <Avatar>
-                                    {contracts.data[dataI].approval_status.toLowerCase() === "approved" ? (
+                                <Avatar style={{ backgroundColor: avatarColor ,color: "white" }}>
+                                    {statusRaw === "approved" ? (
                                         <CheckCircle fontSize="small" />
                                     ) : (
                                         <Block fontSize="small" />
                                     )}
                                 </Avatar>
                             }
-                            variant="outlined"
-                            color={
-                                contracts.data[dataI].approval_status.toLowerCase() === "approved"
-                                    ? "primary"
-                                    : "default"
-                            }
+                            style={{backgroundColor:"white"}}
                             size="small"
-                            label={Capitalize(contracts.data[dataI]?.approval_status)}
+                            label={status}
                         />
                     );
-                },
+                }
+
             },
         },
         {
@@ -474,6 +485,52 @@ function Contracts(props) {
                 filter: true,
                 sort: true,
             },
+        },
+        {
+            name: "end_date",
+            label: "Expiration Status",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value, tableMeta) => {
+                    if (!value) return "";
+                    const endDate = new Date(value);
+                    if (isNaN(endDate.getTime())) return "";
+                    const Today = new Date();
+
+                    const diffTime = endDate.getTime() - Today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    let status = "";
+                    let dotColor = "";
+
+                    if (diffDays > 15) {
+                        status = "Updated";
+                        dotColor = "#55c266"; // green
+                    } else if (diffDays >= 1 && diffDays <= 15) {
+                        status = "Expiring Soon";
+                        dotColor = "#F8BF00"; // yellow
+                    } else {
+                        status = "Expired";
+                        dotColor = "#E53835"; // red
+                    }
+
+                    return (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+                style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: dotColor,
+                    display: "inline-block"
+                }}
+            ></span>
+                            <span style={{ color: "#333", fontWeight: 600 }}>{status}</span>
+                        </div>
+                    );
+                }
+
+            }
         },
         // {
         //     name: "id",
@@ -575,17 +632,22 @@ function Contracts(props) {
         searchPlaceholder: "Search user...",
         selectableRowsOnClick: true,
         fixedHeader: true,
+
         onCellClick: (cellData, cellMeta) => {
             var contract = contracts.data[cellMeta.dataIndex];
-            // check if contract is pending or not
-            console.log('Contract',contract);
-            if(contract['approval_status']!=="PENDING"){
-                history.push('contractDetails',contract)
-            }else{
-                notify("info", 'Contract still pending...', 400);
+            if (contract['approval_status'] === "REJECTED") {
+                setPopoverAnchor(cellMeta.event.currentTarget);
+                setRejectedComment(contract.approval_comment || "No comment provided.");
+                return;
             }
-
+            if(contract['approval_status'] === "APPROVED") {
+                history.push('contractDetails', contract);
+            }
+             else {
+                notify("error", 'Contract is still pending...', 400);
+            }
         },
+
         searchProps: {
             variant: "outlined",
             margin: "dense",
@@ -816,8 +878,121 @@ function Contracts(props) {
                 });
         }
     }
+    /*
+    UPLOAD CONTRACT
+     */
+    const [loading, setLoading] = useState(false);
+    const [fileName, setFileName] = useState('');
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setFileName(file.name);
 
+        try {
+            const data = await readExcelFile(file);
+            await uploadDataToApi(data);
+            setFileName('');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setLoading(false);
+
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                'An unexpected error occurred';
+
+            notify(
+                error?.response?.status === 404 ? 'info' : 'error',
+                errorMessage,
+                error?.response?.status
+            );
+        }
+    };
+
+
+    const readExcelFile = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    const excelDateToJSDate = (serial) => {
+                        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+                        const resultDate = new Date(excelEpoch.getTime() + serial * 24 * 60 * 60 * 1000);
+                        return resultDate.toISOString().split('T')[0];
+                    };
+
+
+                    const parsedData = jsonData.map((item) => ({
+                        ...item,
+                        start_date: excelDateToJSDate(item.start_date),
+                        end_date: excelDateToJSDate(item.end_date),
+                    }));
+
+                    resolve(parsedData);
+                } catch (error) {
+                    reject(new Error('Failed to parse Excel file'));
+                }
+            };
+
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsArrayBuffer(file);
+        });
+    };
+
+    const uploadDataToApi = async (data) => {
+        setLoading(true);
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        const fileInput = document.getElementById('upload-contract-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        uploadInstance
+            .post(new BackendService().CONTRACT_UPLOAD , data)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+                console.log('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }
     return(
+        <React.Fragment>
+            <Popover
+                open={Boolean(popoverAnchor)}
+                anchorEl={popoverAnchor}
+                onClose={() => setPopoverAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                PaperProps={{ style: { minWidth: 300, maxWidth: 500,padding: 3 } }}
+            >
+                <Box >
+                    <Typography style={{color:'#763a18',fontWeight:'bold'}}>
+                        Contract was rejected due to:
+                    </Typography>
+                    <Typography variant="body2">{rejectedComment}</Typography>
+                </Box>
+            </Popover>
+
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <div className={classes.root}>
             {/* Dialogs starts here */}
@@ -1052,25 +1227,25 @@ function Contracts(props) {
                             }}
                         />
                     </Box>
-                    <Box style={{marginTop:10}}>
+                 {/* <Box style={{marginTop:10}}>
                         <Translate>
                             {({ translate }) => (
                                 <TextField
                                     size="small"
                                     variant="outlined"
                                     color="primary"
-                                    type={'text'}
-                                    value={documentLink.value}
-                                    placeholder={"Document Link"}
-                                    label={"Document Link"}
+                                    type="file"
                                     fullWidth
-                                    onChange={(v)=>{
-                                        setDocumentLink({ value: v.target.value, error: ""});
+                                    InputLabelProps={{ shrink: true }}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        setDocumentLink({ value: file, error: "" });
                                     }}
+                                    label="Document Upload"
                                 />
                             )}
                         </Translate>
-                    </Box>
+                    </Box>*/}
 
                     <Box style={{marginTop:10}}>
                         <Translate>
@@ -1557,6 +1732,70 @@ function Contracts(props) {
                 <Typography variant="h5" className={classes.title}>
                     <b>License Contracts</b>
                 </Typography>
+                <Box sx={{ textAlign: 'center', my: 2, position: 'relative' }}>
+                    <input
+                        accept=".xlsx,.xls"
+                        style={{ display: 'none' }}
+                        id="upload-contract-file"
+                        type="file"
+                        onChange={handleFileChange}
+                        disabled={loading}
+                    />
+                    <label htmlFor="upload-contract-file">
+                        <Button
+                            color="primary"
+                            size={"medium"}
+                            className={classes.btn}
+                            variant="contained"
+                            component="span"
+                            disabled={loading}
+                            startIcon={<Publish />}
+
+                        >
+
+                            {loading ? 'Uploading...' : 'Upload License Contracts'}
+                        </Button>
+                    </label>
+
+                    {/*{loading && (*/}
+                    {/*    <CircularProgress*/}
+                    {/*        size={100}*/}
+                    {/*        sx={{*/}
+                    {/*            position: 'absolute',*/}
+                    {/*            top: '50%',*/}
+                    {/*            left: '50%',*/}
+                    {/*            marginTop: '-20px',*/}
+                    {/*            marginLeft: '-12px',*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*)}*/}
+
+                    {/*{fileName && (*/}
+                    {/*    <Typography variant="body2" color="textSecondary">*/}
+                    {/*        Selected file: {fileName}*/}
+                    {/*    </Typography>*/}
+                    {/*)}*/}
+                </Box>
+
+
+                {/*                <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    ref={inputRef}
+                    style={{display: 'none'}}
+                    onChange={handleFileChange}
+                />
+                <Button
+                    className={classes.btn}
+                    variant="contained"
+                    color="primary"
+                    size="medium"
+                    startIcon={<Publish/>}
+
+                    onClick={handleButtonClick}
+                >
+                    Upload License Contracts
+                </Button>*/}
                 <Button
                     className={classes.btn}
                     color="primary"
@@ -1581,6 +1820,9 @@ function Contracts(props) {
             />
         </div>
         </MuiPickersUtilsProvider>
+        </React.Fragment>
+
+
     );
 }
 

@@ -439,28 +439,31 @@ function ContractsApproval(props) {
                 filter: true,
                 sort: false,
                 customBodyRenderLite: function (dataI, rowI) {
+                    const statusRaw = contracts.data[dataI]?.approval_status?.toLowerCase();
+                    const status = statusRaw === "rejected" ? "Rejected" : Capitalize(statusRaw);
+
+                    let avatarColor = "#ccc";
+                    if (statusRaw === "approved") avatarColor = "#55c266";
+                    else if (statusRaw === "pending") avatarColor = "#F8BF00";
+                    else if (statusRaw === "rejected") avatarColor = "#E53835";
+
                     return (
                         <Chip
                             avatar={
-                                <Avatar>
-                                    {contracts.data[dataI].approval_status.toLowerCase() === "approved" ? (
+                                <Avatar style={{ backgroundColor: avatarColor ,color: "white" }}>
+                                    {statusRaw === "approved" ? (
                                         <CheckCircle fontSize="small" />
                                     ) : (
                                         <Block fontSize="small" />
                                     )}
                                 </Avatar>
                             }
-                            variant="outlined"
-                            color={
-                                contracts.data[dataI].approval_status.toLowerCase() === "approved"
-                                    ? "primary"
-                                    : "default"
-                            }
+                            style={{backgroundColor:"white"}}
                             size="small"
-                            label={Capitalize(contracts.data[dataI]?.approval_status)}
+                            label={status}
                         />
                     );
-                },
+                }
             },
         },
         {
@@ -542,7 +545,7 @@ function ContractsApproval(props) {
                                             handleEditCloseStatus();
                                         }}>
                                             <ListItemIcon>
-                                                <ThumbDown style={{color: 'orange'}} />
+                                                <ThumbDown style={{color: 'red'}} />
                                             </ListItemIcon>
                                             <ListItemText primary="Reject" />
                                         </ListItem>

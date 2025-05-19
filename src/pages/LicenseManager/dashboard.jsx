@@ -71,7 +71,7 @@ function Dashboard(){
 
     },[]);
 
-
+console.log(licenseRequestStatusStats)
     return(
         <div className={classes.root}>
             <Box  style={{display: "flex"}}>
@@ -86,7 +86,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}} ><Typography variant="h8"><b>Pending</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="PENDING")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="PENDING")?.total}</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.approval_status==="PENDING")?.total===undefined?0:licenseStats.find((d)=>d.approval_status==="PENDING")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -102,7 +102,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}}><Typography variant="h8" ><b>Reviewed</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="REVIEWED")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="REVIEWED")?.total}</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.approval_status==="REVIEWED")?.total===undefined?0:licenseStats.find((d)=>d.approval_status==="REVIEWED")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -118,7 +118,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}}><Typography variant="h8" ><b>Approved</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="APPROVED")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="APPROVED")?.total}</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.approval_status==="APPROVED")?.total===undefined?0:licenseStats.find((d)=>d.approval_status==="APPROVED")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -134,7 +134,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}}><Typography variant="h8" ><b>Rejected</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.request_status==="REJECTED")?.total===undefined?0:licenseStats.find((d)=>d.request_status==="REJECTED")?.total}</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{licenseStats.find((d)=>d.approval_status==="REJECTED")?.total===undefined?0:licenseStats.find((d)=>d.approval_status==="REJECTED")?.total}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -149,8 +149,6 @@ function Dashboard(){
                     <Grid item xs={12} md={4} lg={4} sm={4}>
                         <Paper style={{minHeight: 380,}} elevation={0}>
                             <Typography style={{marginLeft: 20}}><b>Licenses Status</b></Typography>
-                            {/*<Chart type="donut" options={licenseRequestStatusChart(licenseRequestStatusStats).options}*/}
-                            {/*       series={licenseRequestStatusChart(licenseRequestStatusStats).series}  width={380}/>*/}
                             <Chart type="pie" options={licenseRequestStatusChart(licenseRequestStatusStats).options}
                                    series={licenseRequestStatusChart(licenseRequestStatusStats).series}  width={380}/>
                         </Paper>

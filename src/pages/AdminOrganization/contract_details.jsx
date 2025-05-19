@@ -216,7 +216,6 @@ function ContractDetails(props) {
             .get(`${new BackendService().CONTRACT}/${id}`  )
             .then(function (response) {
                 let d = response.data;
-                // const tools = [];
                 const toolsMetric = [];
                 d.data.toolsMetrics.map((o)=>{
                     toolsMetric.push({
@@ -262,6 +261,7 @@ function ContractDetails(props) {
                         metric_id: o.metric_id || "-",
                         metric_name: o.metric_name || "-",
                         component_metric_id: o.component_metric_id || "-",
+                        system_tool_name: o.system_tool_name || "-"
                     })
                 });
                 d.data.tools = toolsMetric;
@@ -421,6 +421,14 @@ function ContractDetails(props) {
         {
             name: "name",
             label: "Component Name",
+            options: {
+                filter: false,
+                sort: false,
+            },
+        },
+        {
+            name: "system_tool_name",
+            label: "Tool/Product",
             options: {
                 filter: false,
                 sort: false,
@@ -621,6 +629,8 @@ function ContractDetails(props) {
     const [currency, setCurrency] = useState({value:"",error:""});
     const [loading,setLoading]=useState(false);
     const [metricsV, setMetricsV] = useState( {value: [], error: ""});
+    const [systemToolNameV, setSystemToolNameV] = useState( {value: "", error: ""});
+
     const onSystemToolsChange = (event,v) => {
         if (v === null) {
             setSystemTool({
@@ -632,6 +642,16 @@ function ContractDetails(props) {
         }
     };
 
+    const onSystemToolNameChange = (event,v) => {
+        if (v === null) {
+            setSystemToolNameV({
+                value: "",
+                error: "Please select system tool",
+            });
+        } else {
+            setSystemToolNameV({value: v.system_tool_name, error: ""});
+        }
+    };
 
     const onMetricChange = (event,v) => {
         console.log('value',v);
@@ -644,6 +664,7 @@ function ContractDetails(props) {
             setMetricsV({ value: ids, error: ""});
         }
     };
+
 
     const onCurrencyChange = (event) => {
         if (event.target.value === "") {
@@ -738,6 +759,7 @@ function ContractDetails(props) {
                     "start_date": startDate.value,
                     "expiry_date": endDate.value,
                     "metrics": metricsV.value,
+                    "system_tool_name": systemToolNameV.value,
                 };
             componentInstance
                 .post(`${new BackendService().CONTRACT}/component`, data)
@@ -1170,7 +1192,29 @@ function ContractDetails(props) {
                                     )}
                                 />
                             </Box>
-
+{/*
+ADDED TOOL NAME BELOW
+*/}
+                            <Box style={{marginTop: 10}}>
+                                <Autocomplete
+                                    fullWidth
+                                    openOnFocus
+                                    options={systemTools}
+                                    getOptionLabel={(option) => option.system_tool_name}
+                                    onChange={onSystemToolNameChange}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            fullWidth
+                                            label={"Tool/System"}
+                                            variant="outlined"
+                                            size="small"
+                                            helperText={systemToolNameV.error}
+                                            error={systemToolNameV.error !== ""}
+                                        />
+                                    )}
+                                />
+                            </Box>
                             <Box style={{marginTop:10}}>
                                 <Translate>
                                     {({ translate }) => (
@@ -1685,7 +1729,7 @@ function ContractDetails(props) {
                                     Components
                                 </Button>
 
-                                <Button
+                             {/*   <Button
                                     className={classes.btn}
                                     variant={choice == 2 ? "contained" : "outlined"}
                                     size="medium"
@@ -1693,7 +1737,7 @@ function ContractDetails(props) {
                                     onClick={() => setChoice(2)}
                                 >
                                     Reminders
-                                </Button>
+                                </Button>*/}
                             </ButtonGroup>
                         </Box>
 

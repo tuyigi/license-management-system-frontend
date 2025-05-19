@@ -18,6 +18,8 @@
     "axios-retry": "^3.1.2",
     "classnames": "^2.2.6",
     "date-fns": "^2.14.0",
+    "dayjs": "^1.11.13",
+    "icons-material": "^0.0.1-security",
     "leaflet": "^1.6.0",
     "mui-datatables": "^3.1.5",
     "notistack": "^0.9.17",
@@ -35,8 +37,10 @@
     "react-scripts": "^3.0.1",
     "react-swipeable-views": "^0.13.3",
     "react-text-mask": "^5.4.3",
+    "recharts": "^2.15.3",
     "typeface-lato": "0.0.75",
-    "uuid": "^3.3.3"
+    "uuid": "^3.3.3",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "export SET NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",

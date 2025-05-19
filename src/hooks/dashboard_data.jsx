@@ -94,16 +94,15 @@ const organizationLicenseRequestStats = (data)=>{
 
 
 // license manager
-const licenseRequestStatusChart = (data)=> {
-    var config = {
-
-        series: data?.data?.series == null ? [] : data?.data?.series,
+const licenseRequestStatusChart = (data) => {
+    const config = {
+        series: data?.data?.series || [],
         options: {
             chart: {
                 width: 380,
-                type: 'pie',
             },
-            labels: data?.data?.labels == null ? [] : data?.data?.labels,
+            labels: data?.data?.labels || [],
+            colors: ['#81632d', '#763a18','#d0b56f'],
             responsive: [{
                 breakpoint: 480,
                 options: {
@@ -115,9 +114,7 @@ const licenseRequestStatusChart = (data)=> {
                     }
                 }
             }]
-        },
-
-
+        }
     };
 
 

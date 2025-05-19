@@ -33,7 +33,7 @@ import {
     Add,
     Receipt,
     Close,
-    MoreVert, Payment, Assessment, LibraryBooks
+    MoreVert, Payment, Assessment, LibraryBooks, Publish
 } from "@material-ui/icons";
 import MUIDataTable from "mui-datatables";
 import axios from "axios";
@@ -46,14 +46,19 @@ import {
     MuiPickersUtilsProvider,
     KeyboardDatePicker,
 } from '@material-ui/pickers';
+import * as XLSX from "xlsx";
 
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",marginRight:'16px'},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
+    tableHeader: {
+        fontWeight: 'bold !important',
+    },
+
 }));
 function Certificates(props) {
     const classes = useStyles();
@@ -294,13 +299,78 @@ function Certificates(props) {
             },
         },
         {
-            name: "created_at",
-            label: "Created At",
+            name: "issue_date",
+            label: "Issued on",
             options: {
                 filter: false,
                 sort: false,
+                customBodyRender: (value) => {
+                    if (!value) return "";
+                    const date = new Date(value);
+                    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                }
             },
         },
+        {
+            name: "expiry_date",
+            label: "Expiring on",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value) => {
+                    if (!value) return "";
+
+                    const date = new Date(value);
+                    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                }
+            },
+        },
+        {
+            name: "expiry_date",
+            label: "Status",
+            options: {
+                filter: false,
+                sort: false,
+                customBodyRender: (value, tableMeta) => {
+                    if (!value) return "";
+                    const endDate = new Date(value);
+                    if (isNaN(endDate.getTime())) return "";
+                    const Today = new Date();
+
+                    const diffTime = endDate.getTime() - Today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    let status = "";
+                    let dotColor = "";
+
+                    if (diffDays > 15) {
+                        status = "Updated";
+                        dotColor = "#55c266";
+                    } else if (diffDays >= 1 && diffDays <= 15) {
+                        status = "Expiring Soon";
+                        dotColor = "#F8BF00";
+                    } else {
+                        status = "Expired";
+                        dotColor = "#E53835";
+                    }
+
+                    return (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+                style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: dotColor,
+                    display: "inline-block"
+                }}
+            ></span>
+                            <span style={{ color: "#333", fontWeight: 600 }}>{status}</span>
+                        </div>
+                    );
+                }
+            }
+        }
+,
         {
             name: "id",
             label: "Actions",
@@ -375,7 +445,6 @@ function Certificates(props) {
         searchPlaceholder: "Search user...",
         selectableRowsOnClick: false,
         fixedHeader: true,
-
         searchProps: {
             variant: "outlined",
             margin: "dense",
@@ -457,6 +526,102 @@ function Certificates(props) {
                     e = error.response.data.message;
                 }
                 notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    }
+
+    /*Upload Certificates
+     */
+    const [loading, setLoading] = useState(false);
+    const [fileName, setFileName] = useState('');
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setFileName(file.name);
+
+        try {
+            const data = await readExcelFile(file);
+            await uploadDataToApi(data);
+            setFileName('');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setLoading(false);
+
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                'An unexpected error occurred';
+
+            notify(
+                error?.response?.status === 404 ? 'info' : 'error',
+                errorMessage,
+                error?.response?.status
+            );
+        }
+    };
+
+
+    const readExcelFile = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    const excelDateToJSDate = (serial) => {
+                        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+                        const resultDate = new Date(excelEpoch.getTime() + serial * 24 * 60 * 60 * 1000);
+                        return resultDate.toISOString().split('T')[0];
+                    };
+
+                    const parsedData = jsonData.map((item) => ({
+                        ...item,
+                        issue_date: excelDateToJSDate(item.issue_date),
+                        expiration_date: excelDateToJSDate(item.expiration_date),
+                    }));
+
+                    resolve(parsedData);
+                } catch (error) {
+                    reject(new Error('Failed to parse Excel file'));
+                }
+            };
+
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsArrayBuffer(file);
+        });
+    };
+
+    const uploadDataToApi = async (data) => {
+        setLoading(true);
+        const uploadInstance = axios.create(
+            new BackendService().getHeaders(accountData.token)
+        );
+        const fileInput = document.getElementById('upload-certificate-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        uploadInstance
+            .post(new BackendService().CERTIFICATES_UPLOADS , data)
+            .then((response) => {
+                console.log('Upload successful:', response.data);
+                notify("success", response.data.message || "Upload successful");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+            .catch((error) => {
+                let errorMessage = error.message;
+                if (error.response) {
+                    errorMessage = error.response.data.message;
+                }
+                console.log('Upload failed:', errorMessage);
+                notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
+            })
+            .finally(() => {
+                setLoading(false);
             });
     }
 
@@ -805,6 +970,50 @@ function Certificates(props) {
                 <Typography variant="h5" className={classes.title}>
                     <b>Certificates</b>
                 </Typography>
+                <Box sx={{ textAlign: 'center', my: 2, position: 'relative' }}>
+                    <input
+                        accept=".xlsx,.xls"
+                        style={{ display: 'none' }}
+                        id="upload-certificate-file"
+                        type="file"
+                        onChange={handleFileChange}
+                        disabled={loading}
+                    />
+                    <label htmlFor="upload-certificate-file">
+                        <Button
+                            color="primary"
+                            size={"medium"}
+                            className={classes.btn}
+                            variant="contained"
+                            component="span"
+                            disabled={loading}
+                            startIcon={<Publish />}
+
+                        >
+
+                            {loading ? 'Uploading...' : 'Upload Certificates'}
+                        </Button>
+                    </label>
+
+                    {/*{loading && (*/}
+                    {/*    <CircularProgress*/}
+                    {/*        size={100}*/}
+                    {/*        sx={{*/}
+                    {/*            position: 'absolute',*/}
+                    {/*            top: '50%',*/}
+                    {/*            left: '50%',*/}
+                    {/*            marginTop: '-20px',*/}
+                    {/*            marginLeft: '-12px',*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*)}*/}
+
+                    {/*{fileName && (*/}
+                    {/*    <Typography variant="body2" color="textSecondary">*/}
+                    {/*        Selected file: {fileName}*/}
+                    {/*    </Typography>*/}
+                    {/*)}*/}
+                </Box>
                 <Button
                     className={classes.btn}
                     color="primary"

@@ -1,9 +1,9 @@
-import { createMuiTheme } from "@material-ui/core/styles";
+import { createTheme } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 
 function MyTheme(t) {
-  let theme = createMuiTheme({
+  let theme = createTheme({
     palette: {
       type: t == 0 ? "light" : "dark",
       background: { default: t == 0 ? "#faf1dc" : "#303030" },
