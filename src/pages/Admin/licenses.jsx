@@ -32,6 +32,7 @@ import {
   import {BackendService} from "../../utils/web_config";
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
+import {id} from "date-fns/locale";
 
 
 
@@ -63,18 +64,19 @@ function Licenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        getLicenses(accData.access_token);
+        getLicenses(accData.access_token,accData?.user?.department?.id);
     }, [])
 
     const [status, setStatus] = useState("No licenses available....");
-    const getLicenses = (token) => {
+    const getLicenses = (token,id) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setLicenses({...licenses, loading: true});
         licenseInstance
-            .get(new BackendService().LICENSES)
+            .get(`${new BackendService().LICENSES}/department/${id}`)
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
+                console.log('license*****', d);
                 if (d.data.length == 0) {
                     setStatus("There are no users available.");
                 } else {
@@ -241,7 +243,7 @@ function Licenses(props) {
         },
         {
           name: "name",
-          label: "License Name",
+          label: "Name",
           options: {
             filter: false,
             sort: true,
@@ -249,29 +251,21 @@ function Licenses(props) {
         },
         {
           name: "code",
-          label: "License Code",
+          label: "Code",
           options: {
             filter: false,
             sort: false,
           },
         },
-        {
+/*        {
           name: "description",
           label: "Description",
           options: {
             filter: false,
             sort: false,
           },
-        },
-        {
-          name: "created_at",
-          label: "Created At",
-          options: {
-            filter: true,
-            sort: true,
-          },
-        },
-        {
+        },*/
+/*        {
           name: "status",
           label: "Status",
           options: {
@@ -301,7 +295,151 @@ function Licenses(props) {
               );
             },
           },
-        },
+        },*/
+
+          {
+              name: "vendor",
+              label: "Vendor",
+              options: {
+                  filter: false,
+                  sort: true,
+                  customBodyRender: (value) => value?.vendor_name || "N/A",
+              },
+          },
+          {
+              name: "payment_frequency",
+              label: "Payment Frequency",
+              options: {
+                  filter: false,
+                  sort: false,
+              },
+          },
+          {
+              name: "license_fees",
+              label: "License Fees",
+              options: {
+                  filter: false,
+                  sort: false,
+              },
+          },
+          {
+              name: "approval_status",
+              label: "Approval Status",
+
+              options: {
+                  filter: true,
+                  sort: false,
+                  customBodyRenderLite: function (dataI, rowI) {
+                      const statusRaw = licenses.data[dataI]?.approval_status?.toLowerCase();
+                      const status = statusRaw === "rejected" ? "Rejected" : Capitalize(statusRaw);
+
+                      let avatarColor = "#ccc";
+                      if (statusRaw === "approved") avatarColor = "#55c266";
+                      else if (statusRaw === "pending") avatarColor = "#F8BF00";
+                      else if (statusRaw === "rejected") avatarColor = "#E53835";
+
+                      return (
+                          <Chip
+                              avatar={
+                                  <Avatar style={{ backgroundColor: avatarColor ,color: "white" }}>
+                                      {statusRaw === "approved" ? (
+                                          <CheckCircle fontSize="small" />
+                                      ) : (
+                                          <Block fontSize="small" />
+                                      )}
+                                  </Avatar>
+                              }
+                              style={{backgroundColor:"white"}}
+                              size="small"
+                              label={status}
+                          />
+                      );
+                  }
+
+              },
+
+          },
+          {
+              name: "number_system_users",
+              label: "Users",
+              options: {
+                  filter: true,
+                  sort: true,
+              },
+          },
+          {
+              name: "start_date",
+              label: "Issued on",
+              options: {
+                  filter: false,
+                  sort: false,
+                  customBodyRender: (value) => {
+                      if (!value) return "";
+                      const date = new Date(value);
+                      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                  }
+              },
+          },
+          {
+              name: "end_date",
+              label: "Expiring on",
+              options: {
+                  filter: false,
+                  sort: false,
+                  customBodyRender: (value) => {
+                      if (!value) return "";
+
+                      const date = new Date(value);
+                      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                  }
+              },
+          },
+          {
+              name: "end_date",
+              label: "Expiration Status",
+              options: {
+                  filter: false,
+                  sort: false,
+                  customBodyRender: (value, tableMeta) => {
+                      if (!value) return "";
+                      const endDate = new Date(value);
+                      if (isNaN(endDate.getTime())) return "";
+                      const Today = new Date();
+
+                      const diffTime = endDate.getTime() - Today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      let status = "";
+                      let dotColor = "";
+
+                      if (diffDays > 15) {
+                          status = "Updated";
+                          dotColor = "#55c266"; // green
+                      } else if (diffDays >= 1 && diffDays <= 15) {
+                          status = "Expiring Soon";
+                          dotColor = "#F8BF00"; // yellow
+                      } else {
+                          status = "Expired";
+                          dotColor = "#E53835"; // red
+                      }
+
+                      return (
+                          <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+            <span
+                style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: dotColor,
+                    display: "inline-block"
+                }}
+            ></span>
+                              <span style={{color: "#333", fontWeight: 600}}>{status}</span>
+                          </div>
+                      );
+                  }
+
+              }
+          }
       ];
     
       const options = {
@@ -359,7 +497,7 @@ function Licenses(props) {
           }}
         >
           <DialogTitle id="new-op">
-            Add New License Type
+            Add New License
           </DialogTitle>
           <DialogContent>
             <Box style={{marginTop:10}}>
@@ -460,7 +598,7 @@ function Licenses(props) {
             <LocationCity color="primary" fontSize="large" />
           </Box>
           <Typography variant="h5" className={classes.title}>
-            <b>Institution License Types</b>
+            <b>Licenses</b>
           </Typography>
           <Button
             className={classes.btn}
@@ -473,14 +611,14 @@ function Licenses(props) {
              setAddNewOpen(true);
             }}
           >
-            New License Type
+            New License
           </Button>
         </Box>
         <Box style={{marginTop: 20}} />
   
         {licenses.loading && <LinearProgress />}
         <MUIDataTable
-          title={"List of License Types"}
+          title={"List of Licenses"}
           data={licenses.data}
           columns={columns}
           options={options}
@@ -493,25 +631,10 @@ function Licenses(props) {
 function CustomLicenseToolbar(props) {
     const { toggleUser, displayData, selectedRows, openEdit } = props;
   
-    var check = displayData[selectedRows?.data[0]?.index].data[5] == "ENABLED";
+    var check = displayData[selectedRows?.data[0]?.index].data[5] === "ENABLED";
   
     return (
       <Box display="flex" alignItems="center">
-        <FormControlLabel
-          control={
-            <Switch
-              disabled={props.toggling}
-              checked={check}
-              onChange={() => {
-                toggleUser(displayData[selectedRows?.data[0]?.index]?.data[0]);
-              }}
-              value="vertical"
-              color="primary"
-            />
-          }
-          label={check ? "Deactivate License" : "Activate License"}
-        />
-  
         <Button
           color="primary"
           variant="outlined"
@@ -521,7 +644,7 @@ function CustomLicenseToolbar(props) {
             openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
           }
         >
-          Edit
+          Update
         </Button>
   
 

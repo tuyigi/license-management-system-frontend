@@ -69,6 +69,7 @@ import ComponentReport from "./reports/component_report";
 import SystemToolReport from "./reports/system_tool_report";
 import Metric from "./metric";
 import axios from "axios";
+import Licenses from "../Admin/licenses";
 
 
 
@@ -159,6 +160,12 @@ const routes = [
         main: () =>  <Certificates/>,
     },
     {
+        path: "/orgAdmin/licenses",
+        exact: true,
+        permission: "CAN_VIEW_LICENSE",
+        main: () =>  <Licenses/>,
+    },
+    {
         path: "/orgAdmin/systemTool",
         exact: true,
         permission: "CAN_VIEW_SYSTEM_TOOL",
@@ -179,6 +186,7 @@ const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
     { name: "System Tools/Products", icon: <img src={ToolsIcon} width={25} />, path: "/orgAdmin/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
     { name: "Metrics", icon: <Equalizer color={"primary"} />, path: "/orgAdmin/metric", permission: "CAN_VIEW_METRIC"},
+     { name: "Licenses", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/licenses", permission: "CAN_VIEW_LICENSES"},
     { name: "License Contracts", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/contracts", permission: "CAN_VIEW_CONTRACT"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
