@@ -40,7 +40,11 @@ import {Autocomplete} from "@material-ui/lab";
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",
+        paddingLeft: "8px",   // left padding
+        paddingRight: "8px",  // right padding
+        paddingTop: "4px",
+        paddingBottom: "4px", },
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},

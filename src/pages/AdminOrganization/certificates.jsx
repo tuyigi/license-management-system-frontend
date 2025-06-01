@@ -749,7 +749,7 @@ function Certificates(props) {
                                 value={certificateType.value}
                                 onChange={onCertificateTypeChange}
                             >
-                                <MenuItem value="SSL_CERTIFICATE">SSL CERTIFICATE</MenuItem>
+                                <MenuItem value="NORMAL_CERTIFICATE">NORMAL CERTIFICATE</MenuItem>
                                 <MenuItem value="RIPPS_CERTIFICATE">RIPPS CERTIFICATE</MenuItem>
                             </Select>
                             <FormHelperText>{certificateType.error}</FormHelperText>
