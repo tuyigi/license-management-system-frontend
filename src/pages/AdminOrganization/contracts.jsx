@@ -57,7 +57,7 @@ import {BackendService} from "../../utils/web_config";
 import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
 import {Autocomplete} from "@material-ui/lab";
-import {useDepartments, useLicenses, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
+import {useDepartments, useEnabledVendors, useLicenses, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
 import {format} from "date-fns/esm";
 import DateFnsUtils from '@date-io/date-fns';
 import {
@@ -82,7 +82,7 @@ function Contracts(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
-    const vendors = useVendorLicense();
+    const vendors = useEnabledVendors();
     const departments = useDepartments();
     const systemTools = useSystemTools();
     const [addNewOpen, setAddNewOpen] = useState(false);

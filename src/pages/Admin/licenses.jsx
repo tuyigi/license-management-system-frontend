@@ -34,7 +34,7 @@ import {
   import {useHistory} from "react-router-dom";
 import {id} from "date-fns/locale";
 import {Autocomplete} from "@material-ui/lab";
-import {useDepartments, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
+import {useDepartments, useEnabledVendors, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
 import {format} from "date-fns/esm";
 import DateFnsUtils from '@date-io/date-fns';
 import {
@@ -57,7 +57,7 @@ function Licenses(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
-    const vendors = useVendorLicense();
+    const vendors =useEnabledVendors();
     const systemTools = useSystemTools();
     const departments = useDepartments();
     const [paymentFrequency, setPaymentFrequency] = useState({value: "", error: ""});
@@ -276,7 +276,6 @@ function Licenses(props) {
             "department": parseInt(department.value),
         }
 
-console.log('record license****', data);
     licenseInstance
         .post(new BackendService().LICENSES, data)
         .then(function (response) {

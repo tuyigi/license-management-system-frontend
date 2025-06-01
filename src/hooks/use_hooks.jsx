@@ -196,6 +196,32 @@ function useVendorLicense() {
   };
   return vendors;
 }
+function useEnabledVendors() {
+  const [vendorsEnabled, setVendorsEnabled] = useState([]);
+
+  useEffect(() => {
+    var accountData = new BackendService().accountData;
+
+    if (vendorsEnabled.length === 0) {
+      getVendors(accountData.token);
+    }
+  }, [vendorsEnabled]);
+
+  const getVendors = (token) => {
+    const rolesInstance = axios.create(new BackendService().getHeaders(token));
+    rolesInstance
+        .get(new BackendService().VENDOR)
+        .then(function (response) {
+          const d = response.data.data;
+          const dEnabled = d.filter((vendor) => vendor.status === 'ENABLED') || [];
+          console.log('vendors ****', dEnabled);
+
+          setVendorsEnabled(dEnabled);
+        })
+        .catch(function (error) { });
+  };
+  return vendorsEnabled;
+}
 
 
 
@@ -335,4 +361,5 @@ export {
   useFunctions,
   useDepartments,
   useMetric,
+    useEnabledVendors,
 };
