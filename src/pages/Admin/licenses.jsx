@@ -9,7 +9,7 @@ import {
     FormControlLabel,
     Avatar,
     Switch,
-    Box, IconButton
+    Box, IconButton, FormControl, InputLabel, Select, MenuItem, FormHelperText
 } from "@material-ui/core";
   import {
     CircularProgress,
@@ -33,7 +33,15 @@ import {
   import {useSnackbar} from "notistack";
   import {useHistory} from "react-router-dom";
 import {id} from "date-fns/locale";
-
+import {Autocomplete} from "@material-ui/lab";
+import {useDepartments, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
+import {format} from "date-fns/esm";
+import DateFnsUtils from '@date-io/date-fns';
+import {
+    MuiPickersUtilsProvider,
+    KeyboardTimePicker,
+    KeyboardDatePicker,
+} from '@material-ui/pickers';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -49,6 +57,18 @@ function Licenses(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
+    const vendors = useVendorLicense();
+    const systemTools = useSystemTools();
+    const departments = useDepartments();
+    const [paymentFrequency, setPaymentFrequency] = useState({value: "", error: ""});
+    const [annualLicenseFees, setAnnualLicenseFees] = useState({value: "", error: ""});
+    const [startDate, setStartDate] = useState({ value: format(new Date(),["yyyy-MM-dd"]) , error:""});
+    const [endDate, setEndDate] = useState({ value: format(new Date(),["yyyy-MM-dd"]), error: ""});
+    const [currency, setCurrency] = useState({value:"",error:""});
+    const [systemTool, setSystemTool] = useState( {value: "", error: ""});
+    const [systemUsers, setSystemUsers] = useState({ value: 0, error: ""});
+    const [vendor, setVendor] = useState({ value: "", error: ""});
+    const [department, setDepartment] = useState({ value: '', error: ''});
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [licenses, setLicenses] = useState({
         page: 0,
@@ -64,6 +84,7 @@ function Licenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
+        setDepartment({ value: accData.user.department.id, error: ''});
         getLicenses(accData.access_token,accData?.user?.department?.id);
     }, [])
 
@@ -76,7 +97,6 @@ function Licenses(props) {
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
-                console.log('license*****', d);
                 if (d.data.length == 0) {
                     setStatus("There are no users available.");
                 } else {
@@ -136,7 +156,72 @@ function Licenses(props) {
             setDescription({value: event.target.value, error: ""});
         }
     };
+    const onLicensePeriodChange = (event) => {
+        if (event.target.value === "") {
+            setPaymentFrequency({
+                value: "",
+                error: "Please select license period",
+            });
+        } else {
+            setPaymentFrequency({value: event.target.value, error: ""});
+        }
+    };
 
+
+    const onCurrencyChange = (event) => {
+        if (event.target.value === "") {
+            setCurrency({
+                value: "",
+                error: "Please select currency",
+            });
+        } else {
+            setCurrency({value: event.target.value, error: ""});
+        }
+    };
+    const onVendorChange = (event,v) => {
+        if (v === null) {
+            setVendor({
+                value: "",
+                error: "Please select vendor",
+            });
+        } else {
+            setVendor({value: v.id, error: ""});
+        }
+    };
+
+    const onSystemUsersChange= (event)=>{
+        if (event.target.value === "") {
+            setSystemUsers({
+                value: "",
+                error: "Please specify users, or 0(not applicable)",
+            });
+        } else {
+            setSystemUsers({value: event.target.value, error: ""});
+        }
+    }
+    const onSystemToolsChange = (event,v) => {
+        if (v === null) {
+            setSystemTool({
+                value: "",
+                error: "Please select system tool",
+            });
+        } else {
+            setSystemTool({value: v.id, error: ""});
+        }
+    };
+
+
+
+    const onAnnualLicenseFeeChange = (event) => {
+        if (event.target.value === "") {
+            setAnnualLicenseFees({
+                value: "",
+                error: "Please enter annual fees",
+            });
+        } else {
+            setAnnualLicenseFees({value: event.target.value, error: ""});
+        }
+    };
 
     const addLicense = () => {
         if (name.value === "") {
@@ -154,7 +239,18 @@ function Licenses(props) {
                 value: '',
                 error: 'Please fulfill description'
             })
-        } else {
+        }
+        else if (paymentFrequency.value === "") {
+            setPaymentFrequency({
+                value: '',
+                error: 'Please select license period'
+            })
+        } else if (annualLicenseFees.value === "") {
+            setPaymentFrequency({
+                value: '',
+                error: 'Please enter license period count'
+            })
+        }else {
             createLicense();
         }
     }
@@ -169,10 +265,18 @@ function Licenses(props) {
             name: name.value,
             code: code.value,
             description: description.value,
-            license_category: "INSTITUTION_LICENSE"
+            "vendor": vendor.value,
+            "license_fees": parseFloat(annualLicenseFees.value),
+            "start_date": startDate.value,
+            "end_date": endDate.value,
+            "currency": currency.value,
+            "payment_frequency": paymentFrequency.value,
+            "system_tool":systemTool.value,
+            "number_system_users": parseInt(systemUsers.value),
+            "department": parseInt(department.value),
         }
 
-
+console.log('record license****', data);
     licenseInstance
         .post(new BackendService().LICENSES, data)
         .then(function (response) {
@@ -257,6 +361,15 @@ function Licenses(props) {
             sort: false,
           },
         },
+          {
+              name: "system_tool",
+              label: "Tool",
+              options: {
+                  filter: false,
+                  sort: true,
+                  customBodyRender: (value) => value?.system_tool_name || "N/A",
+              },
+          },
 /*        {
           name: "description",
           label: "Description",
@@ -312,6 +425,7 @@ function Licenses(props) {
               options: {
                   filter: false,
                   sort: false,
+
               },
           },
           {
@@ -483,6 +597,7 @@ function Licenses(props) {
       // end table config
 
     return(
+        <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <div className={classes.root}>
         {/* Dialogs starts here */}
 
@@ -539,30 +654,201 @@ function Licenses(props) {
                 )}
               </Translate>
             </Box>
-
-
-
-            <Box style={{marginTop:10}}>
-              <Translate>
-                {({ translate }) => (
-                  <TextField
-                    required
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    value={description.value}
-                    placeholder={"Description"}
-                    label={"Description"}
-                    multiline={true}
-                    minRows={5}
-                    fullWidth
-                    onChange={onDescriptionChange}
-                    helperText={description.error}
-                    error={description.error !== ""}
+              <Box style={{marginTop: 10}}>
+                  <Autocomplete
+                      fullWidth
+                      openOnFocus
+                      options={vendors}
+                      getOptionLabel={(option) => option.vendor_name}
+                      onChange={onVendorChange}
+                      renderInput={(params) => (
+                          <TextField
+                              {...params}
+                              fullWidth
+                              label={"Vendor"}
+                              variant="outlined"
+                              size="small"
+                            helperText={vendor.error}
+                              error={vendor.error !== ""}
+                          />
+                      )}
                   />
-                )}
-              </Translate>
-            </Box>
+              </Box>
+              <Box style={{marginTop: 10}}>
+                  <Autocomplete
+                      fullWidth
+                      openOnFocus
+                      options={systemTools}
+                      getOptionLabel={(option) => option.system_tool_name}
+                      onChange={onSystemToolsChange}
+                      renderInput={(params) => (
+                          <TextField
+                              {...params}
+                              fullWidth
+                              label={"System/Tool"}
+                              variant="outlined"
+                              size="small"
+                               small helperText={systemTool.error}
+                              error={systemTool.error !== ""}
+                          />
+                      )}
+                  />
+              </Box>
+              <Box style={{marginTop: 10}}>
+                  <FormControl
+                      className={classes.formControl}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      error={paymentFrequency.error !== ""}
+                  >
+                      <InputLabel id="type">
+                          Payment Frequency
+                      </InputLabel>
+                      <Select
+                          label={"Payment Frequency"}
+                          value={paymentFrequency.value}
+                          onChange={onLicensePeriodChange}
+                      >
+                          <MenuItem value="MONTH">Monthly</MenuItem>
+                          <MenuItem value="YEAR">Yearly</MenuItem>
+                          <MenuItem value="QUARTER">Quarterly</MenuItem>
+                          <MenuItem value="MIDYEAR">Mid-Year</MenuItem>
+                      </Select>
+                      <FormHelperText>{paymentFrequency.error}</FormHelperText>
+                  </FormControl>
+              </Box>
+              <Box style={{marginTop:10}}>
+                  <Translate>
+                      {({ translate }) => (
+                          <TextField
+                              required
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              type={'number'}
+                              value={annualLicenseFees.value}
+                              placeholder={"License Fees"}
+                              label={"License Fees"}
+                              fullWidth
+                              onChange={onAnnualLicenseFeeChange}
+                              helperText={annualLicenseFees.error}
+                              error={annualLicenseFees.error !== ""}
+                          />
+                      )}
+                  </Translate>
+              </Box>
+              <Box style={{marginTop:10}}>
+                  <Translate>
+                      {({ translate }) => (
+                          <TextField
+                              required
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              type={'number'}
+                              value={systemUsers.value}
+                              placeholder={"Users"}
+                              label={"Users"}
+                              fullWidth
+                              onChange={onSystemUsersChange}
+                              helperText={systemUsers.error}
+                              error={systemUsers.error !== ""}
+                          />
+                      )}
+                  </Translate>
+              </Box>
+              <Box style={{marginTop: 10}}>
+                  <FormControl
+                      className={currency.formControl}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      error={currency.error !== ""}
+                  >
+                      <InputLabel id="type">
+                          Currency
+                      </InputLabel>
+                      <Select
+                          label={"Currency"}
+                          value={currency.value}
+                          onChange={onCurrencyChange}
+                          >
+                          <MenuItem value="USD">USD</MenuItem>
+                          <MenuItem value="RWF">RWF</MenuItem>
+                          <MenuItem value="EURO">EURO</MenuItem>
+
+                      </Select>
+                      <FormHelperText>{currency.error}</FormHelperText>
+                  </FormControl>
+              </Box>
+
+              <Box style={{marginTop:10}}>
+                  <KeyboardDatePicker
+                      fullWidth
+                      disableToolbar
+                      variant="outlined"
+                      format="MM/dd/yyyy"
+                      margin="normal"
+                      label="Start Date"
+                      value={startDate.value}
+                      onChange={(v)=>{
+                          if(v=="Invalid Date" || v==null){
+                              setStartDate({value: '',error:v});
+                          }else{
+                              setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                          }
+
+                      }}
+                      KeyboardButtonProps={{
+                          'aria-label': 'change date',
+                      }}
+                  />
+              </Box>
+              <Box style={{marginTop:10}}>
+                  <KeyboardDatePicker
+                      fullWidth
+                      disableToolbar
+                      variant="outlined"
+                      format="MM/dd/yyyy"
+                      margin="normal"
+                      label="End Date"
+                      value={endDate.value}
+                      onChange={(v)=>{
+                          if(v=="Invalid Date" || v==null){
+                              setEndDate({value: '',error:v});
+                          }else{
+                              setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                          }
+                      }}
+                      KeyboardButtonProps={{
+                          'aria-label': 'change date',
+                      }}
+                  />
+              </Box>
+              <Box style={{marginTop:10}}>
+                  <Translate>
+                      {({ translate }) => (
+                          <TextField
+                              required
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              value={description.value}
+                              placeholder={"Description"}
+                              label={"Description"}
+                              multiline={true}
+                              minRows={5}
+                              fullWidth
+                              onChange={onDescriptionChange}
+                              helperText={description.error}
+                              error={description.error !== ""}
+                          />
+                      )}
+                  </Translate>
+              </Box>
+
+
           </DialogContent>
 
           <DialogActions>
@@ -624,6 +910,8 @@ function Licenses(props) {
           options={options}
         />
       </div>
+        </MuiPickersUtilsProvider>
+
     );
 }
 
