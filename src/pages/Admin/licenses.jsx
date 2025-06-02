@@ -9,7 +9,18 @@ import {
     FormControlLabel,
     Avatar,
     Switch,
-    Box, IconButton, FormControl, InputLabel, Select, MenuItem, FormHelperText
+    Box,
+    IconButton,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormHelperText,
+    Grid,
+    Popover,
+    List,
+    ListItem,
+    ListItemIcon, ListItemText
 } from "@material-ui/core";
   import {
     CircularProgress,
@@ -24,7 +35,7 @@ import {
     CheckCircle,
     Block,
     Edit,
-    Receipt, Close, LocationCity
+    Receipt, Close, LocationCity, MoreVert, Assessment, Payment
   } from "@material-ui/icons";
   import MUIDataTable from "mui-datatables";
   import { Capitalize } from "../../helpers/capitalize";
@@ -70,6 +81,9 @@ function Licenses(props) {
     const [vendor, setVendor] = useState({ value: "", error: ""});
     const [department, setDepartment] = useState({ value: '', error: ''});
     const [addNewOpen, setAddNewOpen] = useState(false);
+    const [licenseId,setLicenseId]= useState(null);
+    const [selectedLicense, setSelectedLicense] = useState(null);
+    const [statusRenewalOpen, setStatusRenewalOpen] = useState(false);
     const [licenses, setLicenses] = useState({
         page: 0,
         count: 1,
@@ -310,6 +324,15 @@ function Licenses(props) {
         setDescription({ value: "", error: "" });
         setCode({ value: "", error: "" });
     };
+    const [anchorElStatus, setAnchorElStatus] = useState(null);
+    const handleEditOpenStatus = (event) => {
+        setAnchorElStatus(event.currentTarget);
+    };
+    const openEditStatus = Boolean(anchorElStatus);
+    const idStatus = openEditStatus ? 'simple-popover' : undefined;
+    const handleEditCloseStatus = () => {
+        setAnchorElStatus(null);
+    };
 
     // notify
 
@@ -429,7 +452,7 @@ function Licenses(props) {
           },
           {
               name: "license_fees",
-              label: "License Fees",
+              label: "Fees",
               options: {
                   filter: false,
                   sort: false,
@@ -437,7 +460,7 @@ function Licenses(props) {
           },
           {
               name: "approval_status",
-              label: "Approval Status",
+              label: "Approval",
 
               options: {
                   filter: true,
@@ -501,7 +524,6 @@ function Licenses(props) {
                   sort: false,
                   customBodyRender: (value) => {
                       if (!value) return "";
-
                       const date = new Date(value);
                       return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
                   }
@@ -509,7 +531,7 @@ function Licenses(props) {
           },
           {
               name: "end_date",
-              label: "Expiration Status",
+              label: "Expiration",
               options: {
                   filter: false,
                   sort: false,
@@ -552,11 +574,68 @@ function Licenses(props) {
                   }
 
               }
+          },
+          {
+              name: "id",
+              label: "Actions",
+              options: {
+                  filter: true,
+                  sort: true,
+                  customBodyRender: (value, tableMeta, updateValue) => {
+                      const obj = licenses.data.find((s) => s.id == value);
+                      console.log('obj', obj);
+                      console.log('value', value);
+                      return (
+                          <Box>
+                              <IconButton
+                                  aria-label="delete"
+                                  onClick={(e) => {
+                                      setLicenseId(obj?.id);
+                                      setSelectedLicense(obj);
+                                      handleEditOpenStatus(e);
+                                  }}
+                              >
+                                  <MoreVert />
+                              </IconButton>
+
+                              <Popover
+                                  id={idStatus}
+                                  open={openEditStatus}
+                                  variant={'outlined'}
+                                  anchorEl={anchorElStatus}
+                                  onClose={handleEditCloseStatus}
+                                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                                  transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                                  elevation={1}
+                              >
+                                  <Box p={2}>
+                                      <List>
+                                          <ListItem
+                                              button
+                                              onClick={() => {
+                                                  setStatusRenewalOpen(true);
+                                                  handleEditCloseStatus();
+                                              }}
+                                          >
+                                              <ListItemIcon>
+                                                  <Payment />
+                                              </ListItemIcon>
+                                              <ListItemText primary="Renewal" />
+                                          </ListItem>
+                                      </List>
+                                  </Box>
+                              </Popover>
+                          </Box>
+                      );
+                  }
+              }
           }
+
+
       ];
     
       const options = {
-        filterType: "multiselect",
+       /* filterType: "multiselect",
         elevation: 0,
         selectableRows: "single",
         searchPlaceholder: "Search user...",
@@ -590,10 +669,63 @@ function Licenses(props) {
             openEdit={()=>{}}
             toggling={licenses.toggling}
           />
-        ),
+        ),*/
       };
 
       // end table config
+
+    /*
+    License renewal
+     */
+
+    const LicenseRenewal=()=>{
+        const licenseRenewalInstance = axios.create(new BackendService().getHeaders(accountData.access_token));
+        const data = {
+                "name": name.value,
+                "code": code.value,
+                "description": description.value,
+                "vendor": vendor.value,
+                "license_fees": parseFloat(annualLicenseFees.value),
+                "start_date": startDate.value,
+                "end_date": endDate.value,
+                "currency": currency.value,
+                "payment_frequency": paymentFrequency.value,
+                "system_tool":systemTool.value,
+                "number_system_users": parseInt(systemUsers.value),
+                "department": parseInt(accountData?.user?.department?.id),
+            }
+        licenseRenewalInstance
+            .put( `${new BackendService().LICENSES}/${licenseId}`, data )
+            .then(function (response) {
+                notify("success", response.data.message);
+                setStatusRenewalOpen(false);
+                getLicenses(accountData.access_token, accountData.user.department.id);
+            })
+            .catch(function (error) {
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
+            });
+    }
+    useEffect(() => {
+        if (statusRenewalOpen && selectedLicense) {
+            setName({ value: selectedLicense.name || "", error: "" });
+            setCode({ value: selectedLicense.code || "", error: "" });
+            setDescription({ value: selectedLicense.description || "", error: "" });
+            setVendor({ value: selectedLicense.vendor?.id || "", error: "" });
+            setSystemTool({ value: selectedLicense.system_tool?.id || "", error: "" });
+            setAnnualLicenseFees({ value: selectedLicense.license_fees || "", error: "" });
+            setStartDate({ value: selectedLicense.start_date || "", error: "" });
+            setEndDate({ value: selectedLicense.end_date || "", error: "" });
+            setCurrency({ value: selectedLicense.currency || "", error: "" });
+            setPaymentFrequency({ value: selectedLicense.payment_frequency || "", error: "" });
+            setSystemUsers({ value: selectedLicense.number_system_users || "", error: "" });
+        }
+    }, [statusRenewalOpen, selectedLicense]);
+
+
 
     return(
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -876,7 +1008,289 @@ function Licenses(props) {
           </DialogActions>
         </Dialog>
   
-        {/* Dialogs ends here */}
+        {/* Dialogs starts here */}
+
+            {/* License Renewal starts here*/}
+            <Dialog
+                open={statusRenewalOpen}
+                maxWidth="sm"
+                fullWidth
+                onClose={() => {
+                    setStatusRenewalOpen(false)
+                }}
+            >
+                <DialogTitle id="new-op">
+                    License Renewal
+                </DialogTitle>
+                <DialogContent>
+
+                    <Box style={{ marginTop: 10 }}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    size="small"
+                                    disabled
+                                    variant="outlined"
+                                    color="primary"
+                                    value={selectedLicense?.name || ""}
+                                    placeholder={selectedLicense?.name}
+                                    label={"License Name"}
+                                    fullWidth
+                                    helperText={name.error}
+                                    error={name.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+
+
+                    <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    disabled
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={selectedLicense?.code || ""}
+                                    placeholder={selectedLicense?.code}
+                                    label={"License Code"}
+                                    fullWidth
+                                    onChange={onCodeChange}
+                                    helperText={code.error}
+                                    error={code.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop: 10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    disabled
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={selectedLicense?.vendor.vendor_name || ""}
+                                    placeholder={selectedLicense?.vendor.vendor_name}
+                                    label={"Vendor"}
+                                    fullWidth
+                                    onChange={onVendorChange}
+                                    helperText={vendor.error}
+                                    error={vendor.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop: 10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    disabled
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={selectedLicense?.system_tool.system_tool_name || ""}
+                                    placeholder={selectedLicense?.system_tool.system_tool_name}
+                                    label={"System/Tool"}
+                                    fullWidth
+                                    onChange={onSystemToolsChange}
+                                    helperText={systemTool.error}
+                                    error={systemTool.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop: 10}}>
+                        <FormControl
+                            className={classes.formControl}
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            error={paymentFrequency.error !== ""}
+                        >
+                            <InputLabel id="type">
+                                Payment Frequency
+                            </InputLabel>
+                            <Select
+                                label={"Payment Frequency"}
+                                value={paymentFrequency.value}
+                                onChange={onLicensePeriodChange}
+                            >
+                                <MenuItem value="MONTH">Monthly</MenuItem>
+                                <MenuItem value="YEAR">Yearly</MenuItem>
+                                <MenuItem value="QUARTER">Quarterly</MenuItem>
+                                <MenuItem value="MIDYEAR">Mid-Year</MenuItem>
+                            </Select>
+                            <FormHelperText>{paymentFrequency.error}</FormHelperText>
+                        </FormControl>
+                    </Box>
+                    <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    type={'number'}
+                                    value={annualLicenseFees.value}
+                                    placeholder={"License Fees"}
+                                    label={"License Fees"}
+                                    fullWidth
+                                    onChange={onAnnualLicenseFeeChange}
+                                    helperText={annualLicenseFees.error}
+                                    error={annualLicenseFees.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    type={'number'}
+                                    value={systemUsers.value}
+                                    placeholder={"Users"}
+                                    label={"Users"}
+                                    fullWidth
+                                    onChange={onSystemUsersChange}
+                                    helperText={systemUsers.error}
+                                    error={systemUsers.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop: 10}}>
+                        <FormControl
+                            className={currency.formControl}
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            error={currency.error !== ""}
+                        >
+                            <InputLabel id="type">
+                                Currency
+                            </InputLabel>
+                            <Select
+                                label={"Currency"}
+                                value={currency.value}
+                                onChange={onCurrencyChange}
+                            >
+                                <MenuItem value="USD">USD</MenuItem>
+                                <MenuItem value="RWF">RWF</MenuItem>
+                                <MenuItem value="EURO">EURO</MenuItem>
+
+                            </Select>
+                            <FormHelperText>{currency.error}</FormHelperText>
+                        </FormControl>
+                    </Box>
+
+                    <Box style={{marginTop:10}}>
+                        <KeyboardDatePicker
+                            fullWidth
+                            disableToolbar
+                            variant="outlined"
+                            format="MM/dd/yyyy"
+                            margin="normal"
+                            label="Start Date"
+                            value={startDate.value}
+                            onChange={(v)=>{
+                                if(v=="Invalid Date" || v==null){
+                                    setStartDate({value: '',error:v});
+                                }else{
+                                    setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                }
+
+                            }}
+                            KeyboardButtonProps={{
+                                'aria-label': 'change date',
+                            }}
+                        />
+                    </Box>
+                    <Box style={{marginTop:10}}>
+                        <KeyboardDatePicker
+                            fullWidth
+                            disableToolbar
+                            variant="outlined"
+                            format="MM/dd/yyyy"
+                            margin="normal"
+                            label="End Date"
+                            value={endDate.value}
+                            onChange={(v)=>{
+                                if(v=="Invalid Date" || v==null){
+                                    setEndDate({value: '',error:v});
+                                }else{
+                                    setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                }
+                            }}
+                            KeyboardButtonProps={{
+                                'aria-label': 'change date',
+                            }}
+                        />
+                    </Box>
+                    <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={description.value}
+                                    placeholder={"Description"}
+                                    label={"Description"}
+                                    multiline={true}
+                                    minRows={5}
+                                    fullWidth
+                                    onChange={onDescriptionChange}
+                                    helperText={description.error}
+                                    error={description.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+
+                </DialogContent>
+
+                <DialogActions>
+                    <Button
+                        onClick={() => {
+                            setStatusRenewalOpen(false);
+                            handleEditCloseStatus();
+                            setLicenseId(null);
+                            setSelectedLicense(null);
+                        }}
+                        variant="outlined"
+                        color="primary"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        disabled={licenses.saving}
+                        variant="contained"
+                        color="primary"
+                        onClick={()=>{ LicenseRenewal() }}
+                        disableElevation
+                    >
+                        {licenses.saving ? (
+                            <CircularProgress size={23} />
+                        ) : (
+                            "Save"
+                        )}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            {/* License Renewal Dialog ends here*/}
+
         <Box display="flex" style={{display: "flex"}}>
           <Box mr={2}>
             {" "}
@@ -899,15 +1313,31 @@ function Licenses(props) {
             New License
           </Button>
         </Box>
+
         <Box style={{marginTop: 20}} />
   
         {licenses.loading && <LinearProgress />}
-        <MUIDataTable
+{/*        <MUIDataTable
           title={"List of Licenses"}
           data={licenses.data}
           columns={columns}
+
           options={options}
-        />
+
+        />*/}
+            <Box style={{ width: "100%", overflowX: "auto" }}>
+                <MUIDataTable
+                    title={"Licenses"}
+                    data={licenses.data}
+                    columns={columns}
+                    options={{
+                        responsive: "standard",
+                        selectableRows: "none",
+                        rowsPerPage: 10,
+                        tableBodyMaxHeight: "500px",
+                    }}
+                />
+            </Box>
       </div>
         </MuiPickersUtilsProvider>
 
@@ -915,28 +1345,5 @@ function Licenses(props) {
 }
 
 
-function CustomLicenseToolbar(props) {
-    const { toggleUser, displayData, selectedRows, openEdit } = props;
-  
-    var check = displayData[selectedRows?.data[0]?.index].data[5] === "ENABLED";
-  
-    return (
-      <Box display="flex" alignItems="center">
-        <Button
-          color="primary"
-          variant="outlined"
-          size="small"
-          startIcon={<Edit />}
-          onClick={() =>
-            openEdit(displayData[selectedRows?.data[0]?.index]?.data[0])
-          }
-        >
-          Update
-        </Button>
-  
-
-      </Box>
-    );
-  }
 
 export default withLocalize(Licenses);
