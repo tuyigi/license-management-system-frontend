@@ -83,6 +83,8 @@ function Licenses(props) {
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [licenseId,setLicenseId]= useState(null);
     const [selectedLicense, setSelectedLicense] = useState(null);
+    const [popoverAnchor, setPopoverAnchor] = useState(null);
+    const [rejectedComment, setRejectedComment] = useState("");
     const [statusRenewalOpen, setStatusRenewalOpen] = useState(false);
     const [licenses, setLicenses] = useState({
         page: 0,
@@ -575,21 +577,26 @@ function Licenses(props) {
 
               }
           },
+
+
           {
               name: "id",
               label: "Actions",
               options: {
-                  filter: true,
-                  sort: true,
-                  customBodyRender: (value, tableMeta, updateValue) => {
-                      const obj = licenses.data.find((s) => s.id == value);
-                      console.log('obj', obj);
-                      console.log('value', value);
+                  filter: false,
+                  sort: false,
+                  empty: true, // optional if you don't want it part of filtering/sorting
+                  customBodyRenderLite: (dataIndex) => {
+                      const obj = licenses.data[dataIndex];
                       return (
-                          <Box>
+                          <Box
+                              onClick={(e) => e.stopPropagation()} // ✅ THIS STOPS ROW SELECT
+                              sx={{ display: "flex", alignItems: "center" }}
+                          >
                               <IconButton
-                                  aria-label="delete"
+                                  aria-label="actions"
                                   onClick={(e) => {
+                                      e.stopPropagation(); // ✅ ALSO IMPORTANT HERE
                                       setLicenseId(obj?.id);
                                       setSelectedLicense(obj);
                                       handleEditOpenStatus(e);
@@ -599,20 +606,19 @@ function Licenses(props) {
                               </IconButton>
 
                               <Popover
-                                  id={idStatus}
-                                  open={openEditStatus}
-                                  variant={'outlined'}
                                   anchorEl={anchorElStatus}
+                                  open={openEditStatus}
                                   onClose={handleEditCloseStatus}
-                                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                                  transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-                                  elevation={1}
+                                  anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                                  transformOrigin={{ vertical: "top", horizontal: "center" }}
+                                  onClick={(e) => e.stopPropagation()} // ✅ prevents popover from selecting row
                               >
                                   <Box p={2}>
                                       <List>
                                           <ListItem
                                               button
-                                              onClick={() => {
+                                              onClick={(e) => {
+                                                  e.stopPropagation(); // ✅ again
                                                   setStatusRenewalOpen(true);
                                                   handleEditCloseStatus();
                                               }}
@@ -627,50 +633,56 @@ function Licenses(props) {
                               </Popover>
                           </Box>
                       );
-                  }
-              }
+                  },
+              },
           }
 
-
       ];
-    
-      const options = {
-       /* filterType: "multiselect",
-        elevation: 0,
-        selectableRows: "single",
-        searchPlaceholder: "Search user...",
-        selectableRowsOnClick: true,
-        fixedHeader: true,
-        onCellClick: (cellData, cellMeta) => {
-          var license = licenses.data[cellMeta.dataIndex];
 
-        },
-        searchProps: {
-          variant: "outlined",
-          margin: "dense",
-        },
-        customSearch: (searchQuery, currentRow, columns) => {
-    
-          console.log(searchQuery)
-          console.log(JSON.stringify(currentRow))
-    
-        },
-        textLabels: {
-          body: {
-            noMatch: status,
-          },
-        },
-        customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
-          <CustomLicenseToolbar
-            selectedRows={selectedRows}
-            displayData={displayData}
-            setSelectedRows={setSelectedRows}
-            toggleUser={()=>{}}
-            openEdit={()=>{}}
-            toggling={licenses.toggling}
-          />
-        ),*/
+
+          const options = {
+              filterType: "multiselect",
+              elevation: 0,
+              selectableRows: false,
+              searchPlaceholder: "Search user...",
+              selectableRowsOnClick: true,
+              customBodyRender: undefined,
+              fixedHeader: true,
+
+              onCellClick: (cellData, cellMeta) => {
+                  var license = licenses.data[cellMeta.dataIndex];
+                  if (license['approval_status'] === "REJECTED") {
+                      setPopoverAnchor(cellMeta.event.currentTarget);
+                      setRejectedComment(license.approval_comment || "No comment provided.");
+                      return;
+                  }
+                  if(license['approval_status'] === "PENDING") {
+                      history.push('LicenseDetails', license);
+                  }
+                  else {
+                      notify("error", 'Contract is still pending...', 400);
+                  }
+              },
+
+              searchProps: {
+                  variant: "outlined",
+                  margin: "dense",
+              },
+              customSearch: (searchQuery, currentRow, columns) => {
+
+                  console.log(searchQuery)
+                  console.log(JSON.stringify(currentRow))
+
+              },
+              textLabels: {
+                  body: {
+                      noMatch: status,
+                  },
+              }
+          };
+/*
       };
+*/
 
       // end table config
 
@@ -1330,12 +1342,8 @@ function Licenses(props) {
                     title={"Licenses"}
                     data={licenses.data}
                     columns={columns}
-                    options={{
-                        responsive: "standard",
-                        selectableRows: "none",
-                        rowsPerPage: 10,
-                        tableBodyMaxHeight: "500px",
-                    }}
+                    options={options}
+
                 />
             </Box>
       </div>

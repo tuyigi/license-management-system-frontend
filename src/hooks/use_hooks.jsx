@@ -214,8 +214,6 @@ function useEnabledVendors() {
         .then(function (response) {
           const d = response.data.data;
           const dEnabled = d.filter((vendor) => vendor.status === 'ENABLED') || [];
-          console.log('vendors ****', dEnabled);
-
           setVendorsEnabled(dEnabled);
         })
         .catch(function (error) { });

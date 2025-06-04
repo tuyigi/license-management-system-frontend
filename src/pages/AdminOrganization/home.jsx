@@ -70,6 +70,7 @@ import SystemToolReport from "./reports/system_tool_report";
 import Metric from "./metric";
 import axios from "axios";
 import Licenses from "../Admin/licenses";
+import LicenseDetails from "../Admin/license_details";
 
 
 
@@ -164,6 +165,12 @@ const routes = [
         exact: true,
         permission: "CAN_VIEW_LICENSE",
         main: () =>  <Licenses/>,
+    },
+    {
+        path: "/orgAdmin/licenseDetails",
+        exact: true,
+        permission: "CAN_VIEW_LICENSE_DETAILS",
+        main: () =>  <LicenseDetails/>,
     },
     {
         path: "/orgAdmin/systemTool",
@@ -301,8 +308,12 @@ function OrgAdminHome(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
+/*
         getCertificateReminders(accData.access_token,accData?.user?.department?.id);
+*/
+/*
         getContractsReminders(accData.access_token,accData?.user?.department?.id);
+*/
 
     }, []);
     const handleMenu = (event) => {
@@ -316,7 +327,7 @@ function OrgAdminHome(props) {
     const handleDrawerToggle = () => {
       setMobileOpen(!mobileOpen);
     };
-
+/*
     //CERTIFICATE REMINDERS
        const getCertificateReminders = (token,id)=>{
            const reminderInstance = axios.create(new BackendService().getHeaders(token));
@@ -332,9 +343,9 @@ function OrgAdminHome(props) {
                    setRemindersCount(0);
                    setReminders([]);
                });
-       };
+       };*/
     //CONTRACT REMINDERS
-    const getContractsReminders = (token,id)=>{
+/*    const getContractsReminders = (token,id)=>{
         const contractsReminderInstance = axios.create(new BackendService().getHeaders(token));
         contractsReminderInstance
             .get(`${new BackendService().CONTRACT}/reminders/department/${id}`)
@@ -348,7 +359,7 @@ function OrgAdminHome(props) {
                 setContractRemindersCount(0);
                 setContractReminders([]);
             });
-    };
+    };*/
 
 
 
