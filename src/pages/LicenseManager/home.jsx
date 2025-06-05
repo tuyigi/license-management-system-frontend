@@ -63,6 +63,7 @@ import {BackendService} from "../../utils/web_config";
 import dayjs from "dayjs";
 import axios from "axios";
 import {useLicenseRequestStatusStats} from "../../hooks/use_dashboard";
+import LicensesApproval from "./licenses_approval";
 // import Contracts from "./contracts";
 
 
@@ -88,10 +89,10 @@ const routes = [
         main: () =>  <SoftwareLicenseRequest/>,
     },
     {
-        path: "/licenseManager/license",
+        path: "/licenseManager/licenses",
         exact: true,
-        permission: "CAN_VIEW_LICENSE_REQUEST",
-        main: () =>  <LicenseRequest/>,
+        permission: "CAN_VIEW_LICENSE",
+        main: () =>  <LicensesApproval/>,
     },
     {
         path: "/licenseManager/settings",
@@ -126,7 +127,7 @@ const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/licenseManager/home",permission: "CAN_VIEW_HOME", },
     { name: "Vendors", icon: <Business color={"primary"}/>, path: "/licenseManager/vendors", permission: "CAN_VIEW_VENDOR"},
     { name: "Contracts", icon: <ListAlt color={"primary"}/>, path: "/licenseManager/contracts", permission: "CAN_VIEW_CONTRACT"},
-    {  name: "License Records", icon: <Note color={"primary"}/>, path: "/licenseManager/softwareLicenseRequest", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
+    {  name: "Licenses", icon: <Note color={"primary"}/>, path: "/licenseManager/licenses", permission: "CAN_VIEW_LICENSE"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/licenseManager/license", permission: "CAN_VIEW_LICENSE_REQUEST"},
     // { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/licenseManager/reports", permission: "CAN_VIEW_REPORT",
     //     submenu:[

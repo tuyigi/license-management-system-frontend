@@ -368,6 +368,7 @@ function Contracts(props) {
     const openEditStatus = Boolean(anchorElStatus);
     const idStatus = openEditStatus ? 'simple-popover' : undefined;
     const [contractId, setContractId] = useState({ value: '', error: ''});
+    const [selectedContract, setSelectedContract] = useState(null);
     const handleEditCloseStatus = () => {
         setAnchorElStatus(null);
     };
@@ -623,6 +624,66 @@ function Contracts(props) {
         //         }
         //     },
         // },
+        {
+            name: "id",
+            label: "Actions",
+            options: {
+                filter: false,
+                sort: false,
+                empty: true,
+
+                customBodyRenderLite: (dataIndex) => {
+                    const obj = contracts.data[dataIndex];
+                    return (
+                        <Box
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ display: "flex", alignItems: "center" }}
+                        >
+                            <IconButton
+                                aria-label="actions"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setContractId(obj?.id);
+                                    setSelectedContract(obj);
+                                    handleEditOpenStatus(e);
+                                }}
+                            >
+                                <MoreVert />
+                            </IconButton>
+
+                            <Popover
+                                anchorEl={anchorElStatus}
+                                open={openEditStatus}
+                                onClose={handleEditCloseStatus}
+                                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                                transformOrigin={{ vertical: "top", horizontal: "center" }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Box p={2}>
+                                    <List>
+                                        <ListItem
+                                            button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setStatusRenewalOpen(true);
+                                                handleEditCloseStatus();
+                                            }}
+                                        >
+                                            <ListItemIcon>
+                                                <Payment />
+                                            </ListItemIcon>
+                                            <ListItemText primary="Renewal" />
+                                        </ListItem>
+                                    </List>
+                                </Box>
+                            </Popover>
+                        </Box>
+                    );
+                },
+
+            },
+        }
+
     ];
 
     const options = {
@@ -1307,7 +1368,7 @@ function Contracts(props) {
                 }}
             >
                 <DialogTitle id="new-op">
-                    License Renewal
+                    Contract Renewal
                 </DialogTitle>
                 <DialogContent>
 

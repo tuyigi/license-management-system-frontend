@@ -114,7 +114,7 @@ function Licenses(props) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
                 if (d.data.length == 0) {
-                    setStatus("There are no users available.");
+                    setStatus("There are no licenses available.");
                 } else {
                     var lcs = d.data;
 
@@ -585,18 +585,18 @@ function Licenses(props) {
               options: {
                   filter: false,
                   sort: false,
-                  empty: true, // optional if you don't want it part of filtering/sorting
+                  empty: true,
                   customBodyRenderLite: (dataIndex) => {
                       const obj = licenses.data[dataIndex];
                       return (
                           <Box
-                              onClick={(e) => e.stopPropagation()} // ✅ THIS STOPS ROW SELECT
+                              onClick={(e) => e.stopPropagation()}
                               sx={{ display: "flex", alignItems: "center" }}
                           >
                               <IconButton
                                   aria-label="actions"
                                   onClick={(e) => {
-                                      e.stopPropagation(); // ✅ ALSO IMPORTANT HERE
+                                      e.stopPropagation();
                                       setLicenseId(obj?.id);
                                       setSelectedLicense(obj);
                                       handleEditOpenStatus(e);
@@ -611,14 +611,14 @@ function Licenses(props) {
                                   onClose={handleEditCloseStatus}
                                   anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
                                   transformOrigin={{ vertical: "top", horizontal: "center" }}
-                                  onClick={(e) => e.stopPropagation()} // ✅ prevents popover from selecting row
+                                  onClick={(e) => e.stopPropagation()}
                               >
                                   <Box p={2}>
                                       <List>
                                           <ListItem
                                               button
                                               onClick={(e) => {
-                                                  e.stopPropagation(); // ✅ again
+                                                  e.stopPropagation();
                                                   setStatusRenewalOpen(true);
                                                   handleEditCloseStatus();
                                               }}

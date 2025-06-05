@@ -118,7 +118,7 @@ function ContractsApproval(props) {
                         data: lcs,
                     });
                     //set status
-                    setStatus("Licenses loaded")
+                    setStatus("Contracts loaded")
                 }
             })
             .catch(function (error) {
