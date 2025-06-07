@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {Container, Box, ThemeProvider} from "@material-ui/core";
+import {Container, Box, ThemeProvider, Avatar} from "@material-ui/core";
 import {
     Typography,
     AppBar,
@@ -26,7 +26,7 @@ import {
     Tooltip,
 } from "@material-ui/core";
 import {
-    Add,
+    Add, Block, CheckCircle,
     Close,
     Edit,
 
@@ -46,6 +46,7 @@ import {format} from "date-fns/esm";
 import {useMetric, useSystemTools} from "../../hooks/use_hooks";
 import axios from "axios";
 import {createTheme} from "@material-ui/core/styles";
+import {Capitalize} from "../../helpers/capitalize";
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
@@ -171,7 +172,6 @@ function LicenseDetails(props) {
                         license_system_tool_metric_id: o.license_system_tool_metric_id,
                         created_at: o.created_at,
                         updated_at: o.updated_at,
-                        system_tool: o.system_tool,
                         entitlement: o.entitlement || "-",
                         utilisation: o.utilisation || "-",
                         license_gap: o.license_gap || "-",
@@ -180,9 +180,10 @@ function LicenseDetails(props) {
                         department: o.department,
                         name: o.name || "No Metric",
                         system_tool_name: o.system_tool_name,
+                        approval_status: o.approval_status || "PENDING",
+
                     })
                 });
-                console.log('********* metrics', toolsMetric);
                 d.data.tools = toolsMetric;
                 const groupDataTools = groupArrayOfObjects(
                     d.data.tools,
@@ -202,8 +203,6 @@ function LicenseDetails(props) {
                 notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
             });
     }
-
-
     //////////
     const columns = [
         {
@@ -268,6 +267,40 @@ function LicenseDetails(props) {
                 filter: false,
                 sort: false,
             },
+        },
+        {
+            name: "approval_status",
+            label: "Approval Status",
+
+            options: {
+                filter: true,
+                sort: false,
+                customBodyRender: (value) => {
+                    const statusRaw = value?.toLowerCase();
+                    const status = statusRaw === "rejected" ? "Rejected" : Capitalize(statusRaw);
+                    let avatarColor = "#ccc";
+                    if (statusRaw === "approved") avatarColor = "#55c266";
+                    else if (statusRaw === "pending") avatarColor = "#F8BF00";
+                    else if (statusRaw === "rejected") avatarColor = "#E53835";
+                    return (
+                        <Chip
+                            avatar={
+                                <Avatar style={{ backgroundColor: avatarColor ,color: "white" }}>
+                                    {statusRaw === "approved" ? (
+                                        <CheckCircle fontSize="small" />
+                                    ) : (
+                                        <Block fontSize="small" />
+                                    )}
+                                </Avatar>
+                            }
+                            style={{backgroundColor:"white"}}
+                            size="small"
+                            label={status}
+                        />
+                    );
+                }
+            },
+
         },
     ];
 

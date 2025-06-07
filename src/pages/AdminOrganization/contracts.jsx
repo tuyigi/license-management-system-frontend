@@ -1811,52 +1811,11 @@ function Contracts(props) {
                             component="span"
                             disabled={loading}
                             startIcon={<Publish />}
-
                         >
-
                             {loading ? 'Uploading...' : 'Upload License Contracts'}
                         </Button>
                     </label>
-
-                    {/*{loading && (*/}
-                    {/*    <CircularProgress*/}
-                    {/*        size={100}*/}
-                    {/*        sx={{*/}
-                    {/*            position: 'absolute',*/}
-                    {/*            top: '50%',*/}
-                    {/*            left: '50%',*/}
-                    {/*            marginTop: '-20px',*/}
-                    {/*            marginLeft: '-12px',*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-
-                    {/*{fileName && (*/}
-                    {/*    <Typography variant="body2" color="textSecondary">*/}
-                    {/*        Selected file: {fileName}*/}
-                    {/*    </Typography>*/}
-                    {/*)}*/}
                 </Box>
-
-
-                {/*                <input
-                    type="file"
-                    accept=".xlsx, .xls"
-                    ref={inputRef}
-                    style={{display: 'none'}}
-                    onChange={handleFileChange}
-                />
-                <Button
-                    className={classes.btn}
-                    variant="contained"
-                    color="primary"
-                    size="medium"
-                    startIcon={<Publish/>}
-
-                    onClick={handleButtonClick}
-                >
-                    Upload License Contracts
-                </Button>*/}
                 <Button
                     className={classes.btn}
                     color="primary"

@@ -143,200 +143,7 @@ function LicensesApproval(props) {
     const [department, setDepartment] = useState({ value: '', error: ''});
 
 
-    const onLicensePeriodChange = (event) => {
-        if (event.target.value === "") {
-            setPaymentFrequency({
-                value: "",
-                error: "Please select license period",
-            });
-        } else {
-            setPaymentFrequency({value: event.target.value, error: ""});
-        }
-    };
 
-
-    const onCurrencyChange = (event) => {
-        if (event.target.value === "") {
-            setCurrency({
-                value: "",
-                error: "Please select currency",
-            });
-        } else {
-            setCurrency({value: event.target.value, error: ""});
-        }
-    };
-
-
-
-    const onLicensePeriodCountChange = (event) => {
-        if (event.target.value === "") {
-            setAnnualLicenseFees({
-                value: "",
-                error: "Please enter valid license period count",
-            });
-        } else {
-            setAnnualLicenseFees({value: event.target.value, error: ""});
-        }
-    };
-
-    const onDepartmentChange = (event,v) => {
-        if (v === null) {
-            setDepartment({
-                value: "",
-                error: "Please select department",
-            });
-        } else {
-            console.log(`department ID:: ${v.id}`);
-            setDepartment({value: v.id, error: ""});
-        }
-    };
-
-    const onVendorChange = (event,v) => {
-        if (v === null) {
-            setVendor({
-                value: "",
-                error: "Please select vendor",
-            });
-        } else {
-            console.log(`vendor ID:: ${v.id}`);
-            setVendor({value: v.id, error: ""});
-        }
-    };
-
-    const onSystemUsersChange= (event)=>{
-        if (event.target.value === "") {
-            setSystemUsers({
-                value: "",
-                error: "Please specify users, or 0(not applicable)",
-            });
-        } else {
-            setSystemUsers({value: event.target.value, error: ""});
-        }
-    }
-
-    const onSystemToolsChange = (event,v) => {
-        if (v === null) {
-            setSystemTool({
-                value: "",
-                error: "Please select system tool",
-            });
-        } else {
-            console.log(`system tool ID:: ${v.id}`);
-            setSystemTool({value: v.id, error: ""});
-        }
-    };
-
-    const onAnnualLicenseFeeChange = (event) => {
-        if (event.target.value === "") {
-            setAnnualLicenseFees({
-                value: "",
-                error: "Please enter annual fees",
-            });
-        } else {
-            setAnnualLicenseFees({value: event.target.value, error: ""});
-        }
-    };
-
-    const onContractNumberChange = (event) => {
-        if (event.target.value === "") {
-            setContractNumber({
-                value: "",
-                error: "Please enter contract number",
-            });
-        } else {
-            setContractNumber({value: event.target.value, error: ""});
-        }
-    };
-
-
-/*    const addContract = () => {
-        if (description.value === "") {
-            setDescription({
-                value: '',
-                error: 'Please fulfill description'
-            })
-        }else if (paymentFrequency.value === "") {
-            setPaymentFrequency({
-                value: '',
-                error: 'Please select license period'
-            })
-        } else if (annualLicenseFees.value === "") {
-            setPaymentFrequency({
-                value: '',
-                error: 'Please enter license period count'
-            })
-        }else if (department.value === "") {
-            setDepartment({
-                value: '',
-                error: 'Please select department'
-            })
-        }
-        else {
-            recordContract();
-        }
-    }*/
-
-/*
-    const recordContract = () => {
-        const contractInstance = axios.create(
-            new BackendService().getHeaders(accountData.token)
-        );
-        setContracts({...contracts, saving: true});
-
-        const data = {
-            "vendor": vendor.value,
-            "contract_number": contractNumber.value,
-            "annual_license_fees": parseFloat(annualLicenseFees.value),
-            "start_date": startDate.value,
-            "end_date": endDate.value,
-            "description": description.value,
-            "currency": currency.value,
-            "payment_frequency": paymentFrequency.value,
-            "system":systemTool.value,
-            "department": parseInt(department.value),
-            "number_system_users": parseInt(systemUsers.value)
-        }
-        contractInstance
-            .post(new BackendService().CONTRACT, data)
-            .then(function (response) {
-                setContracts({...contracts, saving: false});
-                var d = response.data;
-                var lcs = contracts.data;
-                const newLicense = d.data;
-                newLicense['start_date'] = `${format(new Date(newLicense['start_date']), 'yyyy/MM/dd')}`
-                newLicense['end_date']= `${format(new Date(newLicense['end_date']), 'yyyy/MM/dd')}`
-                newLicense['vendor']=newLicense.vendor.vendor_name;
-                // newLicense['department_name']=`${newLicense['department']['name']}`
-                lcs.unshift(newLicense);
-                setContracts({
-                    ...contracts,
-                    data: lcs,
-                });
-                clearContractInfo()
-                notify("success", response.data.message);
-                setAddNewOpen(false);
-            })
-            .catch(function (error) {
-                setContracts({...contracts, saving: false});
-                var e = error.message;
-                if (error.response) {
-                    e = error.response.data.message;
-                }
-                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
-            });
-    }
-*/
-
-    // clear data
-
-/*
-    const clearContractInfo = () => {
-        setLicenseId({value: "", error: ""});
-        setPaymentFrequency({value: "", error: ""});
-        setAnnualLicenseFees({value: "", error: ""});
-        setDescription({value: "", error: ""});
-    };
-*/
 
     // notify
 
@@ -383,12 +190,12 @@ function LicensesApproval(props) {
             },
         },
         {
-            name: "name",
+            name: "department_id",
             label: "Department",
             options: {
                 filter: false,
                 sort: true,
-                customBodyRender: (value) => value?.department_name || "N/A",
+                customBodyRender: (value) => value?.name || "N/A",
             },
         },
         {
@@ -622,147 +429,15 @@ function LicensesApproval(props) {
 
     // end table config
 
-    // renewal license status
-    const [statusRenewalReportOpen, setStatusRenewalReportOpen] = useState(false);
-    const [statusRenewalOpen, setStatusRenewalOpen] = useState(false);
-    const [cost, setCost] = useState({value: "", error: ""});
-    const [paymentPeriods,setPaymentPeriods] = useState([]);
-    const [paymentPeriodId,setPaymentPeriodId] = useState({value: "",error:""});
-    const [isPaid, setIsPaid] = useState(false);
-    const [paymentReference, setPaymentReference] = useState({ value: "", error: ""});
-
-/*    const [licenses, setLicenses] = useState({
-        page: 0,
-        count: 1,
-        rowsPerPage: 10,
-        sortOrder: {},
-        saving: false,
-        loading: false,
-        toggling: false,
-        data: [],
-    });*/
-    const onPaymentReferenceChanged=(v)=>{
-        setPaymentReference({ value: v.target.value, error: ""});
-    }
-
-
-    const onDescriptionChange = (event) => {
-        if (event.target.value === "") {
-            setDescription({
-                value: "",
-                error: "Please enter valid description",
-            });
-        } else {
-            setDescription({value: event.target.value, error: ""});
-        }
-    };
-
-
-    const onPaymentPeriodIdChange = (event,v) => {
-        if (v === null) {
-            setPaymentPeriodId({
-                value: "",
-                error: "Please select payment period",
-            });
-        } else {
-            // set start and end data, cost period
-            const batch = paymentPeriods.filter((o)=>o.id===v.id)[0];
-            setCost({ value: batch['payment_fee'], error: ""});
-            setStartDate({ value: format(new Date(batch["start_period"]),["yyyy-MM-dd"]),error: ""})
-            setEndDate({ value: format(new Date(batch["end_period"]),["yyyy-MM-dd"]), error: ""})
-            setPaymentPeriodId({value: v.id, error: ""});
-        }
-    };
-
-
-
-
-/*    const addLicense = () => {
-        if (contractId.value === "") {
-            setContractId({
-                value: "",
-                error: "Please select contract",
-            });
-        } else if (paymentPeriodId.value === "") {
-            setPaymentPeriodId({
-                value: '',
-                error: 'Please select period'
-            });
-        } else if (description.value === "") {
-            setDescription({
-                value: '',
-                error: 'Please fulfill description'
-            })
-        } else if(isPaid&& paymentReference.value===""){
-            setPaymentReference({
-                value: "",
-                error: "Please enter payment reference",
-            });
-        }else {
-            requestLicense();
-        }
-    }*/
-
-/*
-    const requestLicense = () => {
-        const licenseInstance = axios.create(
-            new BackendService().getHeaders(accountData.token)
-        );
-        setLicenses({...licenses, saving: true});
-
-        const data =
-            {
-                "description": description.value,
-                "start_date": startDate.value,
-                "end_date": endDate.value,
-                "payment_reference": paymentReference.value,
-                "period_cost": cost.value,
-                "payment_status": isPaid?'PAID':'PENDING',
-                "payment_period": paymentPeriodId.value,
-                "user": accountData?.user?.id
-            };
-
-        licenseInstance
-            .post(new BackendService().RECORD_LICENSE, data)
-            .then(function (response) {
-                setLicenses({...licenses, saving: false});
-                // setAccountData(accData);
-                clearLicenseInfo()
-                notify("success", response.data.message);
-                getContracts(accountData.access_token);
-                setStatusRenewalOpen(false);
-            })
-            .catch(function (error) {
-                setLicenses({...licenses, saving: false});
-                var e = error.message;
-                if (error.response) {
-                    e = error.response.data.message;
-                }
-                notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
-            });
-
-    }
-*/
-
-    // clear data
-
-    const clearLicenseInfo = () => {
-        setContractId({value: "", error: ""});
-        setCost({value: "", error: ""});
-        setDescription({value: "", error: ""});
-    };
-
-    const [showReport, setShowReport] = useState(false);
-    const [ paymentReports, setPaymentReports] = useState([]);
 
     /*
-    Approve / Reject contract
+    Approve / Reject License
      */
 
     const [approvalLoading,setApprovalLoading]=useState(false);
     const [comment, setComment]=useState({value: '',error: ''});
 
-    const changeLicensetStatus = ()=>{
+    const changeLicenseStatus = ()=>{
         const licenseInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
         );
@@ -859,7 +534,7 @@ function LicensesApproval(props) {
                             disabled={approvalLoading}
                             variant="contained"
                             color="primary"
-                            onClick={()=>{ changeLicensetStatus() }}
+                            onClick={()=>{ changeLicenseStatus() }}
                             disableElevation
                         >
                             {approvalLoading? (
@@ -877,27 +552,14 @@ function LicensesApproval(props) {
                         <ListAlt color="primary" fontSize="large" />
                     </Box>
                     <Typography variant="h5" className={classes.title}>
-                        <b>License Contracts</b>
+                        <b>Licenses</b>
                     </Typography>
-                    {/*<Button*/}
-                    {/*    className={classes.btn}*/}
-                    {/*    color="primary"*/}
-                    {/*    variant="contained"*/}
-                    {/*    size="medium"*/}
-                    {/*    startIcon={<Add />}*/}
-                    {/*    disableElevation*/}
-                    {/*    onClick={() => {*/}
-                    {/*        setAddNewOpen(true);*/}
-                    {/*    }}*/}
-                    {/*>*/}
-                    {/*    New Contract*/}
-                    {/*</Button>*/}
                 </Box>
                 <Box style={{marginTop: 20}} />
                 {pendingLicenses.loading && <LinearProgress />}
                 <Box style={{ width: "100%", overflowX: "auto" }}>
                 <MUIDataTable
-                    title={"List of License Contracts"}
+                    title={"List of Licenses"}
                     data={pendingLicenses.data}
                     columns={columns}
                     options={options}

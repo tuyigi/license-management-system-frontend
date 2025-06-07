@@ -14,6 +14,7 @@ class BackendService {
     this.GENERAL_STATS = this.BASE_URL + "/api/v1/reports/generalStats";
     this.GET_ORGANIZARION_TYPE_STATS = this.BASE_URL + "/api/v1/reports/organizationTypeStats";
     this.LICENSES = this.BASE_URL + "/api/v1/license";
+    this.LICENSES_UPLOAD = this.BASE_URL + "/api/v1/license/upload";
     this.ORGANIZATIONS = this.BASE_URL + "/api/v1/organization";
     this.ROLES = this.BASE_URL + "/api/v1/role";
     this.PRIVILEGE = this.BASE_URL + "/api/v1/privilege";
