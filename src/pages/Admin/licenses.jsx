@@ -101,7 +101,7 @@ function Licenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        setDepartment({ value: accData.user.department.id, error: ''});
+        setDepartment({ value: accData?.user?.department.id, error: ''});
         getLicenses(accData.access_token,accData?.user?.department?.id);
     }, [])
 
@@ -818,7 +818,6 @@ UPLOAD LICENSE
         if (fileInput) {
             fileInput.value = '';
         }
-        console.log("uploading data *********", data)
         uploadInstance
             .post(new BackendService().LICENSES_UPLOAD , data)
             .then((response) => {

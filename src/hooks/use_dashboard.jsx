@@ -216,7 +216,7 @@ export function useTotalCertificateDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (certificateStats.data == null) {
-            getCertificateStats(accountData.token,accountData.user.department.id);
+            getCertificateStats(accountData.token,accountData?.user?.department.id);
         }
     }, [certificateStats]);
 
@@ -259,7 +259,7 @@ export function useTotalContractDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (contractStats.data == null) {
-            getContractStats(accountData.token,accountData.user.department.id);
+            getContractStats(accountData.token,accountData?.user?.department.id);
         }
     }, [contractStats]);
 
@@ -303,7 +303,7 @@ export function useSystemToolStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (systemStats.data == null) {
-            getSystemStats(accountData.token,accountData.user.department.id);
+            getSystemStats(accountData.token,accountData?.user?.department.id);
         }
     }, [systemStats]);
 
@@ -347,7 +347,7 @@ export function usePaymentStatusContractDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (paymentStatusStats.data == null) {
-            getPaymentStatusStats(accountData.token,accountData.user.department.id);
+            getPaymentStatusStats(accountData.token,accountData?.user?.department.id);
         }
     }, [paymentStatusStats]);
 
@@ -447,7 +447,7 @@ export function useVendorPaymentDeparmentsStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (vendorPaymentDeparmentsStats.data == null) {
-            getVendorPaymentDeparmentsStats(accountData.token, accountData.user.department.id, accountData.user.id);
+            getVendorPaymentDeparmentsStats(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
         }
     }, [vendorPaymentDeparmentsStats]);
 
@@ -497,7 +497,7 @@ export function useLicenseContractsData() {
     useEffect(() => {
         const accountData = new BackendService().accountData;
         if (!licenseContractsStats.data) {
-            getLicenseContractsData(accountData.token, accountData.user.department.id, accountData.user.id);
+            getLicenseContractsData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
         }
     }, [licenseContractsStats]);
 
@@ -551,7 +551,7 @@ export function useCertificatesData() {
 
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getCertificatesData(accountData.token, accountData.user.department.id, accountData.user.id);
+        getCertificatesData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
     }, []);
 
     const getCertificatesData = (token, departmentId, userId) => {
@@ -599,7 +599,7 @@ export function useContractToolsOptimizationData() {
 
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getToolsOptimizationData(accountData.token, accountData.user.department.id, accountData.user.id);
+        getToolsOptimizationData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
     }, []);
 
     const getToolsOptimizationData = (token, departmentId, userId) => {

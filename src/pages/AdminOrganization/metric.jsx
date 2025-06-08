@@ -56,7 +56,7 @@ function Metric(props) {
     const history = useHistory();
     const functions = useFunctions();
     const [addNewOpen, setAddNewOpen] = useState(false);
-    const [systemTools, setSystemTools] = useState({
+    const [metrics, setMetrics] = useState({
         page: 0,
         count: 1,
         rowsPerPage: 10,
@@ -75,25 +75,25 @@ function Metric(props) {
         if(accData['user']!=='SUPER_ADMIN'){
             setDepartment({ value: accData?.user?.department?.id, error: ''});
         }
-        getSystemTools(accData.access_token);
+        getMetrics(accData.access_token);
     }, [])
 
-    const [status, setStatus] = useState("No systemTools available....");
-    const getSystemTools = (token) => {
+    const [status, setStatus] = useState("No metrics available....");
+    const getMetrics = (token) => {
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
-        setSystemTools({...systemTools, loading: true});
+        setMetrics({...metrics, loading: true});
         licenseInstance
             .get(new BackendService().METRICS)
             .then(function (response) {
-                setSystemTools({...systemTools, loading: false});
+                setMetrics({...metrics, loading: false});
                 const d = response.data;
                 if (d.data.length == 0) {
                     setStatus("There are no metrics available.");
                 } else {
                     var lcs = d.data;
 
-                    setSystemTools({
-                        ...systemTools,
+                    setMetrics({
+                        ...metrics,
                         data: lcs,
                     });
                     //set status
@@ -101,7 +101,7 @@ function Metric(props) {
                 }
             })
             .catch(function (error) {
-                setSystemTools({...systemTools, loading: false});
+                setMetrics({...metrics, loading: false});
                 var e = error.message;
 
                 if (error.response) {
@@ -119,7 +119,7 @@ function Metric(props) {
         if (event.target.value === "") {
             setName({
                 value: "",
-                error: "Please enter valid license name",
+                error: "Please enter valid metric name",
             });
         } else {
             setName({value: event.target.value, error: ""});
@@ -141,7 +141,7 @@ function Metric(props) {
         if (name.value === "") {
             setName({
                 value: "",
-                error: "Please provide valid System/Tool name",
+                error: "Please provide valid Metric name",
             });
         } else if (description.value === "'") {
             setDescription({
@@ -157,7 +157,7 @@ function Metric(props) {
         const metricInstance = axios.create(
             new BackendService().getHeaders(accountData.token)
         );
-        setSystemTools({...systemTools, saving: true});
+        setMetrics({...metrics, saving: true});
         const data = {
             name: name.value,
             description: description.value
@@ -166,18 +166,18 @@ function Metric(props) {
             .post(new BackendService().METRICS, data)
             .then(function (response) {
                 var d = response.data;
-                var lcs = systemTools.data;
+                var lcs = metrics.data;
                 const newSystemTool = d.data;
                 lcs.unshift(newSystemTool);
-                setSystemTools({
-                    ...systemTools,
+                setMetrics({
+                    ...metrics,
                     data: lcs,
                 });
                 clearSystemInfo();
                 setAddNewOpen(false);
             })
             .catch(function (error) {
-                setSystemTools({...systemTools, saving: false});
+                setMetrics({...metrics, saving: false});
                 var e = error.message;
                 if (error.response) {
                     e = error.response.data.message;
@@ -194,7 +194,7 @@ function Metric(props) {
 
     // notify
     const notify = (variant, msg, status) => {
-        if (status == 401) {
+        if (status === 401) {
             history.push("/", { expired: true });
         }
         enqueueSnackbar(msg, {
@@ -260,7 +260,7 @@ function Metric(props) {
         selectableRowsOnClick: true,
         fixedHeader: true,
         onCellClick: (cellData, cellMeta) => {
-            var license = systemTools.data[cellMeta.dataIndex];
+            var license = metrics.data[cellMeta.dataIndex];
 
         },
         searchProps: {
@@ -285,7 +285,7 @@ function Metric(props) {
                 setSelectedRows={setSelectedRows}
                 toggleUser={()=>{}}
                 openEdit={()=>{}}
-                toggling={systemTools.toggling}
+                toggling={metrics.toggling}
             />
         ),*/
     };
@@ -363,13 +363,13 @@ function Metric(props) {
                         Cancel
                     </Button>
                     <Button
-                        disabled={systemTools.saving}
+                        disabled={metrics.saving}
                         variant="contained"
                         color="primary"
                         onClick={()=>{ addMetric() }}
                         disableElevation
                     >
-                        {systemTools.saving ? (
+                        {metrics.saving ? (
                             <CircularProgress size={23} />
                         ) : (
                             "Save"
@@ -403,10 +403,10 @@ function Metric(props) {
             </Box>
             <Box style={{marginTop: 20}} />
 
-            {systemTools.loading && <LinearProgress />}
+            {metrics.loading && <LinearProgress />}
             <MUIDataTable
                 title={"List of Metrics"}
-                data={systemTools.data}
+                data={metrics.data}
                 columns={columns}
                 options={options}
             />

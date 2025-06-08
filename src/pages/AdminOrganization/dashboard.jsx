@@ -300,7 +300,7 @@ function Dashboard(){
                         <Grid item xs={12} sm={6} md={6} lg={6}>
                             <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
                                 <Typography style={{ marginLeft: 10, marginTop: 10 }}>
-                                    <b>License Expiration Summary</b>
+                                    <b>Tools Expiration Summary</b>
                                 </Typography>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
@@ -341,7 +341,7 @@ function Dashboard(){
                     <Grid item xs={12} sm={6} md={6} lg={6}>
                         <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
                             <Typography style={{ marginLeft: 10, marginTop: 10 }}>
-                                <b>Tools/Product Optimization</b>
+                                <b>Tools Optimization</b>
                             </Typography>
                            <ResponsiveContainer width="100%" height={400}>
                                 <BarChart data={chartDataToolsOptimization} margin={{ right: 120 ,bottom: 50 }} >

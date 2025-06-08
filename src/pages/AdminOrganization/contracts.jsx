@@ -99,10 +99,9 @@ function Contracts(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
-        console.log('accData',accData.user.department.id);
         setAccountData(accData);
-        setDepartment({ value: accData.user.department.id, error: ''});
-        getContracts(accData.access_token, accData.user.department.id);
+        setDepartment({ value: accData?.user?.department.id, error: ''});
+        getContracts(accData.access_token, accData?.user?.department.id);
     }, [])
 
     const [status, setStatus] = useState("No contracts requests available....");
@@ -342,7 +341,8 @@ function Contracts(props) {
     // notify
 
     const notify = (variant, msg, status) => {
-        if (status == 401) {
+        console.log('****notify', variant, msg, status);
+        if (status === 401) {
             history.push("/", { expired: true });
         }
         enqueueSnackbar(msg, {

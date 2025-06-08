@@ -258,7 +258,7 @@ function SystemTool(props) {
     // notify
 
     const notify = (variant, msg, status) => {
-        if (status == 401) {
+        if (status === 401) {
             history.push("/", { expired: true });
         }
         enqueueSnackbar(msg, {

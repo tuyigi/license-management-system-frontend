@@ -226,6 +226,7 @@ function Certificates(props) {
     // notify
 
     const notify = (variant, msg, status) => {
+        console.log('****notify', variant, msg, status);
         if (status == 401) {
             history.push("/", { expired: true });
         }
