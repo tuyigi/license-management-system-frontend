@@ -215,9 +215,7 @@ export function useTotalCertificateDepartmentStats() {
     const [certificateStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        if (certificateStats.data == null) {
-            getCertificateStats(accountData.token,accountData?.user?.department.id);
-        }
+            getCertificateStats(accountData.token,accountData?.user?.department?.id);
     }, [certificateStats]);
 
     const getCertificateStats = (token,id) => {

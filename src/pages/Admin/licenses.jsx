@@ -709,6 +709,7 @@ function Licenses(props) {
                 "system_tool":systemTool.value,
                 "number_system_users": parseInt(systemUsers.value),
                 "department": parseInt(accountData?.user?.department?.id),
+
             }
         licenseRenewalInstance
             .put( `${new BackendService().LICENSES}/${licenseId}`, data )
@@ -1434,20 +1435,21 @@ UPLOAD LICENSE
                         {loading ? 'Uploading...' : 'Upload Licenses'}
                     </Button>
                 </label>
+                <Button
+                    className={classes.btn}
+                    color="primary"
+                    variant="contained"
+                    size="medium"
+                    startIcon={<Add />}
+                    disableElevation
+                    onClick={() => {
+                        setAddNewOpen(true);
+                    }}
+                >
+                    New License
+                </Button>
             </Box>
-          <Button
-            className={classes.btn}
-            color="primary"
-            variant="contained"
-            size="medium"
-            startIcon={<Add />}
-            disableElevation
-            onClick={() => {
-             setAddNewOpen(true);
-            }}
-          >
-            New License
-          </Button>
+
         </Box>
 
         <Box style={{marginTop: 20}} />

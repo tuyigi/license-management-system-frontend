@@ -1815,20 +1815,21 @@ function Contracts(props) {
                             {loading ? 'Uploading...' : 'Upload License Contracts'}
                         </Button>
                     </label>
+                    <Button
+                        className={classes.btn}
+                        color="primary"
+                        variant="contained"
+                        size="medium"
+                        startIcon={<Add />}
+                        disableElevation
+                        onClick={() => {
+                            setAddNewOpen(true);
+                        }}
+                    >
+                        New Contract
+                    </Button>
                 </Box>
-                <Button
-                    className={classes.btn}
-                    color="primary"
-                    variant="contained"
-                    size="medium"
-                    startIcon={<Add />}
-                    disableElevation
-                    onClick={() => {
-                        setAddNewOpen(true);
-                    }}
-                >
-                    New Contract
-                </Button>
+
             </Box>
             <Box style={{marginTop: 20}} />
             {contracts.loading && <LinearProgress />}

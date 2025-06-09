@@ -573,8 +573,6 @@ function SystemTool(props) {
                             {loading ? 'Uploading...' : 'Upload System Tools'}
                         </Button>
                     </label>
-                </Box>
-                <Box sx={{ textAlign: 'center', my: 2, position: 'relative' }}>
                     <Button
                         className={classes.btn}
                         sx={{ width: '200px', height: '48px', minWidth: 'unset' }}
@@ -588,6 +586,7 @@ function SystemTool(props) {
                         New System/Tool
                     </Button>
                 </Box>
+
 
             </Box>
             <Box style={{marginTop: 20}}/>

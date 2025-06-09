@@ -995,39 +995,21 @@ function Certificates(props) {
                             {loading ? 'Uploading...' : 'Upload Certificates'}
                         </Button>
                     </label>
-
-                    {/*{loading && (*/}
-                    {/*    <CircularProgress*/}
-                    {/*        size={100}*/}
-                    {/*        sx={{*/}
-                    {/*            position: 'absolute',*/}
-                    {/*            top: '50%',*/}
-                    {/*            left: '50%',*/}
-                    {/*            marginTop: '-20px',*/}
-                    {/*            marginLeft: '-12px',*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-
-                    {/*{fileName && (*/}
-                    {/*    <Typography variant="body2" color="textSecondary">*/}
-                    {/*        Selected file: {fileName}*/}
-                    {/*    </Typography>*/}
-                    {/*)}*/}
+                    <Button
+                        className={classes.btn}
+                        color="primary"
+                        variant="contained"
+                        size="medium"
+                        startIcon={<Add />}
+                        disableElevation
+                        onClick={() => {
+                            setAddNewOpen(true);
+                        }}
+                    >
+                        New Certificate
+                    </Button>
                 </Box>
-                <Button
-                    className={classes.btn}
-                    color="primary"
-                    variant="contained"
-                    size="medium"
-                    startIcon={<Add />}
-                    disableElevation
-                    onClick={() => {
-                        setAddNewOpen(true);
-                    }}
-                >
-                    New Certificate
-                </Button>
+
             </Box>
             <Box style={{marginTop: 20}} />
             {certificates.loading && <LinearProgress />}
