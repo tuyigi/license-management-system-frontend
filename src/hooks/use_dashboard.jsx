@@ -501,21 +501,18 @@ export function useLicenseContractsData() {
 
     const getLicenseContractsData = (token, departmentId, userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().CONTRACT}/department/${departmentId}`;
+        const url = `${new BackendService().CONTRACT}/tool/expiration/${departmentId}`;
 
         dInstance.get(url)
             .then(response => {
-                const rawData = response.data?.data || [];
-                const approvedLicenses = rawData.filter(da => da.approval_status === "APPROVED");
-                const formatted = approvedLicenses.map(da => ({
+                const rawData = response.data?.data?.toolsExpiration || [];
+                console.log('TOOLS EXPIRATION', rawData);
+                const formatted = rawData.map(da => ({
                     ...da,
                     start_date: format(new Date(da.start_date), 'yyyy/MM/dd'),
                     end_date: format(new Date(da.end_date), 'yyyy/MM/dd'),
-                    vendor: da.vendor.vendor_name,
-                    department_name: da.department.name,
-                    annual_license_fees: `${da.currency} ${da.annual_license_fees}`
+                    system_tool_name: da.system_tool_name,
                 }));
-
                 setData({
                     data: formatted,
                     status: formatted.length === 0 ? "empty" : "success"

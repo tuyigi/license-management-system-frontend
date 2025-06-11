@@ -199,7 +199,7 @@ const menus = [
     // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     // { name: "License Status Renewal", icon: <Computer color={"primary"}/>, path: "/orgAdmin/recordedLicense", permission: "CAN_VIEW_RECORDED_LICENSE"},
     { name: "Certificates", icon: <LibraryBooks color={"primary"}/>, path: "/orgAdmin/certificates", permission: "CAN_VIEW_CERTIFICATES"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
+/*    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: 'Certificate', path: '/orgAdmin/reports/certificate'},
             { name: 'Component', path: '/orgAdmin/reports/component'},
@@ -208,7 +208,7 @@ const menus = [
             // { name: "Approved Licenses ", path: "/orgAdmin/reports"},
             // { name: "Expiration Report", path: "/orgAdmin/expirationReport"}
         ]
-    }
+    }*/
 ];
 
 const menus2 = [

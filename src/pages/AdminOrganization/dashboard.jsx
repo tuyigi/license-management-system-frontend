@@ -168,7 +168,7 @@ function Dashboard(){
         return <p>Error loading data.</p>;
     }
     if (licenseContractsStats.status === 'empty' || certificates.status === 'empty') {
-        return <p>No licenses or certificates found.</p>;
+        return <p>No tools or certificates found.</p>;
     }
 
 
