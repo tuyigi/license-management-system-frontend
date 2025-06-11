@@ -65,6 +65,7 @@ function Certificates(props) {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
     const [addNewOpen, setAddNewOpen] = useState(false);
+    const [selectedCertificate, setSelectedCertificate] = useState(null);
     const [certificates, setCertificates] = useState({
         page: 0,
         count: 1,
@@ -81,6 +82,7 @@ function Certificates(props) {
         setAccountData(accData);
         console.log('accData',accData)
         getCertificates(accData.access_token,accData?.user?.department?.id);
+        setDepartment({ value: accData?.user?.department?.id, error: ''});
     }, [])
 
     const [status, setStatus] = useState("No certificates requests available....");
@@ -120,6 +122,8 @@ function Certificates(props) {
     const [certificateName, setCertificateName] = useState({ value: '' , error: ''});
     const [userOrganization,setUserOrganization] =useState({ value: '', error: ''});
     const [certificateType,setCertificatType]=useState({value: '', error: ''});
+    const [department, setDepartment] = useState({value: "", error: ""});
+
 
     const onCertificateTypeChange = (event)=> {
         if (event.target.value === "") {
@@ -192,6 +196,7 @@ function Certificates(props) {
             expiration_date: endDate.value,
             certificate_type: certificateType.value
             }
+            console.log('records', data);
         contractInstance
             .post(new BackendService().CERTIFICATES, data)
             .then(function (response) {
@@ -226,6 +231,7 @@ function Certificates(props) {
     // notify
 
     const notify = (variant, msg, status) => {
+        console.log('****notify', variant, msg, status);
         if (status == 401) {
             history.push("/", { expired: true });
         }
@@ -243,6 +249,7 @@ function Certificates(props) {
             ),
         });
     };
+
 
 
     const [anchorElStatus, setAnchorElStatus] = useState(null);
@@ -284,7 +291,7 @@ function Certificates(props) {
         },
         {
             name: "user_organization",
-            label: "User / Organization",
+            label: "Organization",
             options: {
                 filter: false,
                 sort: true,
@@ -386,6 +393,7 @@ function Certificates(props) {
                             <IconButton aria-label="delete"
                                         onClick={(e)=>{
                                             setCertificateId(obj?.id);
+                                            setSelectedCertificate(obj);
                                             handleEditOpenStatus(e);
                                         }}>
                                 <MoreVert />
@@ -409,7 +417,7 @@ function Certificates(props) {
 
                                 <Box p={2}>
                                     <List component="nav" aria-label="main mailbox folders">
-                                        <ListItem button onClick={()=>{
+                                        {/*<ListItem button onClick={()=>{
                                             setShowReport(true);
                                             viewCertificateReports(certificateId);
                                             handleEditCloseStatus();
@@ -418,7 +426,7 @@ function Certificates(props) {
                                                 <Assessment />
                                             </ListItemIcon>
                                             <ListItemText primary="Reports" />
-                                        </ListItem>
+                                        </ListItem>*/}
                                         <ListItem button onClick={()=>{
                                             setStatusRenewalOpen(true);
                                             handleEditCloseStatus();
@@ -509,13 +517,21 @@ function Certificates(props) {
     const certificateRenewal=()=>{
         const certificateInstance = axios.create(new BackendService().getHeaders(accountData.access_token));
         const data ={
-            certificate_id: parseInt(certificateId),
+           /* certificate_id: parseInt(certificateId),
             issue_date: startDate.value,
             expiry_date: endDate.value,
-            responsible: parseInt(accountData?.user?.id)
+            responsible: parseInt(accountData?.user?.id)*/
+            "certificate_name": certificateName.value,
+            "description": description.value,
+            "user_organization": userOrganization.value,
+            "issue_date": startDate.value,
+            "expiry_date": endDate.value,
+            "certificate_type": certificateType.value,
+            "department_id": department.value,
         };
+        console.log('record++++++',data, certificateId)
         certificateInstance
-            .post( `${new BackendService().CERTIFICATES}/report`, data )
+            .put( `${new BackendService().CERTIFICATES}/${certificateId}`, data )
             .then(function (response) {
                 notify("success", response.data.message);
                 setStatusRenewalOpen(false);
@@ -528,6 +544,18 @@ function Certificates(props) {
                 notify(error?.response?.status == 404 ? "info" : "error", e, error?.response?.status);
             });
     }
+
+    useEffect(() => {
+        if (statusRenewalOpen && selectedCertificate) {
+            setCertificateName({ value: selectedCertificate.certificate || "", error: "" });
+            setDescription({ value: selectedCertificate.description || "", error: "" });
+            setUserOrganization({ value: selectedCertificate.user_organization || "", error: "" });
+            setStartDate({ value: selectedCertificate.start_date || "", error: "" });
+            setEndDate({ value: selectedCertificate.end_date || "", error: "" });
+            setCertificatType({ value: selectedCertificate.certificate_type || "", error: "" });
+
+        }
+    }, [statusRenewalOpen, selectedCertificate]);
 
     /*Upload Certificates
      */
@@ -675,7 +703,7 @@ function Certificates(props) {
                                     color="primary"
                                     type={'text'}
                                     value={userOrganization.value}
-                                    placeholder={"User / Organization"}
+                                    placeholder={"Organization"}
                                     label={"User / Organization"}
                                     fullWidth
                                     onChange={onUserOrganizationChange}
@@ -749,7 +777,7 @@ function Certificates(props) {
                                 value={certificateType.value}
                                 onChange={onCertificateTypeChange}
                             >
-                                <MenuItem value="SSL_CERTIFICATE">SSL CERTIFICATE</MenuItem>
+                                <MenuItem value="NORMAL_CERTIFICATE">NORMAL CERTIFICATE</MenuItem>
                                 <MenuItem value="RIPPS_CERTIFICATE">RIPPS CERTIFICATE</MenuItem>
                             </Select>
                             <FormHelperText>{certificateType.error}</FormHelperText>
@@ -805,6 +833,8 @@ function Certificates(props) {
                 </DialogActions>
             </Dialog>
 
+
+
             {/*start renewal certificate status dialog*/}
             <Dialog
                 open={statusRenewalOpen}
@@ -819,6 +849,66 @@ function Certificates(props) {
                 </DialogTitle>
                 <DialogContent>
                     <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    size="small"
+                                    disabled
+                                    variant="outlined"
+                                    color="primary"
+                                    type={'text'}
+                                    value={selectedCertificate?.certificate || ""}
+                                    placeholder={"Certificate Name"}
+                                    label={"Certificate Name"}
+                                    fullWidth
+                                    helperText={certificateName.error}
+                                    error={certificateName.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop: 10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    disabled
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={selectedCertificate?.certificate_type || ""}
+                                    placeholder={selectedCertificate?.certificate_type || ""}
+                                    label={"Certificate Type"}
+                                    fullWidth
+                                    helperText={certificateType.error}
+                                    error={certificateType.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop:10}}>
+                        <Box style={{marginTop:10}}>
+                            <Translate>
+                                {({ translate }) => (
+                                    <TextField
+                                        required
+                                        disabled
+                                        size="small"
+                                        variant="outlined"
+                                        color="primary"
+                                        type={'text'}
+                                        value={selectedCertificate.user_organization || ""}
+                                        placeholder={"Organization"}
+                                        label={"Organization"}
+                                        fullWidth
+                                        helperText={userOrganization.error}
+                                        error={userOrganization.error !== ""}
+                                    />
+                                )}
+                            </Translate>
+                        </Box>
+                    </Box>
                         <KeyboardDatePicker
                             fullWidth
                             disableToolbar
@@ -829,7 +919,7 @@ function Certificates(props) {
                             value={startDate.value}
                             onChange={(v)=>{
                                 console.log('vv',v);
-                                if(v=="Invalid Date" || v=="Invalid time value" || v==null){
+                                if(v=="Invalid Date" || v==null){
                                     setStartDate({value:'',error:v});
                                 }else{
                                     setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
@@ -839,7 +929,6 @@ function Certificates(props) {
                                 'aria-label': 'change date',
                             }}
                         />
-                    </Box>
 
                     <Box style={{marginTop:10}}>
                         <KeyboardDatePicker
@@ -851,7 +940,7 @@ function Certificates(props) {
                             label="Expiry Date"
                             value={endDate.value}
                             onChange={(v)=>{
-                                if(v=="Invalid Date" || v=="Invalid time value" || v==null){
+                                if(v=="Invalid Date" || v==null){
                                     setEndDate({value: '',error:v});
                                 }else{
                                     setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
@@ -862,6 +951,7 @@ function Certificates(props) {
                             }}
                         />
                     </Box>
+
 
                     <Box style={{marginTop:10}}>
                         <Translate>
@@ -994,39 +1084,21 @@ function Certificates(props) {
                             {loading ? 'Uploading...' : 'Upload Certificates'}
                         </Button>
                     </label>
-
-                    {/*{loading && (*/}
-                    {/*    <CircularProgress*/}
-                    {/*        size={100}*/}
-                    {/*        sx={{*/}
-                    {/*            position: 'absolute',*/}
-                    {/*            top: '50%',*/}
-                    {/*            left: '50%',*/}
-                    {/*            marginTop: '-20px',*/}
-                    {/*            marginLeft: '-12px',*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-
-                    {/*{fileName && (*/}
-                    {/*    <Typography variant="body2" color="textSecondary">*/}
-                    {/*        Selected file: {fileName}*/}
-                    {/*    </Typography>*/}
-                    {/*)}*/}
+                    <Button
+                        className={classes.btn}
+                        color="primary"
+                        variant="contained"
+                        size="medium"
+                        startIcon={<Add />}
+                        disableElevation
+                        onClick={() => {
+                            setAddNewOpen(true);
+                        }}
+                    >
+                        New Certificate
+                    </Button>
                 </Box>
-                <Button
-                    className={classes.btn}
-                    color="primary"
-                    variant="contained"
-                    size="medium"
-                    startIcon={<Add />}
-                    disableElevation
-                    onClick={() => {
-                        setAddNewOpen(true);
-                    }}
-                >
-                    New Certificate
-                </Button>
+
             </Box>
             <Box style={{marginTop: 20}} />
             {certificates.loading && <LinearProgress />}

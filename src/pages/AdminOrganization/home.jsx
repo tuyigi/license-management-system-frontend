@@ -69,6 +69,8 @@ import ComponentReport from "./reports/component_report";
 import SystemToolReport from "./reports/system_tool_report";
 import Metric from "./metric";
 import axios from "axios";
+import Licenses from "../Admin/licenses";
+import LicenseDetails from "../Admin/license_details";
 
 
 
@@ -159,6 +161,18 @@ const routes = [
         main: () =>  <Certificates/>,
     },
     {
+        path: "/orgAdmin/licenses",
+        exact: true,
+        permission: "CAN_VIEW_LICENSE",
+        main: () =>  <Licenses/>,
+    },
+    {
+        path: "/orgAdmin/licenseDetails",
+        exact: true,
+        permission: "CAN_VIEW_LICENSE_DETAILS",
+        main: () =>  <LicenseDetails/>,
+    },
+    {
         path: "/orgAdmin/systemTool",
         exact: true,
         permission: "CAN_VIEW_SYSTEM_TOOL",
@@ -179,12 +193,13 @@ const menus = [
     { name: "Home", icon: <Home color="primary" />, path: "/orgAdmin/home",permission: "CAN_VIEW_HOME", },
     { name: "System Tools/Products", icon: <img src={ToolsIcon} width={25} />, path: "/orgAdmin/systemTool", permission: "CAN_VIEW_SYSTEM_TOOL"},
     { name: "Metrics", icon: <Equalizer color={"primary"} />, path: "/orgAdmin/metric", permission: "CAN_VIEW_METRIC"},
+     { name: "Licenses", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/licenses", permission: "CAN_VIEW_LICENSES"},
     { name: "License Contracts", icon: <ListAlt color={"primary"}/>, path: "/orgAdmin/contracts", permission: "CAN_VIEW_CONTRACT"},
     // { name: "Institution License Requests", icon: <Receipt color={"primary"}/>, path: "/orgAdmin/requests", permission: "CAN_VIEW_REQUEST"},
     // { name: "Software License Requests", icon: <Computer color={"primary"}/>, path: "/orgAdmin/softwareRequests", permission: "CAN_VIEW_SOFTWARE_LICENSE_REQUEST"},
     // { name: "License Status Renewal", icon: <Computer color={"primary"}/>, path: "/orgAdmin/recordedLicense", permission: "CAN_VIEW_RECORDED_LICENSE"},
     { name: "Certificates", icon: <LibraryBooks color={"primary"}/>, path: "/orgAdmin/certificates", permission: "CAN_VIEW_CERTIFICATES"},
-    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
+/*    { name: "Reports", icon: <AssessmentOutlined color={"primary"}/>, path: "/orgAdmin/reports", permission: "CAN_VIEW_REPORT",
         submenu:[
             { name: 'Certificate', path: '/orgAdmin/reports/certificate'},
             { name: 'Component', path: '/orgAdmin/reports/component'},
@@ -193,7 +208,7 @@ const menus = [
             // { name: "Approved Licenses ", path: "/orgAdmin/reports"},
             // { name: "Expiration Report", path: "/orgAdmin/expirationReport"}
         ]
-    }
+    }*/
 ];
 
 const menus2 = [
@@ -293,8 +308,12 @@ function OrgAdminHome(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
+/*
         getCertificateReminders(accData.access_token,accData?.user?.department?.id);
+*/
+/*
         getContractsReminders(accData.access_token,accData?.user?.department?.id);
+*/
 
     }, []);
     const handleMenu = (event) => {
@@ -308,7 +327,7 @@ function OrgAdminHome(props) {
     const handleDrawerToggle = () => {
       setMobileOpen(!mobileOpen);
     };
-
+/*
     //CERTIFICATE REMINDERS
        const getCertificateReminders = (token,id)=>{
            const reminderInstance = axios.create(new BackendService().getHeaders(token));
@@ -324,9 +343,9 @@ function OrgAdminHome(props) {
                    setRemindersCount(0);
                    setReminders([]);
                });
-       };
+       };*/
     //CONTRACT REMINDERS
-    const getContractsReminders = (token,id)=>{
+/*    const getContractsReminders = (token,id)=>{
         const contractsReminderInstance = axios.create(new BackendService().getHeaders(token));
         contractsReminderInstance
             .get(`${new BackendService().CONTRACT}/reminders/department/${id}`)
@@ -340,7 +359,7 @@ function OrgAdminHome(props) {
                 setContractRemindersCount(0);
                 setContractReminders([]);
             });
-    };
+    };*/
 
 
 

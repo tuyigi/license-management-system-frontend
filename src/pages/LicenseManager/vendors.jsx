@@ -232,7 +232,7 @@ function Vendors(props) {
         },
         {
           name: "vendor_name",
-          label: "Vendor Name",
+          label: "Name",
           options: {
             filter: false,
             sort: true,

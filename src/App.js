@@ -8,6 +8,7 @@ import { MuiThemeProvider } from '@material-ui/core/styles'
 import { Button, Snackbar } from '@material-ui/core'
 import Translator from './translator.jsx'
 import { LocalizeProvider } from "react-localize-redux";
+import axios from "axios";
 
 require('typeface-lato')
 
@@ -19,7 +20,7 @@ function App() {
 
   useEffect(() =>
   {
-  
+
     const t = window.localStorage.getItem("theme")
     if (t != null) {
       setTheme(t)

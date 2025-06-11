@@ -699,7 +699,6 @@ function ContractDetails(props) {
                 "expire_date" : endDate.value,
                 "metrics": metricsV.value,
             }
-
             contractInstance
                 .put(`${new BackendService().CONTRACT}/addSystemTool/${contractDetails.id}/${systemTool.value}`, data)
                 .then(function (response) {

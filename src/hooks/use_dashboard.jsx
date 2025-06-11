@@ -215,9 +215,7 @@ export function useTotalCertificateDepartmentStats() {
     const [certificateStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        if (certificateStats.data == null) {
-            getCertificateStats(accountData.token,accountData.user.department.id);
-        }
+            getCertificateStats(accountData.token,accountData?.user?.department?.id);
     }, [certificateStats]);
 
     const getCertificateStats = (token,id) => {
@@ -259,7 +257,7 @@ export function useTotalContractDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (contractStats.data == null) {
-            getContractStats(accountData.token,accountData.user.department.id);
+            getContractStats(accountData.token,accountData?.user?.department.id);
         }
     }, [contractStats]);
 
@@ -303,7 +301,7 @@ export function useSystemToolStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (systemStats.data == null) {
-            getSystemStats(accountData.token,accountData.user.department.id);
+            getSystemStats(accountData.token,accountData?.user?.department.id);
         }
     }, [systemStats]);
 
@@ -347,7 +345,7 @@ export function usePaymentStatusContractDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (paymentStatusStats.data == null) {
-            getPaymentStatusStats(accountData.token,accountData.user.department.id);
+            getPaymentStatusStats(accountData.token,accountData?.user?.department.id);
         }
     }, [paymentStatusStats]);
 
@@ -447,7 +445,7 @@ export function useVendorPaymentDeparmentsStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (vendorPaymentDeparmentsStats.data == null) {
-            getVendorPaymentDeparmentsStats(accountData.token, accountData.user.department.id, accountData.user.id);
+            getVendorPaymentDeparmentsStats(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
         }
     }, [vendorPaymentDeparmentsStats]);
 
@@ -497,27 +495,24 @@ export function useLicenseContractsData() {
     useEffect(() => {
         const accountData = new BackendService().accountData;
         if (!licenseContractsStats.data) {
-            getLicenseContractsData(accountData.token, accountData.user.department.id, accountData.user.id);
+            getLicenseContractsData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
         }
     }, [licenseContractsStats]);
 
     const getLicenseContractsData = (token, departmentId, userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().CONTRACT}/department/${departmentId}`;
+        const url = `${new BackendService().CONTRACT}/tool/expiration/${departmentId}`;
 
         dInstance.get(url)
             .then(response => {
-                const rawData = response.data?.data || [];
-                const approvedLicenses = rawData.filter(da => da.approval_status === "APPROVED");
-                const formatted = approvedLicenses.map(da => ({
+                const rawData = response.data?.data?.toolsExpiration || [];
+                console.log('TOOLS EXPIRATION', rawData);
+                const formatted = rawData.map(da => ({
                     ...da,
                     start_date: format(new Date(da.start_date), 'yyyy/MM/dd'),
                     end_date: format(new Date(da.end_date), 'yyyy/MM/dd'),
-                    vendor: da.vendor.vendor_name,
-                    department_name: da.department.name,
-                    annual_license_fees: `${da.currency} ${da.annual_license_fees}`
+                    system_tool_name: da.system_tool_name,
                 }));
-
                 setData({
                     data: formatted,
                     status: formatted.length === 0 ? "empty" : "success"
@@ -551,7 +546,7 @@ export function useCertificatesData() {
 
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getCertificatesData(accountData.token, accountData.user.department.id, accountData.user.id);
+        getCertificatesData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
     }, []);
 
     const getCertificatesData = (token, departmentId, userId) => {
@@ -599,7 +594,7 @@ export function useContractToolsOptimizationData() {
 
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getToolsOptimizationData(accountData.token, accountData.user.department.id, accountData.user.id);
+        getToolsOptimizationData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
     }, []);
 
     const getToolsOptimizationData = (token, departmentId, userId) => {

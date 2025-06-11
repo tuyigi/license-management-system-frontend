@@ -258,7 +258,7 @@ function SystemTool(props) {
     // notify
 
     const notify = (variant, msg, status) => {
-        if (status == 401) {
+        if (status === 401) {
             history.push("/", { expired: true });
         }
         enqueueSnackbar(msg, {
@@ -573,39 +573,21 @@ function SystemTool(props) {
                             {loading ? 'Uploading...' : 'Upload System Tools'}
                         </Button>
                     </label>
-
-                    {/*{loading && (*/}
-                    {/*    <CircularProgress*/}
-                    {/*        size={100}*/}
-                    {/*        sx={{*/}
-                    {/*            position: 'absolute',*/}
-                    {/*            top: '50%',*/}
-                    {/*            left: '50%',*/}
-                    {/*            marginTop: '-20px',*/}
-                    {/*            marginLeft: '-12px',*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-
-                    {/*{fileName && (*/}
-                    {/*    <Typography variant="body2" color="textSecondary">*/}
-                    {/*        Selected file: {fileName}*/}
-                    {/*    </Typography>*/}
-                    {/*)}*/}
+                    <Button
+                        className={classes.btn}
+                        sx={{ width: '200px', height: '48px', minWidth: 'unset' }}
+                        color="primary"
+                        variant="contained"
+                        size="medium"
+                        startIcon={<Add />}
+                        disableElevation
+                        onClick={() => setAddNewOpen(true)}
+                    >
+                        New System/Tool
+                    </Button>
                 </Box>
-                <Button
-                    className={classes.btn}
-                    color="primary"
-                    variant="contained"
-                    size="medium"
-                    startIcon={<Add/>}
-                    disableElevation
-                    onClick={() => {
-                        setAddNewOpen(true);
-                    }}
-                >
-                    New System/Tool
-                </Button>
+
+
             </Box>
             <Box style={{marginTop: 20}}/>
 

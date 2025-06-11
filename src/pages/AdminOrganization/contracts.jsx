@@ -57,7 +57,7 @@ import {BackendService} from "../../utils/web_config";
 import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
 import {Autocomplete} from "@material-ui/lab";
-import {useDepartments, useLicenses, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
+import {useDepartments, useEnabledVendors, useLicenses, useSystemTools, useVendorLicense} from "../../hooks/use_hooks";
 import {format} from "date-fns/esm";
 import DateFnsUtils from '@date-io/date-fns';
 import {
@@ -82,7 +82,7 @@ function Contracts(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
-    const vendors = useVendorLicense();
+    const vendors = useEnabledVendors();
     const departments = useDepartments();
     const systemTools = useSystemTools();
     const [addNewOpen, setAddNewOpen] = useState(false);
@@ -99,10 +99,9 @@ function Contracts(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
-        console.log('accData',accData.user.department.id);
         setAccountData(accData);
-        setDepartment({ value: accData.user.department.id, error: ''});
-        getContracts(accData.access_token, accData.user.department.id);
+        setDepartment({ value: accData?.user?.department.id, error: ''});
+        getContracts(accData.access_token, accData?.user?.department.id);
     }, [])
 
     const [status, setStatus] = useState("No contracts requests available....");
@@ -342,7 +341,8 @@ function Contracts(props) {
     // notify
 
     const notify = (variant, msg, status) => {
-        if (status == 401) {
+        console.log('****notify', variant, msg, status);
+        if (status === 401) {
             history.push("/", { expired: true });
         }
         enqueueSnackbar(msg, {
@@ -368,6 +368,7 @@ function Contracts(props) {
     const openEditStatus = Boolean(anchorElStatus);
     const idStatus = openEditStatus ? 'simple-popover' : undefined;
     const [contractId, setContractId] = useState({ value: '', error: ''});
+    const [selectedContract, setSelectedContract] = useState(null);
     const handleEditCloseStatus = () => {
         setAnchorElStatus(null);
     };
@@ -623,6 +624,66 @@ function Contracts(props) {
         //         }
         //     },
         // },
+        {
+            name: "id",
+            label: "Actions",
+            options: {
+                filter: false,
+                sort: false,
+                empty: true,
+
+                customBodyRenderLite: (dataIndex) => {
+                    const obj = contracts.data[dataIndex];
+                    return (
+                        <Box
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ display: "flex", alignItems: "center" }}
+                        >
+                            <IconButton
+                                aria-label="actions"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setContractId(obj?.id);
+                                    setSelectedContract(obj);
+                                    handleEditOpenStatus(e);
+                                }}
+                            >
+                                <MoreVert />
+                            </IconButton>
+
+                            <Popover
+                                anchorEl={anchorElStatus}
+                                open={openEditStatus}
+                                onClose={handleEditCloseStatus}
+                                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                                transformOrigin={{ vertical: "top", horizontal: "center" }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Box p={2}>
+                                    <List>
+                                        <ListItem
+                                            button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setStatusRenewalOpen(true);
+                                                handleEditCloseStatus();
+                                            }}
+                                        >
+                                            <ListItemIcon>
+                                                <Payment />
+                                            </ListItemIcon>
+                                            <ListItemText primary="Renewal" />
+                                        </ListItem>
+                                    </List>
+                                </Box>
+                            </Popover>
+                        </Box>
+                    );
+                },
+
+            },
+        }
+
     ];
 
     const options = {
@@ -1307,7 +1368,7 @@ function Contracts(props) {
                 }}
             >
                 <DialogTitle id="new-op">
-                    License Renewal
+                    Contract Renewal
                 </DialogTitle>
                 <DialogContent>
 
@@ -1750,65 +1811,25 @@ function Contracts(props) {
                             component="span"
                             disabled={loading}
                             startIcon={<Publish />}
-
                         >
-
                             {loading ? 'Uploading...' : 'Upload License Contracts'}
                         </Button>
                     </label>
-
-                    {/*{loading && (*/}
-                    {/*    <CircularProgress*/}
-                    {/*        size={100}*/}
-                    {/*        sx={{*/}
-                    {/*            position: 'absolute',*/}
-                    {/*            top: '50%',*/}
-                    {/*            left: '50%',*/}
-                    {/*            marginTop: '-20px',*/}
-                    {/*            marginLeft: '-12px',*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-
-                    {/*{fileName && (*/}
-                    {/*    <Typography variant="body2" color="textSecondary">*/}
-                    {/*        Selected file: {fileName}*/}
-                    {/*    </Typography>*/}
-                    {/*)}*/}
+                    <Button
+                        className={classes.btn}
+                        color="primary"
+                        variant="contained"
+                        size="medium"
+                        startIcon={<Add />}
+                        disableElevation
+                        onClick={() => {
+                            setAddNewOpen(true);
+                        }}
+                    >
+                        New Contract
+                    </Button>
                 </Box>
 
-
-                {/*                <input
-                    type="file"
-                    accept=".xlsx, .xls"
-                    ref={inputRef}
-                    style={{display: 'none'}}
-                    onChange={handleFileChange}
-                />
-                <Button
-                    className={classes.btn}
-                    variant="contained"
-                    color="primary"
-                    size="medium"
-                    startIcon={<Publish/>}
-
-                    onClick={handleButtonClick}
-                >
-                    Upload License Contracts
-                </Button>*/}
-                <Button
-                    className={classes.btn}
-                    color="primary"
-                    variant="contained"
-                    size="medium"
-                    startIcon={<Add />}
-                    disableElevation
-                    onClick={() => {
-                        setAddNewOpen(true);
-                    }}
-                >
-                    New Contract
-                </Button>
             </Box>
             <Box style={{marginTop: 20}} />
             {contracts.loading && <LinearProgress />}
