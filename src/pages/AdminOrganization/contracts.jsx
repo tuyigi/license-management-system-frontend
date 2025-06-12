@@ -115,7 +115,7 @@ function Contracts(props) {
                 console.log('*********', response);
                 const d = response.data;
                 if (d.data.length == 0) {
-                    setStatus("There are no license requests available.");
+                    setStatus("There are no contract requests available.");
                 } else {
                     var lcs = d.data;
                     lcs.map((da)=>{
@@ -159,6 +159,8 @@ function Contracts(props) {
     const [contractNumber, setContractNumber] = useState({ value: null, error: ""});
     const [systemUsers, setSystemUsers] = useState({ value: 0, error: ""});
     const [department, setDepartment] = useState({ value: '', error: ''});
+    const [contractId,setContractId]= useState(null);
+
 
 
     const onLicensePeriodChange = (event) => {
@@ -332,7 +334,7 @@ function Contracts(props) {
     // clear data
 
     const clearContractInfo = () => {
-        setLicenseId({value: "", error: ""});
+        setContractId({value: "", error: ""});
         setPaymentFrequency({value: "", error: ""});
         setAnnualLicenseFees({value: "", error: ""});
         setDescription({value: "", error: ""});
@@ -367,7 +369,6 @@ function Contracts(props) {
     };
     const openEditStatus = Boolean(anchorElStatus);
     const idStatus = openEditStatus ? 'simple-popover' : undefined;
-    const [contractId, setContractId] = useState({ value: '', error: ''});
     const [selectedContract, setSelectedContract] = useState(null);
     const handleEditCloseStatus = () => {
         setAnchorElStatus(null);
@@ -939,6 +940,55 @@ function Contracts(props) {
                 });
         }
     }
+
+    const ContractRenewal=()=>{
+        const contractRenewalInstance = axios.create(new BackendService().getHeaders(accountData.access_token));
+        const data = {
+            "contract_number" : contractNumber.value,
+            "vendor" : vendor.value,
+            "document_link" : "",
+            "description": description.value,
+            "start_date": startDate.value,
+            "end_date": endDate.value,
+            "annual_license_fees": parseFloat(annualLicenseFees.value),
+            "currency" : currency.value,
+            "department": parseInt(department.value),
+            "number_system_users": parseInt(systemUsers.value),
+            "user": accountData?.user?.id,
+            "payment_frequency": paymentFrequency.value,
+        }
+        console.log('contractRenewalInstance', data);
+        contractRenewalInstance
+            .put( `${new BackendService().CONTRACT}/${contractId}`, data )
+            .then(function (response) {
+                notify("success", response.data.message);
+                setStatusRenewalOpen(false);
+                getContracts(accountData.access_token, accountData.user.department.id);
+            })
+            .catch(function (error) {
+                var e = error.message;
+                if (error.response) {
+                    e = error.response.data.message;
+                }
+                notify(error?.response?.status === 404 ? "info" : "error", e, error?.response?.status);
+            });
+    }
+    useEffect(() => {
+        if (statusRenewalOpen && selectedContract) {
+            setVendor({ value: selectedContract.vendor || "", error: "" });
+            setContractNumber({ value: selectedContract.contract_number || "", error: "" });
+            setDescription({ value: selectedContract.description || "", error: "" });
+            setVendor({ value: selectedContract.vendor?.id || "", error: "" });
+            setSystemTool({ value: selectedContract.system_tool?.id || "", error: "" });
+            setAnnualLicenseFees({ value: selectedContract.license_fees || "", error: "" });
+            setStartDate({ value: selectedContract.start_date || "", error: "" });
+            setEndDate({ value: selectedContract.end_date || "", error: "" });
+            setCurrency({ value: selectedContract.currency || "", error: "" });
+            setPaymentFrequency({ value: selectedContract.payment_frequency || "", error: "" });
+            setSystemUsers({ value: selectedContract.number_system_users || "", error: "" });
+        }
+    }, [statusRenewalOpen, selectedContract]);
+
     /*
     UPLOAD CONTRACT
      */
@@ -1176,6 +1226,8 @@ function Contracts(props) {
                             >
                                 <MenuItem value="MONTH">Monthly</MenuItem>
                                 <MenuItem value="YEAR">Yearly</MenuItem>
+                                <MenuItem value="QUARTER">Quarterly</MenuItem>
+                                <MenuItem value="MIDYEAR">Mid-Year</MenuItem>
                             </Select>
                             <FormHelperText>{paymentFrequency.error}</FormHelperText>
                         </FormControl>
@@ -1358,7 +1410,7 @@ function Contracts(props) {
             </Dialog>
 
 
-            {/*start renewal license status dialog*/}
+            {/*start renewal contract status dialog*/}
             <Dialog
                 open={statusRenewalOpen}
                 maxWidth="sm"
@@ -1371,26 +1423,117 @@ function Contracts(props) {
                     Contract Renewal
                 </DialogTitle>
                 <DialogContent>
+                    <Box style={{marginTop: 10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    disabled
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={vendor.value|| ""}
+                                    placeholder={vendor.value|| ""}
+                                    label={"Vendor"}
+                                    fullWidth
+                                    onChange={onVendorChange}
+                                    helperText={vendor.error}
+                                    error={vendor.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+
+                    <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    disabled
+                                    type={'text'}
+                                    value={contractNumber.value}
+                                    placeholder={"Contract Number"}
+                                    label={"Contract Number"}
+                                    fullWidth
+                                    onChange={onContractNumberChange}
+                                    helperText={contractNumber.error}
+                                    error={contractNumber.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
+
+                    <Box style={{marginTop: 10}}>
+
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    disabled
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    value={systemTool.value || ""}
+                                    placeholder={systemTool.value || ""}
+                                    label={"System/Tool"}
+                                    fullWidth
+                                    onChange={onSystemToolsChange}
+                                    helperText={systemTool.error}
+                                    error={systemTool.error !== ""}
+                                />
+                            )}
+                        </Translate>
+                    </Box>
 
                     <Box style={{marginTop: 10}}>
                         <Autocomplete
                             fullWidth
+                            disabled={true}
                             openOnFocus
-                            options={paymentPeriods}
-                            getOptionLabel={(option) => `${format(new Date(option.start_period),["yyyy-MM-dd"])} - ${format(new Date(option.end_period),["yyyy-MM-dd"])}`}
-                            onChange={onPaymentPeriodIdChange}
+                            defaultValue={departments[departments.findIndex((o)=>o.id==accountData.user.department.id)]}
+                            options={departments}
+                            getOptionLabel={(option) => option.name}
+                            onChange={onDepartmentChange}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
                                     fullWidth
-                                    label={"Period"}
+                                    label={"Department"}
                                     variant="outlined"
                                     size="small"
-                                    helperText={paymentPeriodId.error}
-                                    error={paymentPeriodId.error !== ""}
+                                    helperText={department.error}
+                                    error={department.error !== ""}
                                 />
                             )}
                         />
+                    </Box>
+
+
+                    <Box style={{marginTop: 10}}>
+                        <FormControl
+                            className={classes.formControl}
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            error={paymentFrequency.error !== ""}
+                        >
+                            <InputLabel id="type">
+                                Payment Frequency
+                            </InputLabel>
+                            <Select
+                                label={"Payment Frequency"}
+                                value={paymentFrequency.value}
+                                onChange={onLicensePeriodChange}
+                            >
+                                <MenuItem value="MONTH">Monthly</MenuItem>
+                                <MenuItem value="YEAR">Yearly</MenuItem>
+                                <MenuItem value="QUARTER">Quarterly</MenuItem>
+                                <MenuItem value="MIDYEAR">Mid-Year</MenuItem>
+                            </Select>
+                            <FormHelperText>{paymentFrequency.error}</FormHelperText>
+                        </FormControl>
                     </Box>
 
                     <Box style={{marginTop:10}}>
@@ -1398,72 +1541,127 @@ function Contracts(props) {
                             {({ translate }) => (
                                 <TextField
                                     required
-                                    disabled={true}
                                     size="small"
                                     variant="outlined"
                                     color="primary"
                                     type={'number'}
-                                    value={cost.value}
-                                    placeholder={"Cost"}
-                                    label={"Cost"}
+                                    value={annualLicenseFees.value}
+                                    placeholder={"Annual License Fees"}
+                                    label={"Annual License Fees"}
                                     fullWidth
-                                    // onChange={onLicensePeriodCountChange}
-                                    helperText={cost.error}
-                                    error={cost.error !== ""}
+                                    onChange={onAnnualLicenseFeeChange}
+                                    helperText={annualLicenseFees.error}
+                                    error={annualLicenseFees.error !== ""}
                                 />
                             )}
                         </Translate>
                     </Box>
-                    <Grid container spacing={2}>
-                        <Grid item lg={6} sm={6} xs={6}>
-                            <Box style={{marginTop:10}}>
-                                <KeyboardDatePicker
-                                    fullWidth
-                                    disableToolbar
+                    <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    required
+                                    size="small"
                                     variant="outlined"
-                                    format="MM/dd/yyyy"
-                                    margin="normal"
-                                    // label="Start Date"
-                                    value={startDate.value}
-                                    onChange={(v)=>{
-                                        if(v=="Invalid Date" || v==null){
-                                            setStartDate({value: '',error:v});
-                                        }else{
-                                            setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
-                                        }
-                                    }}
-                                    KeyboardButtonProps={{
-                                        'aria-label': 'change date',
-                                    }}
-                                />
-                            </Box>
-                        </Grid>
-                        <Grid item lg={6} sm={6} xs={6}>
-                            <Box style={{marginTop:10}}>
-                                <KeyboardDatePicker
+                                    color="primary"
+                                    type={'number'}
+                                    value={systemUsers.value}
+                                    placeholder={"System Users"}
+                                    label={"System Users"}
                                     fullWidth
-                                    disableToolbar
-                                    variant="outlined"
-                                    format="MM/dd/yyyy"
-                                    margin="normal"
-                                    // label="End Date"
-                                    value={endDate.value}
-                                    onChange={(v)=>{
-                                        if(v=="Invalid Date" || v==null){
-                                            setEndDate({value: '',error:v});
-                                        }else{
-                                            setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
-                                        }
-                                    }}
-                                    KeyboardButtonProps={{
-                                        'aria-label': 'change date',
-                                    }}
+                                    onChange={onSystemUsersChange}
+                                    helperText={systemUsers.error}
+                                    error={systemUsers.error !== ""}
                                 />
-                            </Box>
-                        </Grid>
-                    </Grid>
+                            )}
+                        </Translate>
+                    </Box>
+                    <Box style={{marginTop: 10}}>
+                        <FormControl
+                            className={currency.formControl}
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            error={currency.error !== ""}
+                        >
+                            <InputLabel id="type">
+                                Currency
+                            </InputLabel>
+                            <Select
+                                label={"Currency"}
+                                value={currency.value}
+                                onChange={onCurrencyChange}
+                            >
+                                <MenuItem value="USD">USD</MenuItem>
+                                <MenuItem value="RWF">RWF</MenuItem>
+                                <MenuItem value="EURO">EURO</MenuItem>
+                            </Select>
+                            <FormHelperText>{currency.error}</FormHelperText>
+                        </FormControl>
+                    </Box>
+                    <Box style={{marginTop:10}}>
+                        <KeyboardDatePicker
+                            fullWidth
+                            disableToolbar
+                            variant="outlined"
+                            format="MM/dd/yyyy"
+                            margin="normal"
+                            label="Start Date"
+                            value={startDate.value}
+                            onChange={(v)=>{
+                                if(v=="Invalid Date" || v==null){
+                                    setStartDate({value: '',error:v});
+                                }else{
+                                    setStartDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                }
 
+                            }}
+                            KeyboardButtonProps={{
+                                'aria-label': 'change date',
+                            }}
+                        />
+                    </Box>
 
+                    <Box style={{marginTop:10}}>
+                        <KeyboardDatePicker
+                            fullWidth
+                            disableToolbar
+                            variant="outlined"
+                            format="MM/dd/yyyy"
+                            margin="normal"
+                            label="End Date"
+                            value={endDate.value}
+                            onChange={(v)=>{
+                                if(v=="Invalid Date" || v==null){
+                                    setEndDate({value: '',error:v});
+                                }else{
+                                    setEndDate({value: format(v,["yyyy-MM-dd"]),error:""});
+                                }
+                            }}
+                            KeyboardButtonProps={{
+                                'aria-label': 'change date',
+                            }}
+                        />
+                    </Box>
+                    {/* <Box style={{marginTop:10}}>
+                        <Translate>
+                            {({ translate }) => (
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    type="file"
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        setDocumentLink({ value: file, error: "" });
+                                    }}
+                                    label="Document Upload"
+                                />
+                            )}
+                        </Translate>
+                    </Box>*/}
 
                     <Box style={{marginTop:10}}>
                         <Translate>
@@ -1486,34 +1684,7 @@ function Contracts(props) {
                             )}
                         </Translate>
                     </Box>
-                    <Box style={{marginTop:10}}>
-                        <FormControlLabel
-                            control={<Switch   checked={isPaid} onChange={(v) => {
-                                setIsPaid(v.target.checked);
-                            }} value="vertical" color="primary"/>} label={"Is payment paid?"}/>
-                    </Box>
-                    {isPaid&&<Box style={{marginTop:10}}>
-                        <Translate>
-                            {({ translate }) => (
-                                <TextField
-                                    required
-                                    size="small"
-                                    variant="outlined"
-                                    color="primary"
-                                    type={'text'}
-                                    value={paymentReference.value}
-                                    placeholder={"Payment Reference"}
-                                    label={"Payment Reference"}
-                                    fullWidth
-                                    onChange={onPaymentReferenceChanged}
-                                    helperText={paymentReference.error}
-                                    error={paymentReference.error !== ""}
-                                />
-                            )}
-                        </Translate>
-                    </Box>}
                 </DialogContent>
-
                 <DialogActions>
                     <Button
                         onClick={() => {
@@ -1525,13 +1696,13 @@ function Contracts(props) {
                         Cancel
                     </Button>
                     <Button
-                        disabled={licenses.saving}
+                        disabled={contracts.saving}
                         variant="contained"
                         color="primary"
-                        onClick={()=>{ addLicense() }}
+                        onClick={()=>{ ContractRenewal() }}
                         disableElevation
                     >
-                        {licenses.saving ? (
+                        {contracts.saving ? (
                             <CircularProgress size={23} />
                         ) : (
                             "Save"
@@ -1583,12 +1754,28 @@ function Contracts(props) {
                 <DialogActions>
                     <Button
                         onClick={() => {
-                            setShowReport(false);
+                            setStatusRenewalOpen(false);
+                            handleEditCloseStatus();
+                            setContractId(null);
+                            setSelectedContract(null);
                         }}
                         variant="outlined"
                         color="primary"
                     >
-                        Close
+                        Cancel
+                    </Button>
+                    <Button
+                        disabled={contracts.saving}
+                        variant="contained"
+                        color="primary"
+                        onClick={()=>{ ContractRenewal() }}
+                        disableElevation
+                    >
+                        {contracts.saving ? (
+                            <CircularProgress size={23} />
+                        ) : (
+                            "Save"
+                        )}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -525,7 +525,7 @@ function Certificates(props) {
             "description": description.value,
             "user_organization": userOrganization.value,
             "issue_date": startDate.value,
-            "expiry_date": endDate.value,
+            "expiration_date": endDate.value,
             "certificate_type": certificateType.value,
             "department_id": department.value,
         };
