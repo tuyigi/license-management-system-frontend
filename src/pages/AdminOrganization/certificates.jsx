@@ -81,8 +81,8 @@ function Certificates(props) {
         var accData = new BackendService().accountData;
         setAccountData(accData);
         console.log('accData',accData)
-        getCertificates(accData.access_token,accData?.user?.department?.id);
-        setDepartment({ value: accData?.user?.department?.id, error: ''});
+        getCertificates(accData.access_token,accData.user.department.id);
+        setDepartment({ value: accData.user.department.id, error: ''});
     }, [])
 
     const [status, setStatus] = useState("No certificates requests available....");
@@ -191,7 +191,7 @@ function Certificates(props) {
             certificate_name: certificateName.value,
             user_organization: userOrganization.value,
             description: description.value,
-            department_id: parseInt(accountData?.user?.department?.id),
+            department_id: parseInt(accountData.user.department.id),
             issue_date: startDate.value,
             expiration_date: endDate.value,
             certificate_type: certificateType.value

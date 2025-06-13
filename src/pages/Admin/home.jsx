@@ -230,9 +230,17 @@ function BnrHome(props) {
     const [openMenu, setOpenMenu] = useState("none");
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
-        var accData = new BackendService().accountData;
-        setAccountData(accData);
+        const accData = new BackendService().accountData;
+
+        if (!accData || !accData.user_type) return; // Wait until data is ready
+
+        if (accData.user_type !== "SUPER_ADMIN") {
+            history.replace('/');
+        } else {
+            setAccountData(accData);
+        }
     }, []);
+
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
     };

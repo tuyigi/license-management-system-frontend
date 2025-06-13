@@ -188,7 +188,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}} ><Typography variant="h8"><b>Certificates</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{certificateStats?.data?.total_certificates||0}</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{certificateStats.data.total_certificates||0}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>

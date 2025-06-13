@@ -100,8 +100,8 @@ function Contracts(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        setDepartment({ value: accData?.user?.department.id, error: ''});
-        getContracts(accData.access_token, accData?.user?.department.id);
+        setDepartment({ value: accData.user.department.id, error: ''});
+        getContracts(accData.access_token, accData.user.department.id);
     }, [])
 
     const [status, setStatus] = useState("No contracts requests available....");
@@ -954,12 +954,12 @@ function Contracts(props) {
             "currency" : currency.value,
             "department": parseInt(department.value),
             "number_system_users": parseInt(systemUsers.value),
-            "user": accountData?.user?.id,
+            "user": accountData.user.id,
             "payment_frequency": paymentFrequency.value,
         }
         console.log('contractRenewalInstance', data);
         contractRenewalInstance
-            .put( `${new BackendService().CONTRACT}/${contractId}`, data )
+            .put( `${new BackendService().CONTRACT}/${contractId.value}`, data )
             .then(function (response) {
                 notify("success", response.data.message);
                 setStatusRenewalOpen(false);

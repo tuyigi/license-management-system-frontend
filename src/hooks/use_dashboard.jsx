@@ -23,7 +23,7 @@ export function useGeneralStats() {
         if (generalStatsData.data == null) {
             getGeneralStats(accountData.token);
         }
-    }, [generalStatsData]);
+    }, []);
 
     const getGeneralStats = (token) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -63,7 +63,7 @@ export function useOrganizationTypeStats() {
         if (organizationTypeStats.data == null) {
             getOrganizationTypeStats(accountData.token);
         }
-    }, [organizationTypeStats]);
+    }, []);
 
     const getOrganizationTypeStats = (token) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -112,7 +112,7 @@ export function useLicenseRequestStatusStats() {
         if (licenseRequestStatusStats.data == null) {
             getLicenseRequestStatusStats(accountData.token);
         }
-    }, [licenseRequestStatusStats]);
+    }, []);
 
     const getLicenseRequestStatusStats = (token) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -161,7 +161,6 @@ export function useOrganizationLicenseRequestStatusStats() {
     const [licenseRequestStatusStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        console.log(accountData.user);
        /* if (licenseRequestStatusStats.data == null) {
             getLicenseRequestStatusStats(accountData.token,accountData.user.organization_id.id);
         }*/
@@ -215,12 +214,12 @@ export function useTotalCertificateDepartmentStats() {
     const [certificateStats, setData] = useState({status: "loading" });
     useEffect(() => {
         var accountData = new BackendService().accountData;
-            getCertificateStats(accountData.token,accountData?.user?.department?.id);
-    }, [certificateStats]);
+            getCertificateStats(accountData.token,accountData.user.department.id);
+    }, []);
 
     const getCertificateStats = (token,id) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().REPORT}/certificatesDepartment/${id}`;
+        const url = `${new BackendService().REPORT}/certificateNo/${id}`;
         dInstance
             .get(url)
             .then(function (response) {
@@ -257,9 +256,9 @@ export function useTotalContractDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (contractStats.data == null) {
-            getContractStats(accountData.token,accountData?.user?.department.id);
+            getContractStats(accountData.token,accountData.user.department.id);
         }
-    }, [contractStats]);
+    }, []);
 
     const getContractStats = (token,id) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -301,9 +300,9 @@ export function useSystemToolStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (systemStats.data == null) {
-            getSystemStats(accountData.token,accountData?.user?.department.id);
+            getSystemStats(accountData.token,accountData.user.department.id);
         }
-    }, [systemStats]);
+    }, []);
 
     const getSystemStats = (token,id) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -345,9 +344,9 @@ export function usePaymentStatusContractDepartmentStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (paymentStatusStats.data == null) {
-            getPaymentStatusStats(accountData.token,accountData?.user?.department.id);
+            getPaymentStatusStats(accountData.token,accountData.user.department.id);
         }
-    }, [paymentStatusStats]);
+    }, []);
 
     const getPaymentStatusStats = (token,id) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -392,7 +391,7 @@ export function useApprovedLicenseTypeStats() {
         if (approvedLicenseRequestStats.data == null) {
             getApprovedLicenseTypeStats(accountData.token);
         }
-    }, [approvedLicenseRequestStats]);
+    }, []);
 
     const getApprovedLicenseTypeStats = (token) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -445,9 +444,9 @@ export function useVendorPaymentDeparmentsStats() {
     useEffect(() => {
         var accountData = new BackendService().accountData;
         if (vendorPaymentDeparmentsStats.data == null) {
-            getVendorPaymentDeparmentsStats(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
+            getVendorPaymentDeparmentsStats(accountData.token, accountData.user.department.id, accountData.user.id);
         }
-    }, [vendorPaymentDeparmentsStats]);
+    }, []);
 
     const getVendorPaymentDeparmentsStats = (token, departmentId, userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -495,9 +494,9 @@ export function useLicenseContractsData() {
     useEffect(() => {
         const accountData = new BackendService().accountData;
         if (!licenseContractsStats.data) {
-            getLicenseContractsData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
+            getLicenseContractsData(accountData.token, accountData.user.department.id, accountData.user.id);
         }
-    }, [licenseContractsStats]);
+    }, []);
 
     const getLicenseContractsData = (token, departmentId, userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
@@ -546,7 +545,7 @@ export function useCertificatesData() {
 
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getCertificatesData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
+        getCertificatesData(accountData.token, accountData.user.department.id, accountData.user.id);
     }, []);
 
     const getCertificatesData = (token, departmentId, userId) => {
@@ -594,7 +593,7 @@ export function useContractToolsOptimizationData() {
 
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getToolsOptimizationData(accountData.token, accountData?.user?.department.id, accountData?.user?.id);
+        getToolsOptimizationData(accountData.token, accountData.user.department.id, accountData.user.id);
     }, []);
 
     const getToolsOptimizationData = (token, departmentId, userId) => {

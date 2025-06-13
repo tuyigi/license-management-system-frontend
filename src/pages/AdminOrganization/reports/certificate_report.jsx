@@ -59,7 +59,7 @@ function CertificateReport(props) {
         var accData = new BackendService().accountData;
         console.log('accData',accData);
         setAccountData(accData);
-        getLicenses(accData.access_token, new Date().getFullYear(),accData?.user?.id);
+        getLicenses(accData.access_token, new Date().getFullYear(),accData.user.id);
     }, [])
 
     const [status, setStatus] = useState("No reports available....");

@@ -72,7 +72,8 @@ function Users(props){
     useEffect(()=>{
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        getUsers(accData.access_token,accData?.user?.department.id);
+        console.log('----', accData);
+        getUsers(accData.access_token);
     },[])
     // get Users
     const getUsers = (token)=>{

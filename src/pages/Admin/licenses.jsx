@@ -101,8 +101,8 @@ function Licenses(props) {
     useEffect(() => {
         var accData = new BackendService().accountData;
         setAccountData(accData);
-        setDepartment({ value: accData?.user?.department.id, error: ''});
-        getLicenses(accData.access_token,accData?.user?.department?.id);
+        setDepartment({ value: accData.user.department.id, error: ''});
+        getLicenses(accData.access_token,accData.user.department.id);
     }, [])
 
     const [status, setStatus] = useState("No licenses available....");

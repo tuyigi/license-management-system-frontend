@@ -151,9 +151,18 @@ function LicenseDetails(props) {
 
     useEffect(() => {
         var accData = new BackendService().accountData;
+        const id = history.location.state?.id;
+
+        if (!/^\d+$/.test(id)) {
+            // Reject if id is not a number
+            notify('','invalid',400);
+            return;
+        }
+
         setAccountData(accData);
-        getLicenseDetails(accData.access_token, history.location.state.id);
+        getLicenseDetails(accData.access_token, id);
     }, []);
+
 
 
 

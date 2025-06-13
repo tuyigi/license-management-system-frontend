@@ -172,7 +172,7 @@ function RolePermission(props){
             setLoadingPriv(false);
             const d = response.data;
     
-            getPrivileges(accountData.token, selectedRole?.role?.id);
+            getPrivileges(accountData.token, selectedRole.role.id);
             setItemOver("none");
             notify("success", d.message);
           })

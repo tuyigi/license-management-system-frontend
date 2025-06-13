@@ -816,7 +816,7 @@ function ContractDetails(props) {
         const data = {
             "reminder_date": reminderDate.value,
             "description": description.value,
-            "user": accountData?.user?.id
+            "user": accountData.user.id
         }
         setReminderLoading(true);
         const reminderInstance = axios.create(
