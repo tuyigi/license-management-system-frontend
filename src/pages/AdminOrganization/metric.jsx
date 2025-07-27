@@ -32,7 +32,6 @@ import axios from "axios";
 import {BackendService} from "../../utils/web_config";
 import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
-import {useFunctions} from "../../hooks/use_hooks";
 import {Autocomplete} from "@material-ui/lab";
 
 
@@ -54,7 +53,6 @@ function Metric(props) {
     const classes = useStyles();
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
-    const functions = useFunctions();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [metrics, setMetrics] = useState({
         page: 0,
@@ -70,11 +68,10 @@ function Metric(props) {
     const [department, setDepartment] = useState({ value: '', error: ''});
     useEffect(() => {
         var accData = new BackendService().accountData;
-        console.log('accData',accData);
-        setAccountData(accData);
-        if(accData['user']!=='SUPER_ADMIN'){
-            setDepartment({ value: accData?.user?.department?.id, error: ''});
+        if(accData.user.user_type !== 'LICENSE_OWNER'){
+            history.push('/');
         }
+        setAccountData(accData);
         getMetrics(accData.access_token);
     }, [])
 
@@ -269,8 +266,6 @@ function Metric(props) {
         },
         customSearch: (searchQuery, currentRow, columns) => {
 
-            console.log(searchQuery)
-            console.log(JSON.stringify(currentRow))
 
         },
         textLabels: {

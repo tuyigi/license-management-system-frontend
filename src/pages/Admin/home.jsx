@@ -47,7 +47,7 @@ import {
     AssessmentOutlined,
     Computer,
     LocationCity,
-    WorkOutlineOutlined, ImportantDevices, Ballot
+    WorkOutlineOutlined, ImportantDevices, Ballot, Close
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
@@ -66,6 +66,7 @@ import Vendors from "../LicenseManager/vendors";
 import SystemTool from "./system_tool";
 import Departments from "./departments";
 import {BackendService} from "../../utils/web_config";
+import {useSnackbar} from "notistack";
 
 const routes = [
     {
@@ -229,17 +230,37 @@ function BnrHome(props) {
   
     const [openMenu, setOpenMenu] = useState("none");
     const [accountData, setAccountData] = useState(null);
+    const [checkingAuth, setCheckingAuth] = useState(true);
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+
     useEffect(() => {
         const accData = new BackendService().accountData;
 
-        if (!accData || !accData.user_type) return; // Wait until data is ready
-
-        if (accData.user_type !== "SUPER_ADMIN") {
-            history.replace('/');
-        } else {
-            setAccountData(accData);
+        if(accData.user.user_type !== 'SUPER_ADMIN'){
+            history.push('/');
         }
+        setAccountData(accData);
     }, []);
+
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
 
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
@@ -344,7 +365,7 @@ function BnrHome(props) {
     const container =
       window !== undefined ? () => window().document.body : undefined;
     const matches = useMediaQuery(Theme.breakpoints.up("sm"));
-  
+
     return (
       <div className={classes.root}>
         <CssBaseline />

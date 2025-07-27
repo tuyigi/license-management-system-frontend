@@ -120,6 +120,9 @@ function RolePermission(props){
 
     useEffect(()=>{
         const accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'SUPER_ADMIN'){
+            history.push('/');
+        }
         setAccountData(accData);
         getRoles(accData.access_token)
         getPrivileges(accData.access_token,0,true)
@@ -159,8 +162,6 @@ function RolePermission(props){
         );
     
         setLoadingPriv(true);
-    
-        console.log("Assigning privilege .....");
         setAnchorAssignPriv(null);
     
         const data = privs;
@@ -171,8 +172,18 @@ function RolePermission(props){
           .then(function (response) {
             setLoadingPriv(false);
             const d = response.data;
-    
-            getPrivileges(accountData.token, selectedRole.role.id);
+
+              const id = selectedRole.role.id;
+              if (!id) {
+                  notify('error', 'License ID is required', 400);
+                  return;
+              }
+
+              if (!/^\d+$/.test(id)) {
+                  notify('error', 'Invalid license ID ', 400);
+                  return;
+              }
+            getPrivileges(accountData.token, id);
             setItemOver("none");
             notify("success", d.message);
           })
@@ -263,7 +274,6 @@ function RolePermission(props){
         const usersInstance = axios.create(new BackendService().getHeaders(token));
         setRoles({ ...roles, loading: true });
         setSelectedRole("none");
-        console.log("getting roles .....");
 
         usersInstance
             .get(
@@ -293,16 +303,23 @@ function RolePermission(props){
     };
 
     // get privileges
-    const getPrivileges = (token,role_id,all = false) => {
+    const getPrivileges = (token,id,all = false) => {
+        if (!token || !id) {
+            return;
+        }
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            return;
+        }
         const privilegeInstance = axios.create(new BackendService().getHeaders(token));
         setLoadingPriv(true);
         setPrivileges([]);
         setPrivileges2([]);
-        console.log("getting privileges .....");
 
         const url =all
                 ? new BackendService().PRIVILEGE
-            : new BackendService().GET_ROLE_PRIVILEGE + role_id;
+            : new BackendService().GET_ROLE_PRIVILEGE + numericId;
 
         privilegeInstance
             .get(url)
@@ -318,7 +335,6 @@ function RolePermission(props){
                     setPrivileges2(d.data);
 
                     var diff = new Validator().difference(d.data, allPrivileges);
-                    console.log(diff.length);
                 }
             })
             .catch(function (error) {
@@ -338,7 +354,6 @@ function RolePermission(props){
             new BackendService().getHeaders()
         );
         setRoles({ ...roles, saving: true });
-        console.log("Create role .....");
         const data = {
             description: description.value,
             name: name.value,
@@ -1209,7 +1224,6 @@ function RolePermission(props){
                                         })
                                       }
                                       onClick={(e) =>{
-                                          console.log(priv);
                                           setAnchorEditPriv(e.currentTarget);
                                       }
                                       }

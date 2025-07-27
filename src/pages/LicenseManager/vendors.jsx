@@ -64,6 +64,9 @@ function Vendors(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'CONTRACT_MANAGER'){
+            history.push('/');
+        }
         setAccountData(accData);
         getVendors(accData.access_token);
     }, [])
@@ -345,9 +348,6 @@ function Vendors(props) {
         },
         customSearch: (searchQuery, currentRow, columns) => {
     
-          console.log(searchQuery)
-          console.log(JSON.stringify(currentRow))
-    
         },
         textLabels: {
           body: {
@@ -415,7 +415,6 @@ function Vendors(props) {
         uploadInstance
             .post(new BackendService().VENDOR_UPLOADS , data)
             .then((response) => {
-                console.log('Upload successful:', response.data);
                 notify("success", response.data.message || "Upload successful");
                 setTimeout(() => {
                     window.location.reload();
@@ -426,7 +425,6 @@ function Vendors(props) {
                 if (error.response) {
                     errorMessage = error.response.data.message;
                 }
-                console.log('Upload failed:', errorMessage);
                 notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
             })
             .finally(() => {

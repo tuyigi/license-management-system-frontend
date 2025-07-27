@@ -11,6 +11,19 @@ root.render(
           <App />
   </React.StrictMode>
 );
+console.warn = () => {};
+console.error = () => {};
+
+window.addEventListener('error', (event) => {
+    event.preventDefault();
+    return true;
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    return true;
+});
+
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

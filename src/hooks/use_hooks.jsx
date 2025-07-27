@@ -295,29 +295,6 @@ function useContracts() {
 
 
 
-function useFunctions() {
-  const [functions, setFunctions] = useState([]);
-
-  useEffect(() => {
-    var accountData = new BackendService().accountData;
-
-    if (functions.length === 0) {
-      getFunctions(accountData.token);
-    }
-  }, [functions]);
-
-  const getFunctions = (token) => {
-    const functionsInstance = axios.create(new BackendService().getHeaders(token));
-    functionsInstance
-        .get(new BackendService().FUNCTION)
-        .then(function (response) {
-          const d = response.data.data;
-          setFunctions(d);
-        })
-        .catch(function (error) { });
-  };
-  return functions;
-}
 
 function useDepartments() {
   const [departments, setDepartments] = useState([]);
@@ -356,7 +333,6 @@ export {
   useVendorLicense,
   useSystemTools,
   useContracts,
-  useFunctions,
   useDepartments,
   useMetric,
     useEnabledVendors,

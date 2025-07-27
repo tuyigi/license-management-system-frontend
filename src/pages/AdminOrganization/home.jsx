@@ -45,11 +45,11 @@ import {
     AccountTree,
     PeopleAltOutlined,
     AssessmentOutlined,
-    Computer, ListAlt, LibraryBooks, Equalizer, Notifications
+    Computer, ListAlt, LibraryBooks, Equalizer, Notifications, Close
 } from "@material-ui/icons";
 import { makeStyles, useTheme } from "@material-ui/styles";
 import { withLocalize } from "react-localize-redux";
-import { Link, Switch, Route, useHistory } from "react-router-dom";
+import {Link, Switch, Route, useHistory, useLocation} from "react-router-dom";
 import Dashboard from "./dashboard";
 import LicenseRequest from "./license_requests";
 import LicenseRequestReport from "./reports/report_approved_license";
@@ -71,6 +71,7 @@ import Metric from "./metric";
 import axios from "axios";
 import Licenses from "../Admin/licenses";
 import LicenseDetails from "../Admin/license_details";
+import {useSnackbar} from "notistack";
 
 
 
@@ -304,10 +305,16 @@ function OrgAdminHome(props) {
     };
 
     const open = Boolean(anchorElReminders);
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+    const location = useLocation();
     const id = open ? 'reminders-popover' : undefined;
     useEffect(() => {
         var accData = new BackendService().accountData;
-        setAccountData(accData);
+        if(accData.user.user_type !== 'LICENSE_OWNER'){
+            history.push('/');
+        }
+
 /*
         getCertificateReminders(accData.access_token,accData?.user?.department?.id);
 */
@@ -316,6 +323,25 @@ function OrgAdminHome(props) {
 */
 
     }, []);
+
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
     const handleMenu = (event) => {
       setAnchorEl(event.currentTarget);
     };

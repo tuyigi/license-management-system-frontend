@@ -79,18 +79,47 @@ function Certificates(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
-        setAccountData(accData);
-        console.log('accData',accData)
-        getCertificates(accData.access_token,accData.user.department.id);
-        setDepartment({ value: accData.user.department.id, error: ''});
+        if (accData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            setAccountData(accData);
+            getCertificates(accData.access_token, id);
+            setDepartment({value: id, error: ''});
+        }
     }, [])
 
     const [status, setStatus] = useState("No certificates requests available....");
     const getCertificates = (token,id) => {
+        if (!token || !id) {
+            notify('error', 'Invalid request parameters', 400);
+            return;
+        }
+
+        const paramId = parseInt(id, 10);
+        if (isNaN(paramId) || paramId <= 0) {
+            notify('error', 'Invalid department ID', 400);
+            return;
+        }
         const certificateInstance = axios.create(new BackendService().getHeaders(token));
         setCertificates({...certificates, loading: true});
         certificateInstance
-            .get( `${new BackendService().CERTIFICATES}/department/${id}` )
+            .get( `${new BackendService().CERTIFICATES}/department/${paramId}` )
             .then(function (response) {
                 setCertificates({...certificates, loading: false});
                 const d = response.data;
@@ -196,7 +225,6 @@ function Certificates(props) {
             expiration_date: endDate.value,
             certificate_type: certificateType.value
             }
-            console.log('records', data);
         contractInstance
             .post(new BackendService().CERTIFICATES, data)
             .then(function (response) {
@@ -231,7 +259,6 @@ function Certificates(props) {
     // notify
 
     const notify = (variant, msg, status) => {
-        console.log('****notify', variant, msg, status);
         if (status == 401) {
             history.push("/", { expired: true });
         }
@@ -386,8 +413,6 @@ function Certificates(props) {
                 sort: true,
                 customBodyRender: (value, tableMeta, updateValue) => {
                     const obj=certificates.data.find((s)=>s.id==value);
-                    console.log('obj', obj);
-                    console.log('value',value);
                     return (
                         <Box>
                             <IconButton aria-label="delete"
@@ -458,10 +483,6 @@ function Certificates(props) {
             margin: "dense",
         },
         customSearch: (searchQuery, currentRow, columns) => {
-
-            console.log(searchQuery)
-            console.log(JSON.stringify(currentRow))
-
         },
         textLabels: {
             body: {
@@ -529,7 +550,6 @@ function Certificates(props) {
             "certificate_type": certificateType.value,
             "department_id": department.value,
         };
-        console.log('record++++++',data, certificateId)
         certificateInstance
             .put( `${new BackendService().CERTIFICATES}/${certificateId}`, data )
             .then(function (response) {
@@ -634,7 +654,6 @@ function Certificates(props) {
         uploadInstance
             .post(new BackendService().CERTIFICATES_UPLOADS , data)
             .then((response) => {
-                console.log('Upload successful:', response.data);
                 notify("success", response.data.message || "Upload successful");
                 setTimeout(() => {
                     window.location.reload();
@@ -645,7 +664,6 @@ function Certificates(props) {
                 if (error.response) {
                     errorMessage = error.response.data.message;
                 }
-                console.log('Upload failed:', errorMessage);
                 notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
             })
             .finally(() => {
@@ -918,7 +936,6 @@ function Certificates(props) {
                             label="Issue Date"
                             value={startDate.value}
                             onChange={(v)=>{
-                                console.log('vv',v);
                                 if(v=="Invalid Date" || v==null){
                                     setStartDate({value:'',error:v});
                                 }else{

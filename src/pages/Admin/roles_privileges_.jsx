@@ -151,6 +151,9 @@ function RolesPrivileges(props) {
 
   useEffect(() => {
     var accountData = new AdminService().accountData;
+    if(accountData.user.user_type !== 'SUPER_ADMIN'){
+      history.push('/');
+    }
     setAccountData(accountData);
     getRoles(accountData.token, 0);
     getPrivileges(accountData.token, null, true);
@@ -319,8 +322,6 @@ function RolesPrivileges(props) {
 
     setRoles({ ...roles, saving: true });
 
-    console.log("Create role .....");
-
     const data = {
       description: description.value,
       name: name.value,
@@ -366,9 +367,6 @@ function RolesPrivileges(props) {
     );
 
     setRoles({ ...roles, saving: true });
-
-    console.log("update role .....");
-
     const data = {
       description: description.value,
       name: name.value,
@@ -415,10 +413,8 @@ function RolesPrivileges(props) {
     var role = roles.data[index];
     var role2 = role;
 
-    console.log("toggling role .....");
-
     var url;
-    if (status == "ENABLED") {
+    if (status === "ENABLED") {
       url = new AdminService().DEACTIVATE_ROLE + id;
       role["role_status"] = "DISABLED";
     } else {
@@ -454,8 +450,6 @@ function RolesPrivileges(props) {
       new AdminService().getHeaders(accountData.token)
     );
 
-    console.log("Removing.....");
-
     // const data = {
     //   role_privilege_id: [warning.priv],
     // };
@@ -486,8 +480,6 @@ function RolesPrivileges(props) {
     const usersInstance = axios.create(new AdminService().getHeaders(token));
     setRoles({ ...roles, loading: true, page: p });
     setSelectedRole("none");
-    console.log("getting roles .....");
-
     usersInstance
       .get(
         new AdminService().GET_ALL_ROLES +
@@ -529,8 +521,6 @@ function RolesPrivileges(props) {
     setLoadingPriv(true);
     setPrivileges([]);
     setPrivileges2([]);
-    console.log("getting privileges .....");
-
     const url = all
       ? new AdminService().GET_ALL_PRIVILEGES
       : new AdminService().GET_PRIVILEGES_BY_ROLE + role_id;
@@ -548,7 +538,6 @@ function RolesPrivileges(props) {
           setPrivileges2(d.data);
 
           var diff = new Validator().difference(d.data, allPrivileges);
-          console.log(diff.length);
         }
       })
       .catch(function (error) {
@@ -571,7 +560,6 @@ function RolesPrivileges(props) {
     );
     setSavingPriv(true);
 
-    console.log("Updating privilege .....");
 
     const data = {
       description: privDescription.value,
@@ -584,7 +572,6 @@ function RolesPrivileges(props) {
       .then(function (response) {
         setSavingPriv(false);
         const d = response.data;
-        console.log(index);
         if (role) {
           const v = privileges[index];
           v["privilege"] = d.data;
@@ -624,7 +611,6 @@ function RolesPrivileges(props) {
 
     setLoadingPriv(true);
 
-    console.log("Assigning privilege .....");
     setAnchorAssignPriv(null);
 
     const data = {

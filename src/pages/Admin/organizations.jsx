@@ -191,6 +191,9 @@ function Organizations(props) {
 
     useEffect(()=>{
         const accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'SUPER_ADMIN'){
+            history.push('/');
+        }
         setAccountData(accData);
         getOrganizations(accData.access_token)
 

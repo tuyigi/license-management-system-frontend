@@ -59,7 +59,7 @@ import * as XLSX from "xlsx";
 const useStyles = makeStyles((theme) => ({
     root: {flexGrow: 1, [theme.breakpoints.up("sm")]: {marginLeft: 250,},},
     title: {flexGrow: 1,},
-    btn: {textTransform: "capitalize",},
+    btn: {textTransform: "capitalize",marginRight:'16px'},
     btn2: {textTransform: "capitalize", border: "dashed grey 1px",},
     paper: {padding: 15,},
     action: {borderRadius: 15,},
@@ -100,17 +100,46 @@ function Licenses(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+
+        if (accData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
         setAccountData(accData);
-        setDepartment({ value: accData.user.department.id, error: ''});
-        getLicenses(accData.access_token,accData.user.department.id);
+        setDepartment({ value: id, error: ''});
+        getLicenses(accData.access_token,id);
+        }
     }, [])
 
     const [status, setStatus] = useState("No licenses available....");
     const getLicenses = (token,id) => {
+        if (!token || !id) {
+            return;
+        }
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            return;
+        }
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setLicenses({...licenses, loading: true});
         licenseInstance
-            .get(`${new BackendService().LICENSES}/department/${id}`)
+            .get(`${new BackendService().LICENSES}/department/${numericId}`)
             .then(function (response) {
                 setLicenses({...licenses, loading: false});
                 const d = response.data;
@@ -291,6 +320,7 @@ function Licenses(props) {
             "system_tool":systemTool.value,
             "number_system_users": parseInt(systemUsers.value),
             "department": parseInt(department.value),
+            "updated_by": accountData.user.id,
         }
 
     licenseInstance
@@ -673,10 +703,6 @@ function Licenses(props) {
                   margin: "dense",
               },
               customSearch: (searchQuery, currentRow, columns) => {
-
-                  console.log(searchQuery)
-                  console.log(JSON.stringify(currentRow))
-
               },
               textLabels: {
                   body: {
@@ -709,6 +735,7 @@ function Licenses(props) {
                 "system_tool":systemTool.value,
                 "number_system_users": parseInt(systemUsers.value),
                 "department": parseInt(accountData?.user?.department?.id),
+                "updated_by": accountData.user.id,
 
             }
         licenseRenewalInstance
@@ -758,7 +785,6 @@ UPLOAD LICENSE
             await uploadDataToApi(data);
             setFileName('');
         } catch (error) {
-            console.error('Upload failed:', error);
             setLoading(false);
 
             const errorMessage =
@@ -822,7 +848,6 @@ UPLOAD LICENSE
         uploadInstance
             .post(new BackendService().LICENSES_UPLOAD , data)
             .then((response) => {
-                console.log('Upload successful:', response.data);
                 notify("success", response.data.message || "Upload successful");
                 setTimeout(() => {
                     window.location.reload();
@@ -833,7 +858,6 @@ UPLOAD LICENSE
                 if (error.response) {
                     errorMessage = error.response.data.message;
                 }
-                console.log('Upload failed:', errorMessage);
                 notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
             })
             .finally(() => {
@@ -842,6 +866,22 @@ UPLOAD LICENSE
     }
 
     return(
+        <React.Fragment>
+        <Popover
+            open={Boolean(popoverAnchor)}
+            anchorEl={popoverAnchor}
+            onClose={() => setPopoverAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+            PaperProps={{ style: { minWidth: 300, maxWidth: 500,padding: 3 } }}
+        >
+            <Box >
+                <Typography style={{color:'#763a18',fontWeight:'bold'}}>
+                    License was rejected due to:
+                </Typography>
+                <Typography variant="body2">{rejectedComment}</Typography>
+            </Box>
+        </Popover>
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <div className={classes.root}>
         {/* Dialogs starts here */}
@@ -1189,7 +1229,7 @@ UPLOAD LICENSE
                                     variant="outlined"
                                     color="primary"
                                     value={selectedLicense?.vendor.vendor_name || ""}
-                                    placeholder={selectedLicense?.vendor.vendor_name}
+                                    placeholder={selectedLicense?.vendor.vendor_name || ""}
                                     label={"Vendor"}
                                     fullWidth
                                     onChange={onVendorChange}
@@ -1474,7 +1514,7 @@ UPLOAD LICENSE
             </Box>
       </div>
         </MuiPickersUtilsProvider>
-
+        </React.Fragment>
     );
 }
 

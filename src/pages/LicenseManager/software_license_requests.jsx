@@ -86,6 +86,9 @@ function SoftwareLicenseRequest(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'CONTRACT_MANAGER'){
+            history.push('/');
+        }
         setAccountData(accData);
         getLicenses(accData.access_token);
     }, [])

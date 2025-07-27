@@ -71,8 +71,10 @@ function Users(props){
     const [accountData, setAccountData] = useState(null);
     useEffect(()=>{
         var accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'SUPER_ADMIN'){
+            history.push('/');
+        }
         setAccountData(accData);
-        console.log('----', accData);
         getUsers(accData.access_token);
     },[])
     // get Users
@@ -82,11 +84,9 @@ function Users(props){
         usersInstance
             .get(new BackendService().USERS)
             .then(function (response) {
-                console.log('entering', response);
                 setUsers({...users, loading: false});
 
                 const d = response.data;
-                console.log('GETTING USERS', d);
                 if (d.data.length === 0) {
                     setStatus("There are no users available.");
                 } else
@@ -236,8 +236,6 @@ function Users(props){
         }
     };
     const onOrganizationChange = (event, v) => {
-        console.log('event',event);
-        console.log('v',v);
         if (v == null) {
             setOrganizationId({
                 value: '',
@@ -502,9 +500,6 @@ function Users(props){
                 },
                 customSearch: (searchQuery, currentRow, columns) => {
             
-                  console.log(searchQuery)
-                  console.log(JSON.stringify(currentRow))
-            
                 },
                 textLabels: {
                   body: {
@@ -662,13 +657,35 @@ function Users(props){
                               {/*<MenuItem value="ORG_ADMIN">ORG ADMIN</MenuItem>*/}
                               {/*<MenuItem value="LICENSE_MANAGER">LICENSE MANAGER</MenuItem>*/}
                               {/*<MenuItem value="END_USER">END USER</MenuItem>*/}
-                              <MenuItem value="CONTRACT_MANAGER">CONTRACT MANAGER</MenuItem>
+                              <MenuItem value="CONTRACT_MANAGER">MANAGER</MenuItem>
                               <MenuItem value="LICENSE_OWNER">LICENSE OWNER</MenuItem>
                           </Select>
                           <FormHelperText>{userType.error}</FormHelperText>
                       </FormControl>
                   </Box>
                   {userType.value ==='LICENSE_OWNER'&&
+                      <Box style={{marginTop: 10}}>
+                          <Autocomplete
+                              fullWidth
+                              openOnFocus
+                              options={departments}
+                              getOptionLabel={(option) => option.name}
+                              onChange={onDepartmentChange}
+                              renderInput={(params) => (
+                                  <TextField
+                                      {...params}
+                                      fullWidth
+                                      label={"Department"}
+                                      variant="outlined"
+                                      size="small"
+                                      helperText={department.error}
+                                      error={department.error !== ""}
+                                  />
+                              )}
+                          />
+                      </Box>
+                  }
+                  {userType.value ==='CONTRACT_MANAGER'&&
                       <Box style={{marginTop: 10}}>
                           <Autocomplete
                               fullWidth

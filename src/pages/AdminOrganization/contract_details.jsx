@@ -201,8 +201,28 @@ function ContractDetails(props) {
 
     useEffect(() => {
         var accData = new BackendService().accountData;
+        if (accData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+    else {
+            const id = history.location.state.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
         setAccountData(accData);
-        getContractDetails(accData.access_token, history.location.state.id);
+        getContractDetails(accData.access_token, id);
+    }
     }, []);
 
 
@@ -211,9 +231,17 @@ function ContractDetails(props) {
     const  [groupTools, setGroupTools] = useState({});
     ///////////////////////
     const getContractDetails=(token,id) =>{
+        if (!token || !id) {
+            return;
+        }
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            return;
+        }
         const contractInstance = axios.create(new BackendService().getHeaders(token));
         contractInstance
-            .get(`${new BackendService().CONTRACT}/${id}`  )
+            .get(`${new BackendService().CONTRACT}/details/${numericId}`  )
             .then(function (response) {
                 let d = response.data;
                 const toolsMetric = [];

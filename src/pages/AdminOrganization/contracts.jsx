@@ -99,29 +99,59 @@ function Contracts(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
-        setAccountData(accData);
-        setDepartment({ value: accData.user.department.id, error: ''});
-        getContracts(accData.access_token, accData.user.department.id);
+
+        if (accData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            setAccountData(accData);
+            setDepartment({value: id, error: ''});
+            getContracts(accData.access_token, id);
+        }
     }, [])
 
     const [status, setStatus] = useState("No contracts requests available....");
     const getContracts = (token,id) => {
+        if (!token || !id) {
+            notify('error', 'Invalid request parameters', 400);
+            return;
+        }
+
+        const paramId = parseInt(id, 10);
+        if (isNaN(paramId) || paramId <= 0) {
+            notify('error', 'Invalid license ID', 400);
+            return;
+        }
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         setContracts({...contracts, loading: true});
         licenseInstance
-            .get(`${new BackendService().CONTRACT}/department/${id}`  )
+            .get(`${new BackendService().CONTRACT}/department/${paramId}`  )
             .then(function (response) {
                 setContracts({...contracts, loading: false});
-                console.log('*********', response);
                 const d = response.data;
-                if (d.data.length == 0) {
+                if (d.data.length === 0) {
                     setStatus("There are no contract requests available.");
                 } else {
                     var lcs = d.data;
                     lcs.map((da)=>{
                         da['start_date'] = `${format(new Date(da['start_date']), 'yyyy/MM/dd')}`
                         da['end_date']= `${format(new Date(da['end_date']), 'yyyy/MM/dd')}`
-                        da['vendor']=da.vendor.vendor_name;
+                        da['vendor']=da.vendor;
                         da['department_name']=`${da['department']['name']}`
                         da['annual_license_fees'] = `${da['currency']} ${da['annual_license_fees']}`
                     })
@@ -222,18 +252,6 @@ function Contracts(props) {
     }
 
 
-    const onSystemToolsChange = (event,v) => {
-        if (v === null) {
-            setSystemTool({
-                value: "",
-                error: "Please select system tool",
-            });
-        } else {
-            setSystemTool({value: v.id, error: ""});
-        }
-    };
-
-
 
     const onAnnualLicenseFeeChange = (event) => {
         if (event.target.value === "") {
@@ -295,6 +313,7 @@ function Contracts(props) {
             "currency": currency.value,
             "payment_frequency": paymentFrequency.value,
             "system_tools":arr,
+            "updated_by": accountData.user.id,
             "department": parseInt(department.value),
             "number_system_users": parseInt(systemUsers.value)
             }
@@ -343,7 +362,6 @@ function Contracts(props) {
     // notify
 
     const notify = (variant, msg, status) => {
-        console.log('****notify', variant, msg, status);
         if (status === 401) {
             history.push("/", { expired: true });
         }
@@ -411,6 +429,7 @@ function Contracts(props) {
             options: {
                 filter: false,
                 sort: true,
+                customBodyRender: (value) => value?.vendor_name || "N/A",
             },
         },
         {
@@ -534,97 +553,6 @@ function Contracts(props) {
 
             }
         },
-        // {
-        //     name: "id",
-        //     label: "Actions",
-        //     options: {
-        //         filter: true,
-        //         sort: true,
-        //         customBodyRenderLite: function (dataI, rowI) {
-        //             return (
-        //                 <Box>
-        //                     <IconButton aria-label="delete"
-        //                                 onClick={(e)=>{
-        //                                     const obj=contracts.data[dataI];
-        //                                     const paymentBatches = obj['payments'];
-        //                                     setPaymentPeriods(paymentBatches.filter((o)=> o.payment_status === 'PENDING'));
-        //                                     setContractId({ value: obj['id'], error: ''});
-        //                                     setPaymentReports(paymentBatches.sort((n1,n2) => n1.order_number - n2.order_number));
-        //                                     handleEditOpenStatus(e);
-        //                                 }}>
-        //                         <MoreVert />
-        //                     </IconButton>
-        //                     <Popover
-        //                         id={idStatus}
-        //                         open={openEditStatus}
-        //                         variant={'outlined'}
-        //                         anchorEl={anchorElStatus}
-        //                         onClose={handleEditCloseStatus}
-        //                         anchorOrigin={{
-        //                             vertical: 'bottom',
-        //                             horizontal: 'center',
-        //                         }}
-        //                         transformOrigin={{
-        //                             vertical: 'top',
-        //                             horizontal: 'center',
-        //                         }}
-        //                         elevation={1}
-        //                     >
-        //
-        //                         <Box p={2}>
-        //                             <List component="nav" aria-label="main mailbox folders">
-        //                                 <ListItem button onClick={()=>{
-        //                                     const obj = contracts.data.find((o)=>o['id']===contractId.value);
-        //                                     if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
-        //                                         console.log('check approval status',contracts.data[dataI]['approval_status'].toLowerCase())
-        //                                         setShowReport(true);
-        //                                     }else {
-        //                                         notify("info", 'Contract not yet approved', 400);
-        //                                     }
-        //                                     handleEditCloseStatus();
-        //                                 }}>
-        //                                     <ListItemIcon>
-        //                                         <Assessment />
-        //                                     </ListItemIcon>
-        //                                     <ListItemText primary="View Report" />
-        //                                 </ListItem>
-        //                                 <ListItem button onClick={()=>{
-        //                                     const obj = contracts.data.find((o)=>o['id']===contractId.value);
-        //                                     if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
-        //                                         setStatusRenewalOpen(true);
-        //                                     }else{
-        //                                         notify("info", 'Contract not yet approved', 400);
-        //                                     }
-        //                                     handleEditCloseStatus();
-        //                                 }} >
-        //                                     <ListItemIcon>
-        //                                         <Payment />
-        //                                     </ListItemIcon>
-        //                                     <ListItemText primary="Status Renewal" />
-        //                                 </ListItem>
-        //                                 <ListItem button onClick={(e)=>{
-        //                                     const obj = contracts.data.find((o)=>o['id']===contractId.value);
-        //                                     if(obj['approval_status'].toLowerCase() === 'APPROVED'.toLowerCase()) {
-        //                                         setShowContractComponents(true);
-        //                                         getContractComponents();
-        //                                     }else{
-        //                                         notify("info", 'Contract not yet approved', 400);
-        //                                     }
-        //                                     handleEditCloseStatus();
-        //                                 }} >
-        //                                     <ListItemIcon>
-        //                                         <AccountTree />
-        //                                     </ListItemIcon>
-        //                                     <ListItemText primary="Components" />
-        //                                 </ListItem>
-        //                             </List>
-        //                         </Box>
-        //                     </Popover>
-        //                 </Box>
-        //             );
-        //         }
-        //     },
-        // },
         {
             name: "id",
             label: "Actions",
@@ -715,10 +643,6 @@ function Contracts(props) {
             margin: "dense",
         },
         customSearch: (searchQuery, currentRow, columns) => {
-
-            console.log(searchQuery)
-            console.log(JSON.stringify(currentRow))
-
         },
         textLabels: {
             body: {
@@ -955,11 +879,11 @@ function Contracts(props) {
             "department": parseInt(department.value),
             "number_system_users": parseInt(systemUsers.value),
             "user": accountData.user.id,
+            "updated_by": accountData.user.id,
             "payment_frequency": paymentFrequency.value,
         }
-        console.log('contractRenewalInstance', data);
         contractRenewalInstance
-            .put( `${new BackendService().CONTRACT}/${contractId.value}`, data )
+            .put( `${new BackendService().CONTRACT}/${contractId}`, data )
             .then(function (response) {
                 notify("success", response.data.message);
                 setStatusRenewalOpen(false);
@@ -975,12 +899,11 @@ function Contracts(props) {
     }
     useEffect(() => {
         if (statusRenewalOpen && selectedContract) {
-            setVendor({ value: selectedContract.vendor || "", error: "" });
             setContractNumber({ value: selectedContract.contract_number || "", error: "" });
             setDescription({ value: selectedContract.description || "", error: "" });
             setVendor({ value: selectedContract.vendor?.id || "", error: "" });
             setSystemTool({ value: selectedContract.system_tool?.id || "", error: "" });
-            setAnnualLicenseFees({ value: selectedContract.license_fees || "", error: "" });
+            setAnnualLicenseFees({ value: selectedContract.annual_license_fees || "", error: "" });
             setStartDate({ value: selectedContract.start_date || "", error: "" });
             setEndDate({ value: selectedContract.end_date || "", error: "" });
             setCurrency({ value: selectedContract.currency || "", error: "" });
@@ -1004,7 +927,6 @@ function Contracts(props) {
             await uploadDataToApi(data);
             setFileName('');
         } catch (error) {
-            console.error('Upload failed:', error);
             setLoading(false);
 
             const errorMessage =
@@ -1068,7 +990,6 @@ function Contracts(props) {
         uploadInstance
             .post(new BackendService().CONTRACT_UPLOAD , data)
             .then((response) => {
-                console.log('Upload successful:', response.data);
                 notify("success", response.data.message || "Upload successful");
                 setTimeout(() => {
                     window.location.reload();
@@ -1079,7 +1000,6 @@ function Contracts(props) {
                 if (error.response) {
                     errorMessage = error.response.data.message;
                 }
-                console.log('Upload failed:', errorMessage);
                 notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
             })
             .finally(() => {
@@ -1163,6 +1083,7 @@ function Contracts(props) {
                         </Translate>
                     </Box>
 
+{/*
                     <Box style={{marginTop: 10}}>
                         <Autocomplete
                             fullWidth
@@ -1183,6 +1104,7 @@ function Contracts(props) {
                             )}
                         />
                     </Box>
+*/}
 
                     <Box style={{marginTop: 10}}>
                         <Autocomplete
@@ -1432,8 +1354,8 @@ function Contracts(props) {
                                     size="small"
                                     variant="outlined"
                                     color="primary"
-                                    value={vendor.value|| ""}
-                                    placeholder={vendor.value|| ""}
+                                    value={selectedContract?.vendor.vendor_name|| ""}
+                                    placeholder={selectedContract?.vendor.vendor_name || ""}
                                     label={"Vendor"}
                                     fullWidth
                                     onChange={onVendorChange}
@@ -1465,7 +1387,8 @@ function Contracts(props) {
                         </Translate>
                     </Box>
 
-                    <Box style={{marginTop: 10}}>
+
+           {/*         <Box style={{marginTop: 10}}>
 
                         <Translate>
                             {({ translate }) => (
@@ -1485,7 +1408,8 @@ function Contracts(props) {
                                 />
                             )}
                         </Translate>
-                    </Box>
+                    </Box>*/}
+
 
                     <Box style={{marginTop: 10}}>
                         <Autocomplete
@@ -1802,7 +1726,6 @@ function Contracts(props) {
                             color="primary"
                             startIcon={<LibraryAdd />}
                             onClick={(e)=>{
-                                console.log('clicked');
                                 handleEditOpenComponent(e);
                             }}
                         >

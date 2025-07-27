@@ -67,6 +67,9 @@ function SoftwareLicenses(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'SUPER_ADMIN'){
+            history.push('/');
+        }
         setAccountData(accData);
         getLicenses(accData.access_token);
     }, [])

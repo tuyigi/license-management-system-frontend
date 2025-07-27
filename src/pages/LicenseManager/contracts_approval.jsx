@@ -89,16 +89,33 @@ function ContractsApproval(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'CONTRACT_MANAGER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        const id = accData.user.department.id;
+
         setAccountData(accData);
-        getContracts(accData.access_token);
+        getContracts(accData.access_token,id);
     }, [])
 
     const [status, setStatus] = useState("No contracts requests available....");
-    const getContracts = (token) => {
+    const getContracts = (token,id) => {
+        if (!token || !id) {
+            notify('error', 'Invalid request parameters', 400);
+            return;
+        }
+
+        const paramId = parseInt(id, 10);
+        if (isNaN(paramId) || paramId <= 0) {
+            notify('error', 'Invalid department ID', 400);
+            return;
+        }
+
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
+
         setContracts({...contracts, loading: true});
         licenseInstance
-            .get(new BackendService().CONTRACT )
+            .get(`${new BackendService().CONTRACT}/department/${paramId}`)
             .then(function (response) {
                 setContracts({...contracts, loading: false});
                 const d = response.data;
@@ -200,7 +217,6 @@ function ContractsApproval(props) {
                 error: "Please select department",
             });
         } else {
-            console.log(`department ID:: ${v.id}`);
             setDepartment({value: v.id, error: ""});
         }
     };
@@ -212,7 +228,6 @@ function ContractsApproval(props) {
                 error: "Please select vendor",
             });
         } else {
-            console.log(`vendor ID:: ${v.id}`);
             setVendor({value: v.id, error: ""});
         }
     };
@@ -235,7 +250,6 @@ function ContractsApproval(props) {
                 error: "Please select system tool",
             });
         } else {
-            console.log(`system tool ID:: ${v.id}`);
             setSystemTool({value: v.id, error: ""});
         }
     };
@@ -573,9 +587,6 @@ function ContractsApproval(props) {
         },
         customSearch: (searchQuery, currentRow, columns) => {
 
-            console.log(searchQuery)
-            console.log(JSON.stringify(currentRow))
-
         },
         textLabels: {
             body: {
@@ -746,7 +757,7 @@ function ContractsApproval(props) {
                 setApprovalDialog(false);
                 setComment({ value: '', error: ''});
                 notify("success", response.data.message);
-                getContracts(accountData.access_token);
+                getContracts(accountData.access_token,accountData.user.department.id);
             })
             .catch(function (error) {
                 setApprovalLoading(false);

@@ -94,12 +94,14 @@ function Dashboard(){
 
     useEffect(()=>{
         var accountData = new BackendService().accountData;
+
     },[]);
 
     // Call all hooks at the top level
     const [licenseContractsStats] = useLicenseContractsData();
     const [certificates] = useCertificatesData();
     const [toolsOptimization] = useContractToolsOptimizationData();
+
     const chartData = useMemo(() => {
         if (licenseContractsStats.status !== 'success') return [];
         const currentYear = new Date().getFullYear();
@@ -140,14 +142,7 @@ function Dashboard(){
     //Chart for optimization
     const chartDataToolsOptimization = useMemo(() => {
         if (toolsOptimization.status !== "success") return [];
-
         const tools = toolsOptimization.data?.toolsMetrics || [];
-/* return tools.map(tool => ({
-                    name: tool.system_tool_name,
-                    entitlement: tool.entitlement,
-                    utilisation: tool.utilisation,
-                    license_gap: tool.license_gap,
-                }));*/
         return tools.map(tool => ({
             name: tool.system_tool_name,
             shortName: tool.system_tool_name.length > 10
@@ -157,19 +152,9 @@ function Dashboard(){
             utilisation: tool.utilisation,
             license_gap: tool.license_gap,
         }));
-            }, [toolsOptimization]);
+    }, [toolsOptimization]);
 
 
-// Then handle early return after hooks
-   if (licenseContractsStats.status === 'loading' || certificates.status === 'loading') {
-        return <p>Loading chart...</p>;
-    }
-    if (licenseContractsStats.status === 'error' || certificates.status === 'error') {
-        return <p>Error loading data.</p>;
-    }
-    if (licenseContractsStats.status === 'empty' || certificates.status === 'empty') {
-        return <p>No tools or certificates found.</p>;
-    }
 
 
     return(
@@ -181,6 +166,7 @@ function Dashboard(){
             <Box style={{marginTop: 10}}>
                 <Grid container spacing={1}>
                     {/* overview  */}
+
                     <Grid item xs={12} md={3} >
                         <Paper className={classes.paper3} elevation={0} onClick={()=>{
                             history.push("/orgAdmin/certificates")
@@ -188,7 +174,7 @@ function Dashboard(){
                             <Grid container>
                                 <Grid item xs={8} md={8}>
                                     <Box style={{display: "flex",justifyContent:"center"}} ><Typography variant="h8"><b>Certificates</b></Typography></Box>
-                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{certificateStats.data.total_certificates||0}</Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{certificateStats?.data?.total_certificates||0}</Typography></Box>
                                 </Grid>
                                 <Grid item xs={4} md={4}>
                                     <Box style={{padding: 5}}>
@@ -199,23 +185,27 @@ function Dashboard(){
                         </Paper>
 
                     </Grid>
+
+
                     <Grid item xs={12} md={3} lg={3} sm={3} >
-                    <Paper className={classes.paper3} elevation={0} onClick={()=>{
-                        history.push("/orgAdmin/systemTool");
-                    }}>
-                        <Grid container>
-                            <Grid item xs={8} md={8}>
-                                <Box style={{display: "flex",justifyContent:"center"}} ><Typography variant="h8"><b>System/Tools</b></Typography></Box>
-                                <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{systemStats?.data?.total||0}</Typography></Box>
+                        <Paper className={classes.paper3} elevation={0} onClick={()=>{
+                            history.push("/orgAdmin/systemTool");
+                        }}>
+                            <Grid container>
+                                <Grid item xs={8} md={8}>
+                                    <Box style={{display: "flex",justifyContent:"center"}} ><Typography variant="h8"><b>System/Tools</b></Typography></Box>
+                                    <Box style={{display: "flex",justifyContent:"center", marginTop: 10}}><Typography variant="h6">{systemStats?.data?.total||0}</Typography></Box>
+                                </Grid>
+                                <Grid item xs={4} md={4}>
+                                    <Box style={{padding: 5}}>
+                                        <img src={ToolsIcon} width="50px" height="50px" />
+                                    </Box>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={4} md={4}>
-                                <Box style={{padding: 5}}>
-                                    <img src={ToolsIcon} width="50px" height="50px" />
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </Paper>
+                        </Paper>
                     </Grid>
+
+
 
                     <Grid item xs={12} md={3} lg={3} sm={3} >
                         <Paper className={classes.paper3} elevation={0}>
@@ -232,6 +222,8 @@ function Dashboard(){
                             </Grid>
                         </Paper>
                     </Grid>
+
+
 
                     <Grid item xs={12} md={3} lg={3} sm={3} >
                         <Paper className={classes.paper3} elevation={0} onClick={()=>{
@@ -251,7 +243,8 @@ function Dashboard(){
                         </Paper>
                     </Grid>
 
-{/*                    <Grid item xs={12} md={4} lg={4} sm={4}>
+
+                    {/*                    <Grid item xs={12} md={4} lg={4} sm={4}>
                         <Paper style={{minHeight: 400,display:"flex",flexDirection:"column"}} elevation={0}>
                             <Typography style={{marginLeft:10,marginTop:10}}><b>License Requests Summary</b></Typography>
                             <Chart style={{marginTop:50}} type="donut" options={organizationLicenseRequestStats(licenseRequestStatusStats).options}
@@ -259,7 +252,7 @@ function Dashboard(){
                         </Paper>
                     </Grid>*/}
 
-                   {/* <Grid item xs={12} md={8} lg={8} sm={8}>
+                    {/* <Grid item xs={12} md={8} lg={8} sm={8}>
                         <Paper style={{minHeight: 300,display:"flex",flexDirection:"column"}} elevation={0}>
                             <Typography style={{marginLeft:10,marginTop:10}}><b>Certificate Expiration Summary</b></Typography>
                             <Box>
@@ -293,7 +286,7 @@ function Dashboard(){
                         </Paper>
                     </Grid>*/}
 
-{/*
+                    {/*
                     Summaries
 */}
                     <Grid container spacing={3}>
@@ -343,7 +336,7 @@ function Dashboard(){
                             <Typography style={{ marginLeft: 10, marginTop: 10 }}>
                                 <b>Tools Optimization</b>
                             </Typography>
-                           <ResponsiveContainer width="100%" height={400}>
+                            <ResponsiveContainer width="100%" height={400}>
                                 <BarChart data={chartDataToolsOptimization} margin={{ right: 120 ,bottom: 50 }} >
                                     <XAxis
                                         dataKey="name"
@@ -370,7 +363,7 @@ function Dashboard(){
                                 </BarChart>
                             </ResponsiveContainer>
 
-  {/*                          <ResponsiveContainer width="100%" height={400}>
+                            {/*                          <ResponsiveContainer width="100%" height={400}>
                                 <BarChart
                                     data={chartDataToolsOptimization}
                                     layout="vertical"
@@ -395,7 +388,7 @@ function Dashboard(){
                         </Paper>
                     </Grid>
 
-               {/*     <Grid item xs={12} sm={6} md={6} lg={6}>
+                    {/*     <Grid item xs={12} sm={6} md={6} lg={6}>
                         <Paper style={{ width: '100%', display: "flex", flexDirection: "column" }} elevation={0}>
                             <Typography style={{ marginLeft: 10, marginTop: 10 }}>
                                 <b>Certificates Expiration Summary</b>

@@ -77,7 +77,6 @@ function Login(props) {
     }
     const data1 = localStorage.getItem("LMIS");
     if (data1 != null) {
-      console.log(JSON.parse(data1));
       var data = JSON.parse(data1);
       if (data?.user.organization_id.organization_type === "LICENSE_ISSUER") {
         if (data?.user.user_type === "SUPER_ADMIN") {
@@ -257,9 +256,6 @@ function Login(props) {
         if (error.response) {
           e = error.response.data.message;
         }
-
-        //console.log(error.response);
-
         enqueueSnackbar(e, {
           variant: "error",
           action: (k) => (

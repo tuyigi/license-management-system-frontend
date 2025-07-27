@@ -59,6 +59,10 @@ function Departments(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+
+        if(accData.user.user_type !== 'SUPER_ADMIN'){
+            history.push('/');
+        }
         setAccountData(accData);
         getDepartment(accData.access_token);
     }, [])
@@ -259,10 +263,6 @@ function Departments(props) {
           margin: "dense",
         },
         customSearch: (searchQuery, currentRow, columns) => {
-    
-          console.log(searchQuery)
-          console.log(JSON.stringify(currentRow))
-    
         },
         textLabels: {
           body: {

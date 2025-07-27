@@ -7,6 +7,9 @@ import Chart from "react-apexcharts";
 import {useHistory} from "react-router-dom";
 import {format} from "date-fns/esm";
 import {da} from "date-fns/locale";
+import {IconButton} from "@material-ui/core";
+import {Close} from "@material-ui/icons";
+import {useSnackbar} from "notistack";
 //const axios = require("axios");
 
 
@@ -74,13 +77,10 @@ export function useOrganizationTypeStats() {
                 // const data = response.data.data;
                 const series =  response.data.data.map(item => item.total);
                 const labels = response.data.data.map(item => item.organization_type);
-                console.log(series,labels);
-
                 const data = {
                     labels,
                     series
                 };
-                console.log(data)
                 setData({
                     data,
                     status: "success",
@@ -122,14 +122,12 @@ export function useLicenseRequestStatusStats() {
             .then(function (response) {
                 // const data = response.data.data;
                 const total = response.data.data.reduce((total, item) => parseInt(item.total) + total, 0)
-                console.log('total',total);
                 const series =  response.data.data.map(item => (parseInt(item.total)));
                 const labels = response.data.data.map(item => item.approval_status);
                 const data = {
                     labels,
                     series
                 };
-                console.log('^^^^^^^', data)
                 setData({
                     data,
                     status: "success",
@@ -174,16 +172,13 @@ export function useOrganizationLicenseRequestStatusStats() {
             .then(function (response) {
                 // const data = response.data.data;
                 const total = response.data.data.reduce((total, item) => parseInt(item.total) + total, 0)
-                console.log('total',total);
                 const series =  response.data.data.map(item => (parseInt(item.total)*100)/total);
                 const labels = response.data.data.map(item => item.name);
-                console.log(series,labels);
 
                 const data = {
                     labels,
                     series
                 };
-                console.log(data);
                 setData({
                     data,
                     status: "success",
@@ -212,14 +207,53 @@ export function useOrganizationLicenseRequestStatusStats() {
 export function useTotalCertificateDepartmentStats() {
     const history = useHistory();
     const [certificateStats, setData] = useState({status: "loading" });
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
     useEffect(() => {
         var accountData = new BackendService().accountData;
-            getCertificateStats(accountData.token,accountData.user.department.id);
+        if (accountData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accountData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accountData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            getCertificateStats(accountData.token, accountData.user.department.id);
+        }
     }, []);
 
     const getCertificateStats = (token,id) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().REPORT}/certificateNo/${id}`;
+        const url = `${new BackendService().REPORT}/certificatesDepartment/${id}`;
         dInstance
             .get(url)
             .then(function (response) {
@@ -253,16 +287,62 @@ export function useTotalCertificateDepartmentStats() {
 export function useTotalContractDepartmentStats() {
     const history = useHistory();
     const [contractStats, setData] = useState({status: "loading" });
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        if (contractStats.data == null) {
-            getContractStats(accountData.token,accountData.user.department.id);
+        if (accountData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accountData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accountData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            if (contractStats.data == null) {
+                getContractStats(accountData.token, id);
+            }
         }
     }, []);
 
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
+
     const getContractStats = (token,id) => {
+
+        const paramId = parseInt(id, 10);
+        if (isNaN(paramId) || paramId <= 0) {
+            return;
+        }
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().REPORT}/totalContractDepartment/${id}`;
+        const url = `${new BackendService().REPORT}/totalContractDepartment/${paramId}`;
         dInstance
             .get(url)
             .then(function (response) {
@@ -297,10 +377,49 @@ export function useTotalContractDepartmentStats() {
 export function useSystemToolStats() {
     const history = useHistory();
     const [systemStats, setData] = useState({status: "loading" });
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        if (systemStats.data == null) {
-            getSystemStats(accountData.token,accountData.user.department.id);
+        if (accountData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accountData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accountData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            if (systemStats.data == null) {
+                getSystemStats(accountData.token, id);
+            }
         }
     }, []);
 
@@ -341,16 +460,71 @@ export function useSystemToolStats() {
 export function usePaymentStatusContractDepartmentStats() {
     const history = useHistory();
     const [paymentStatusStats, setData] = useState({status: "loading" });
-    useEffect(() => {
+/*    useEffect(() => {
         var accountData = new BackendService().accountData;
         if (paymentStatusStats.data == null) {
             getPaymentStatusStats(accountData.token,accountData.user.department.id);
         }
+    }, []);*/
+
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
+    useEffect(() => {
+        var accData = new BackendService().accountData;
+        if (accData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            if (paymentStatusStats.data == null) {
+                getPaymentStatusStats(accData.token, id);
+            }
+        }
     }, []);
 
+
     const getPaymentStatusStats = (token,id) => {
+        if (!token || !id) {
+            return;
+        }
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            return;
+        }
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().REPORT}/contractPeriodPayments/${id}`;
+        const url = `${new BackendService().REPORT}/contractPeriodPayments/${numericId}`;
         dInstance
             .get(url)
             .then(function (response) {
@@ -401,16 +575,13 @@ export function useApprovedLicenseTypeStats() {
             .then(function (response) {
                 // const data = response.data.data;
                 const total = response.data.data.reduce((total, item) => parseInt(item.total) + total, 0)
-                console.log('total',total);
                 const series =  response.data.data.map(item => (parseInt(item.total)));
                 const labels = response.data.data.map(item => item.l_name);
-                console.log(series,labels);
 
                 const data = {
                     labels,
                     series
                 };
-                console.log(data)
                 setData({
                     data,
                     status: "success",
@@ -441,10 +612,49 @@ export function useApprovedLicenseTypeStats() {
 export function useVendorPaymentDeparmentsStats() {
     const history = useHistory();
     const [vendorPaymentDeparmentsStats, setData] = useState({status: "loading"});
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
     useEffect(() => {
         var accountData = new BackendService().accountData;
-        if (vendorPaymentDeparmentsStats.data == null) {
-            getVendorPaymentDeparmentsStats(accountData.token, accountData.user.department.id, accountData.user.id);
+        if (accountData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accountData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accountData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            if (vendorPaymentDeparmentsStats.data == null) {
+                getVendorPaymentDeparmentsStats(accountData.token, id, accountData.user.id);
+            }
         }
     }, []);
 
@@ -456,7 +666,6 @@ export function useVendorPaymentDeparmentsStats() {
             .then(function (response) {
                 const series = response.data.data.map(item => (parseInt(item.total)));
                 const labels = response.data.data.map(item => item.month);
-                console.log(series, labels);
                 const data = {
                     labels,
                     series
@@ -490,22 +699,60 @@ export function useVendorPaymentDeparmentsStats() {
 export function useLicenseContractsData() {
     const history = useHistory();
     const [licenseContractsStats, setData] = useState({ status: "loading" });
-
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
     useEffect(() => {
         const accountData = new BackendService().accountData;
+        if (accountData.user.user_type !=='LICENSE_OWNER'){
+            notify('error', 'Unauthorized', 401);
+        }
+        else {
+            const id = accountData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accountData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+
         if (!licenseContractsStats.data) {
-            getLicenseContractsData(accountData.token, accountData.user.department.id, accountData.user.id);
+            getLicenseContractsData(accountData.token, id);
+        }
         }
     }, []);
 
-    const getLicenseContractsData = (token, departmentId, userId) => {
+    const getLicenseContractsData = (token, id, userId) => {
         const dInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().CONTRACT}/tool/expiration/${departmentId}`;
+        const url = `${new BackendService().CONTRACT}/tool/expiration/${id}`;
 
         dInstance.get(url)
             .then(response => {
                 const rawData = response.data?.data?.toolsExpiration || [];
-                console.log('TOOLS EXPIRATION', rawData);
                 const formatted = rawData.map(da => ({
                     ...da,
                     start_date: format(new Date(da.start_date), 'yyyy/MM/dd'),
@@ -542,10 +789,48 @@ export function useLicenseContractsData() {
 export function useCertificatesData() {
     const history = useHistory();
     const [certificates, setCertificates] = useState({ status: "loading", data: [] });
+        const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+        const notify = (variant, msg, status) => {
+            if (status == 401) {
+                history.push("/", { expired: true });
+            }
+            enqueueSnackbar(msg, {
+                variant: variant,
+                action: (k) => (
+                    <IconButton
+                        onClick={() => {
+                            closeSnackbar(k);
+                        }}
+                        size="small"
+                    >
+                        <Close fontSize="small" />
+                    </IconButton>
+                ),
+            });
+        };
+        useEffect(() => {
+            const accountData = new BackendService().accountData;
+            if (accountData.user.user_type !== 'LICENSE_OWNER') {
+                notify('error', 'Unauthorized', 401);
+            } else {
+                const id = accountData.user.department.id;
+                if (!id) {
+                    notify('error', ' ID is required', 400);
+                    return;
+                }
 
-    useEffect(() => {
-        const accountData = new BackendService().accountData;
-        getCertificatesData(accountData.token, accountData.user.department.id, accountData.user.id);
+                if (!/^\d+$/.test(id)) {
+                    notify('error', 'Invalid  ID ', 400);
+                    return;
+                }
+
+                if (!accountData.access_token) {
+                    notify('error', 'Authentication required', 401);
+                    return;
+                }
+                getCertificatesData(accountData.token, id, accountData.user.id);
+            }
+
     }, []);
 
     const getCertificatesData = (token, departmentId, userId) => {
@@ -585,20 +870,66 @@ export function useCertificatesData() {
 }
 
 
+
 // CONTRACT TOOLS Optimization
 
 export function useContractToolsOptimizationData() {
     const history = useHistory();
     const [toolsOptimization, setToolsOptimization] = useState({ status: "loading", data: [] });
 
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+    const notify = (variant, msg, status) => {
+        if (status == 401) {
+            history.push("/", { expired: true });
+        }
+        enqueueSnackbar(msg, {
+            variant: variant,
+            action: (k) => (
+                <IconButton
+                    onClick={() => {
+                        closeSnackbar(k);
+                    }}
+                    size="small"
+                >
+                    <Close fontSize="small" />
+                </IconButton>
+            ),
+        });
+    };
     useEffect(() => {
         const accountData = new BackendService().accountData;
-        getToolsOptimizationData(accountData.token, accountData.user.department.id, accountData.user.id);
+        if (accountData.user.user_type !== 'LICENSE_OWNER') {
+            notify('error', 'Unauthorized', 401);
+        } else {
+            const id = accountData.user.department.id;
+            if (!id) {
+                notify('error', ' ID is required', 400);
+                return;
+            }
+
+            if (!/^\d+$/.test(id)) {
+                notify('error', 'Invalid  ID ', 400);
+                return;
+            }
+
+            if (!accountData.access_token) {
+                notify('error', 'Authentication required', 401);
+                return;
+            }
+            getToolsOptimizationData(accountData.token, id, accountData.user.id);
+        }
+
     }, []);
 
-    const getToolsOptimizationData = (token, departmentId, userId) => {
+    const getToolsOptimizationData = (token, id, userId) => {
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            return;
+        }
+
         const toolsInstance = axios.create(new BackendService().getHeaders(token));
-        const url = `${new BackendService().CONTRACT}/tool/metric/department/${departmentId}`;
+        const url = `${new BackendService().CONTRACT}/tool/metric/department/${id}`;
 
         toolsInstance.get(url)
             .then(response => {
@@ -607,7 +938,9 @@ export function useContractToolsOptimizationData() {
                     data: rawData,
                     status: rawData.length === 0 ? "empty" : "success",
                 });
+
             })
+
             .catch(error => {
                 if (error.response) {
                     if (error.response.status === 404) {
@@ -625,3 +958,4 @@ export function useContractToolsOptimizationData() {
 
     return [toolsOptimization, getToolsOptimizationData];
 }
+

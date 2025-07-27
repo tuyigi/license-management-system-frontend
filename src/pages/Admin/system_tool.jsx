@@ -53,7 +53,6 @@ function SystemTool(props) {
     const { enqueueSnackbar, closeSnackbar } = useSnackbar();
     const history = useHistory();
     const [systemToolUpload, setSystemToolUpload] = useState({value: __filename, error:""});
-    const functions = useFunctions();
     const [addNewOpen, setAddNewOpen] = useState(false);
     const [systemTools, setSystemTools] = useState({
         page: 0,
@@ -69,7 +68,6 @@ function SystemTool(props) {
     const [department, setDepartment] = useState({ value: '', error: ''});
     useEffect(() => {
         var accData = new BackendService().accountData;
-        console.log('accData',accData);
         setAccountData(accData);
         if(accData['user']!=='SUPER_ADMIN'){
             setDepartment({ value: accData?.user?.department?.id, error: ''});
@@ -136,7 +134,6 @@ function SystemTool(props) {
         }
     };
     const onFunctionChange = (event,v) => {
-        console.log(v);
         setFunctionIds([]);
         if (v === null) {
             setFunctionIds({
@@ -145,7 +142,6 @@ function SystemTool(props) {
             });
         } else {
             const ids = v.map((o)=>o.id);
-            console.log('ids',ids);
             checkFunctions(ids);
             setFunctionIds({value: ids, error: ""});
         }
@@ -333,9 +329,6 @@ function SystemTool(props) {
         },
         customSearch: (searchQuery, currentRow, columns) => {
 
-          console.log(searchQuery)
-          console.log(JSON.stringify(currentRow))
-
         },
         textLabels: {
           body: {
@@ -370,7 +363,6 @@ function SystemTool(props) {
             await uploadDataToApi(data);
             setFileName('');
         } catch (error) {
-            console.error('Upload failed:', error);
             setLoading(false);
         }
     };
@@ -407,7 +399,6 @@ function SystemTool(props) {
         uploadInstance
             .post(new BackendService().TOOL_UPLOADS , data)
             .then((response) => {
-                console.log('Upload successful:', response.data);
                 notify("success", response.data.message || "Upload successful");
                 setTimeout(() => {
                     window.location.reload();
@@ -418,7 +409,6 @@ function SystemTool(props) {
                 if (error.response) {
                     errorMessage = error.response.data.message;
                 }
-                console.log('Upload failed:', errorMessage);
                 notify(error?.response?.status === 404 ? "info" : "error", errorMessage, error?.response?.status);
             })
             .finally(() => {
@@ -465,27 +455,6 @@ function SystemTool(props) {
                 )}
               </Translate>
             </Box>
-              <Box style={{marginTop: 10}}>
-                  <Autocomplete
-                      fullWidth
-                      multiple
-                      openOnFocus
-                      options={functions}
-                      getOptionLabel={(option) => `${option.name}`}
-                      onChange={onFunctionChange}
-                      renderInput={(params) => (
-                          <TextField
-                              {...params}
-                              fullWidth
-                              label={"Functions/Roles"}
-                              variant="outlined"
-                              size="small"
-                              helperText={functionIds.error}
-                              error={functionIds.error !== ""}
-                          />
-                      )}
-                  />
-              </Box>
               <Box><Typography style={{fontSize: '12px'}}>{similarFunctions.map((v)=>`${v.system_tool_name}(${v.total})`)}</Typography></Box>
 
             <Box style={{marginTop:10}}>

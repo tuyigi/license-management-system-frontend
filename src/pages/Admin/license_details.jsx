@@ -151,11 +151,25 @@ function LicenseDetails(props) {
 
     useEffect(() => {
         var accData = new BackendService().accountData;
-        const id = history.location.state?.id;
+
+        if(accData.user.user_type !== 'LICENSE_OWNER'){
+            history.push('/');
+        }
+
+        const id = history.location.state.id;
+
+        if (!id) {
+            notify('error', 'License ID is required', 400);
+            return;
+        }
 
         if (!/^\d+$/.test(id)) {
-            // Reject if id is not a number
-            notify('','invalid',400);
+            notify('error', 'Invalid license ID ', 400);
+            return;
+        }
+
+        if (!accData.access_token) {
+            notify('error', 'Authentication required', 401);
             return;
         }
 
@@ -165,14 +179,23 @@ function LicenseDetails(props) {
 
 
 
-
     const [licenseDetails,setLicensedetails]= useState({});
     const  [groupTools, setGroupTools] = useState({});
     ///////////////////////
     const getLicenseDetails=(token,id) =>{
+        if (!token || !id) {
+            notify('error', 'Invalid request parameters', 400);
+            return;
+        }
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            notify('error', 'Invalid license ID', 400);
+            return;
+        }
         const licenseInstance = axios.create(new BackendService().getHeaders(token));
         licenseInstance
-            .get(`${new BackendService().LICENSES}/details/${id}`  )
+            .get(`${new BackendService().LICENSES}/details/${numericId}`  )
             .then(function (response) {
                 let d = response.data;
                 const toolsMetric = [];

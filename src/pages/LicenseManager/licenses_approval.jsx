@@ -89,16 +89,29 @@ function LicensesApproval(props) {
     const [accountData, setAccountData] = useState(null);
     useEffect(() => {
         var accData = new BackendService().accountData;
+        if(accData.user.user_type !== 'CONTRACT_MANAGER'){
+            history.push('/');
+        }
+        const id = accData.user.department.id;
+
         setAccountData(accData);
-        getPendingLicenses(accData.access_token);
+        getPendingLicenses(accData.access_token,id);
     }, [])
 
     const [status, setStatus] = useState("No licenses available....");
-    const getPendingLicenses = (token) => {
+    const getPendingLicenses = (token,id) => {
+        if (!token || !id) {
+            return;
+        }
+
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId) || numericId <= 0) {
+            return;
+        }
         const pendingLicenseInstance = axios.create(new BackendService().getHeaders(token));
         setPendingLicenses({...pendingLicenses, loading: true});
         pendingLicenseInstance
-            .get(new BackendService().LICENSES )
+            .get(`${new BackendService().LICENSES}/department/${numericId}`)
             .then(function (response) {
                 setPendingLicenses({...pendingLicenses, loading: false});
                 const d = response.data;
@@ -460,7 +473,7 @@ function LicensesApproval(props) {
                 setApprovalDialog(false);
                 setComment({ value: '', error: ''});
                 notify("success", response.data.message);
-                getPendingLicenses(accountData.access_token);
+                getPendingLicenses(accountData.access_token,accountData.user.department.id);
             })
             .catch(function (error) {
                 setApprovalLoading(false);
